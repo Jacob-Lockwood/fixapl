@@ -36,7 +36,7 @@ export const glyphs = {
   bac: { name: "backward", glyph: "˜", kind: "monadic modifier" },
   slf: { name: "self", glyph: "˙", kind: "monadic modifier" },
   cel: { name: "cells", glyph: "◡", kind: "monadic modifier" },
-  con: { name: "contents", glyph: "ᑒ", kind: "monadic modifier" },
+  con: { name: "contents", glyph: "⊙", kind: "monadic modifier" },
   eac: { name: "each", glyph: "¨", kind: "monadic modifier" },
   red: { name: "reduce", glyph: "/", kind: "monadic modifier" },
   sca: { name: "scan", glyph: "\\", kind: "monadic modifier" },
