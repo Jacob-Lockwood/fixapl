@@ -401,7 +401,6 @@ function pick(x: Val, y: Val): Val {
   else if (x.kind === "array") {
     if (x.shape.length === 1 && x.data.every((v) => v.kind === "number")) {
       const idx = x.data.map((v) => v.data);
-      console.log(idx);
       if (idx.length !== y.shape.length)
         throw new Error("Index must have same length as source's rank");
       const d = idx.reduce((tot, ax, i) => {
