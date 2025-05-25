@@ -102,7 +102,7 @@ function mCells(y: Val) {
 function contents(y: Val) {
   if (y.kind !== "function")
     throw new Error("Operand to contents must be a function");
-  return F(y.arity, (...v) => y.data(...v.map(disclose)));
+  return F(y.arity, (...v) => y.data(...v.map((x) => x && disclose(x))));
 }
 function disclose(y: Val) {
   return y.kind === "array" ? y.data[0] : y;
@@ -420,6 +420,10 @@ function enclose(y: Val) {
 }
 function enlist(y: Val) {
   return A([1], [y]);
+}
+function transpose(y: Val) {
+  if (y.kind !== "array") return y;
+  // const o = y.data.map()
 }
 
 function over(x: Val, y: Val) {
