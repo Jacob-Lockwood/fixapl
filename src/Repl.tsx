@@ -39,7 +39,7 @@ export const Highlight: Component<{ tokens: readonly Token[] }> = (props) => {
       case "number":
         return <span class="text-orange-400">{image}</span>;
       default:
-        return <span>{image}</span>;
+        return <span class={glyphColors.syntax}>{image}</span>;
     }
   });
 };
