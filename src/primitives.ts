@@ -376,10 +376,7 @@ function select(x: Val, y: Val) {
 function pick(x: Val, y: Val): Val {
   if (y.kind !== "array") throw new Error("Cannot pick from non-array");
   const c = cells(x, 1);
-  console.log(display(c));
-  console.log("shape", c.shape);
   const l = c.shape.reduce((n, m) => n * m, 1);
-  console.log("length", l);
   for (let i = 0; i < l; i++) {
     const v = c.data[i];
     if (v.kind !== "array") throw new Error("Pick indices must be arrays");
