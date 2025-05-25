@@ -83,7 +83,29 @@ export function cells(arr: Val, r: number) {
 }
 export function atRank(ranks: number[], fn: (...x: Val[]) => Val) {
   return (...xs: Val[]) =>
-    each(fn, ...xs.map((x, i) => cells(x, ranks[i] ?? ranks[0])));
+    merge(each(fn, ...xs.map((x, i) => cells(x, ranks[i] ?? ranks[0]))));
+}
+function merge(y: Val) {
+  if (y.kind !== "array") return y;
+  const [sh, ...shs] = y.data.map(shape);
+  if (!shs.every((v) => fMatch(v, sh).data))
+    throw new Error("Cannot merge elements whose shapes do not match");
+  const newsh = y.shape.concat(sh.data.map((x) => x.data as number));
+  const dat = y.data.flatMap((x) => (x.kind === "array" ? x.data : x));
+  return A(newsh, dat);
+}
+function mCells(y: Val) {
+  if (y.kind !== "function")
+    throw new Error("Operand to cells must be a function");
+  return F(y.arity, atRank([-1], y.data));
+}
+function contents(y: Val) {
+  if (y.kind !== "function")
+    throw new Error("Operand to contents must be a function");
+  return F(y.arity, (...v) => y.data(...v.map(disclose)));
+}
+function disclose(y: Val) {
+  return y.kind === "array" ? y.data[0] : y;
 }
 // function atDepth(
 //   depths: number[],
@@ -375,28 +397,24 @@ function select(x: Val, y: Val) {
 }
 function pick(x: Val, y: Val): Val {
   if (y.kind !== "array") throw new Error("Cannot pick from non-array");
-  const c = cells(x, 1);
-  const l = c.shape.reduce((n, m) => n * m, 1);
-  for (let i = 0; i < l; i++) {
-    const v = c.data[i];
-    if (v.kind !== "array") throw new Error("Pick indices must be arrays");
-    if (v.data.every((m) => m.kind === "array"))
-      return each((z) => pick(z, y), v);
-    if (!v.data.every((m) => m.kind === "number"))
-      throw new Error("Invalid types in pick indices array");
-    const idx = v.data.map((n) => n.data);
-    if (idx.length === 0) throw new Error("Index may not be empty");
-    if (idx.length !== y.shape.length)
-      throw new Error("Index must have the same length as the source's shape");
-    const d = idx.reduce((tot, ax, i) => {
-      const yax = y.shape[i];
-      if (ax > yax)
-        throw new Error(`Index ${ax} out of bounds for length ${yax}`);
-      return tot * yax + ax;
-    });
-    c.data[i] = y.data[d];
-  }
-  return c;
+  if (x.kind === "number") return pick(A([1], [x]), y);
+  else if (x.kind === "array") {
+    if (x.shape.length === 1 && x.data.every((v) => v.kind === "number")) {
+      const idx = x.data.map((v) => v.data);
+      console.log(idx);
+      if (idx.length !== y.shape.length)
+        throw new Error("Index must have same length as source's rank");
+      const d = idx.reduce((tot, ax, i) => {
+        const yax = y.shape[i];
+        if (ax > yax)
+          throw new Error(`Index ${ax} out of bounds for length ${yax}`);
+        if (ax < 0) ax += yax;
+        return tot * yax + ax;
+      });
+      return y.data[d];
+    }
+    return each((i) => pick(i, y), x);
+  } else throw new Error("Invalid indices to pick");
 }
 function enclose(y: Val) {
   return A([], [y]);
@@ -460,6 +478,9 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   slf: self,
   eac: mEach,
   red: reduce,
+  cel: mCells,
+  mer: merge,
+  con: contents,
   sca: scan,
   ov: over,
   jot,
