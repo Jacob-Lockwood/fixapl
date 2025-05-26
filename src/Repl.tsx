@@ -194,7 +194,7 @@ export function Repl() {
           ></textarea>
         </div>
       </div>
-      <div class="flex flex-wrap text-2xl">
+      <div class="flex flex-wrap text-3xl">
         {Object.entries(glyphs).map(([alias, data], i) => (
           <button
             class="block cursor-pointer rounded-t-sm select-none focus:outline-0"
