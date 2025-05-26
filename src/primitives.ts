@@ -266,6 +266,21 @@ function mEach(y: Val) {
     throw new Error("Operand to each must be a function");
   return F(y.arity, (...x) => each(y.data, ...x));
 }
+function repeat(y: Val) {
+  if (y.kind !== "function")
+    throw new Error("Operand to repeat must be a function");
+  const fn = y.arity === 2 ? y.data : (_: Val, v: Val) => y.data(v);
+  return F(2, (w, x) => {
+    if (w.kind !== "number" || !(Number.isInteger(w.data) && w.data >= 0))
+      throw new Error("Repetition count must be a nonnegative integer");
+
+    let cur: Val = x;
+    for (let i = 0; i < w.data; i++) {
+      cur = fn(N(i), cur);
+    }
+    return cur;
+  });
+}
 function reduce(y: Val) {
   if (y.kind !== "function" || y.arity !== 2)
     throw new Error("Operand to reduce must be a dyadic function");
@@ -302,7 +317,6 @@ function backwards(y: Val) {
     throw new Error("Operand to backwards must be a function");
   if (y.arity === 2) return F(2, (g, h) => y.data(h, g));
   throw new Error("Operand to backwards must be dyadic");
-  // return y;
 }
 function self(y: Val) {
   if (y.kind !== "function")
@@ -421,10 +435,50 @@ function enclose(y: Val) {
 function enlist(y: Val) {
   return A([1], [y]);
 }
-function transpose(y: Val) {
-  if (y.kind !== "array") return y;
-  // const o = y.data.map()
-}
+// function transpose(y: Val) {
+//   if (y.kind !== "array" || y.shape.length === 0) return y;
+//   // const sh = y.shape.slice(1);
+//   // sh.push(y.shape[0]);
+//   const sh = y.shape.slice();
+//   console.log("sh", sh);
+//   // sh.push(y.shape[0]);
+//   // const sh = y.shape.slice(0, -1);
+//   // sh.unshift(y.shape.at(-1)!);
+//   const pr = [1];
+//   for (let i = sh.length - 1; i > 0; i--) {
+//     pr.unshift(pr[0] * sh[i]);
+//   }
+//   // pr.unshift(pr.pop()!);
+//   // pr.reverse();
+//   console.log("pr", pr);
+//   const o = y.data.map((_, i, a) => {
+//     // console.log(i);
+//     const tr = [...y.shape]
+//       .reverse()
+//       .map((ax) => {
+//         const j = i % ax;
+//         i = Math.floor(i / ax);
+//         return j;
+//       })
+//       .reverse();
+//     //   .reverse();
+//     // const d = tr.map((v, i) => v * pr[i]).reduce((a, b) => a + b);
+//     // .reverse();
+//     // tr.push(tr.shift()!);
+//     tr.unshift(tr.pop()!);
+//     const d = tr.reduce((tot, ax, i) => tot * sh[i] + ax);
+//     // const d = tr.reduce((tot, ax, i) => tot)
+//     console.log(
+//       tr,
+//       d,
+//       // tr.map((v, i) => v * pr[i]).reduce((a, b) => a + b),
+//     );
+//     return a[d];
+//   });
+//   // console.log(o);
+//   // console.log(sh);
+//   return A(sh, o);
+// }
 
 function over(x: Val, y: Val) {
   if (x.kind !== "function" || y.kind !== "function")
@@ -470,6 +524,8 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   len: length,
   sha: shape,
   fla: flat,
+  rep: repeat,
+  // tra: transpose,
   enc: enclose,
   enl: enlist,
   par: pair,
