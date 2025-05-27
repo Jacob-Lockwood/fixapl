@@ -161,6 +161,8 @@ export class Parser {
     if (!m) {
       const t = this.tok();
       if (t?.kind !== "close list") throw this.expected("expression or ⟩", t);
+      this.i++;
+      return { kind: "list", values: [] };
     }
     while (m) {
       values.push(m);
