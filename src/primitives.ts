@@ -402,13 +402,13 @@ function flat(y: Val) {
 function select(x: Val, y: Val) {
   if (y.kind !== "array") throw new Error("Cannot select from non-array");
   const c = cells(y, -1);
-  console.log(display(c));
   const len = y.shape[0];
   return each((v) => {
     if (v.kind !== "number") throw new Error("Cannot select non-number");
     let i = v.data;
     if (i < 0) i += len;
-    if (i >= len) throw new Error(`Index ${i} out of bounds for length ${len}`);
+    if (i >= len || i < 0)
+      throw new Error(`Index ${i} out of bounds for length ${len}`);
     return c.data[i];
   }, x);
 }
@@ -416,16 +416,15 @@ function pick(x: Val, y: Val): Val {
   if (y.kind !== "array") throw new Error("Cannot pick from non-array");
   if (x.kind === "number") return pick(A([1], [x]), y);
   else if (x.kind === "array") {
-    // console.log(x);
     if (x.shape.length === 1 && x.data.every((v) => v.kind === "number")) {
       const idx = x.data.map((v) => v.data);
       if (idx.length !== y.shape.length)
         throw new Error("Index must have same length as source's rank");
       const d = idx.reduce((tot, ax, i) => {
         const yax = y.shape[i];
-        if (ax >= yax)
-          throw new Error(`Index ${ax} out of bounds for length ${yax}`);
         if (ax < 0) ax += yax;
+        if (ax >= yax || ax < 0)
+          throw new Error(`Index ${ax} out of bounds for length ${yax}`);
         return tot * yax + ax;
       }, 0);
       return y.data[d];
@@ -438,6 +437,46 @@ function enclose(y: Val) {
 }
 function enlist(y: Val) {
   return A([1], [y]);
+}
+function take(x: Val, y: Val): Val {
+  if (y.kind !== "array") throw new Error("Cannot take from non-array");
+  if (x.kind === "number") {
+    const cel = cells(y, -1);
+    const len = y.shape[0];
+    if (x.data > len || x.data < -len)
+      throw new Error(`Take amount outside of bounds for length ${len}`);
+    const d = x.data < 0 ? cel.data.slice(x.data) : cel.data.slice(0, x.data);
+    return A(
+      [d.length, ...y.shape.slice(1)],
+      d.flatMap((x) => (x.kind === "array" ? x.data : x)),
+    );
+  } else if (x.kind === "array" && x.data.every((v) => v.kind === "number")) {
+    const arr = take(x.data[0], y);
+    if (x.data.length === 1) return arr;
+    return mCells(
+      F(1, (z) => take(A([x.shape[0] - 1], x.data.slice(1)), z)),
+    ).data(arr);
+  } else throw new Error("Invalid take amount");
+}
+function drop(x: Val, y: Val): Val {
+  if (y.kind !== "array") throw new Error("Cannot take from non-array");
+  if (x.kind === "number") {
+    const cel = cells(y, -1);
+    const len = y.shape[0];
+    if (x.data > len || x.data < -len)
+      throw new Error(`Take amount outside of bounds for length ${len}`);
+    const d = x.data < 0 ? cel.data.slice(0, x.data) : cel.data.slice(x.data);
+    return A(
+      [d.length, ...y.shape.slice(1)],
+      d.flatMap((x) => (x.kind === "array" ? x.data : x)),
+    );
+  } else if (x.kind === "array" && x.data.every((v) => v.kind === "number")) {
+    const arr = drop(x.data[0], y);
+    if (x.data.length === 1) return arr;
+    return mCells(
+      F(1, (z) => drop(A([x.shape[0] - 1], x.data.slice(1)), z)),
+    ).data(arr);
+  } else throw new Error("Invalid take amount");
 }
 // function transpose(y: Val) {
 //   if (y.kind !== "array" || y.shape.length === 0) return y;
@@ -584,6 +623,8 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   res: reshape,
   sel: select,
   pic: pick,
+  tak: take,
+  dro: drop,
   bac: backwards,
   slf: self,
   eac: mEach,
