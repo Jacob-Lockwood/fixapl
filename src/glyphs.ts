@@ -36,6 +36,7 @@ export const glyphs = {
   pic: { name: "pick", glyph: "⊃", kind: "dyadic function" },
   tak: { name: "take", glyph: "↑", kind: "dyadic function" },
   dro: { name: "drop", glyph: "↓", kind: "dyadic function" },
+  rot: { name: "rotate", glyph: "⌽", kind: "dyadic function" },
   bac: { name: "backward", glyph: "˜", kind: "monadic modifier" },
   slf: { name: "self", glyph: "⁼", kind: "monadic modifier" },
   cel: { name: "cells", glyph: "◡", kind: "monadic modifier" },

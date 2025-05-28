@@ -459,7 +459,7 @@ function take(x: Val, y: Val): Val {
   } else throw new Error("Invalid take amount");
 }
 function drop(x: Val, y: Val): Val {
-  if (y.kind !== "array") throw new Error("Cannot take from non-array");
+  if (y.kind !== "array") throw new Error("Cannot drop from non-array");
   if (x.kind === "number") {
     const cel = cells(y, -1);
     const len = y.shape[0];
@@ -475,6 +475,25 @@ function drop(x: Val, y: Val): Val {
     if (x.data.length === 1) return arr;
     return mCells(
       F(1, (z) => drop(A([x.shape[0] - 1], x.data.slice(1)), z)),
+    ).data(arr);
+  } else throw new Error("Invalid take amount");
+}
+function rotate(x: Val, y: Val): Val {
+  if (y.kind !== "array") throw new Error("Cannot rotate non-array");
+  if (x.kind === "number") {
+    const cel = cells(y, -1);
+    const len = y.shape[0];
+    const rot = (x.data % len) + (x.data < 0 ? len : 0);
+    const d = cel.data.slice(rot).concat(cel.data.slice(0, rot));
+    return A(
+      [d.length, ...y.shape.slice(1)],
+      d.flatMap((x) => (x.kind === "array" ? x.data : x)),
+    );
+  } else if (x.kind === "array" && x.data.every((v) => v.kind === "number")) {
+    const arr = rotate(x.data[0], y);
+    if (x.data.length === 1) return arr;
+    return mCells(
+      F(1, (z) => rotate(A([x.shape[0] - 1], x.data.slice(1)), z)),
     ).data(arr);
   } else throw new Error("Invalid take amount");
 }
@@ -625,6 +644,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   pic: pick,
   tak: take,
   dro: drop,
+  rot: rotate,
   bac: backwards,
   slf: self,
   eac: mEach,
