@@ -27,7 +27,7 @@ export default function App() {
                 unfinished.
               </span>
             </summary>
-            <p>
+            <p class="mt-1">
               Several planned primitives have not been implemented yet. There is
               currently zero documentation for the language. The settings button
               does nothing. The existing help text on the site is either
