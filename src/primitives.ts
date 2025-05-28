@@ -73,6 +73,7 @@ export function cells(arr: Val, r: number) {
   if (r === 0) return arr;
   const frame = arr.shape.slice(0, -r);
   const cell = arr.shape.slice(-r);
+  if (cell.length === 0) return arr;
   const delta = cell.reduce((a, b) => a * b, 1);
   const data: Val[] = [];
   for (let i = 0; i < arr.data.length; i += delta) {
@@ -296,10 +297,11 @@ function scan(y: Val) {
   return F(1, (x) => {
     if (x.kind !== "array") throw new Error(`Cannot scan ${x.kind}`);
     const c = cells(x, -1);
+    const o = [];
     for (let i = 1, acc = c.data[0]; i < c.shape[0]; i++) {
-      c.data[i] = acc = y.data(acc, c.data[i]);
+      o.push((acc = y.data(acc, c.data[i])));
     }
-    return c;
+    return A(c.shape, o);
   });
 }
 function fMatch(x: Val, y: Val): Val {
@@ -400,6 +402,7 @@ function flat(y: Val) {
 function select(x: Val, y: Val) {
   if (y.kind !== "array") throw new Error("Cannot select from non-array");
   const c = cells(y, -1);
+  console.log(display(c));
   const len = y.shape[0];
   return each((v) => {
     if (v.kind !== "number") throw new Error("Cannot select non-number");
