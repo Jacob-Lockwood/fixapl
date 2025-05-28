@@ -503,8 +503,6 @@ function under(x: Val, y: Val) {
     const [t, ti] = [arr, indices].map((z) =>
       y.arity === 1 ? y.data(z) : y.data(v[0], z),
     );
-    console.log("ti", display(ti));
-    console.log("t", display(t));
     const isOk = (x: Val) =>
       x.kind === "number" &&
       x.data >= 0 &&
@@ -527,7 +525,6 @@ function under(x: Val, y: Val) {
       const dat = x.data(t);
       if (dat.kind !== "array" || !match(dat.shape, t.shape))
         throw new Error("Function cannot change shape");
-      console.log(display(dat));
       return each((v) => {
         const i = v.data as number;
         const g = ti.data.findIndex((z) => z.data === i);
