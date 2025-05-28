@@ -47,6 +47,7 @@ export const glyphs = {
   id: { name: "identity", glyph: "⋅", kind: "monadic function" },
   jot: { name: "atop/bind", glyph: "∘", kind: "dyadic modifier" },
   ov: { name: "over", glyph: "○", kind: "dyadic modifier" },
+  und: { name: "under", glyph: "⍢", kind: "dyadic modifier" },
   "(": { name: "open parenthesis", glyph: "(", kind: "syntax" },
   ")": { name: "close parenthesis", glyph: ")", kind: "syntax" },
   "[": { name: "open array", glyph: "[", kind: "syntax" },

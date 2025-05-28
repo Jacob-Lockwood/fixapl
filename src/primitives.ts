@@ -405,7 +405,7 @@ function select(x: Val, y: Val) {
     if (v.kind !== "number") throw new Error("Cannot select non-number");
     let i = v.data;
     if (i < 0) i += len;
-    if (i > len) throw new Error(`Index ${i} out of bounds for length ${len}`);
+    if (i >= len) throw new Error(`Index ${i} out of bounds for length ${len}`);
     return c.data[i];
   }, x);
 }
@@ -413,17 +413,18 @@ function pick(x: Val, y: Val): Val {
   if (y.kind !== "array") throw new Error("Cannot pick from non-array");
   if (x.kind === "number") return pick(A([1], [x]), y);
   else if (x.kind === "array") {
+    // console.log(x);
     if (x.shape.length === 1 && x.data.every((v) => v.kind === "number")) {
       const idx = x.data.map((v) => v.data);
       if (idx.length !== y.shape.length)
         throw new Error("Index must have same length as source's rank");
       const d = idx.reduce((tot, ax, i) => {
         const yax = y.shape[i];
-        if (ax > yax)
+        if (ax >= yax)
           throw new Error(`Index ${ax} out of bounds for length ${yax}`);
         if (ax < 0) ax += yax;
         return tot * yax + ax;
-      });
+      }, 0);
       return y.data[d];
     }
     return each((i) => pick(i, y), x);
@@ -490,6 +491,56 @@ function over(x: Val, y: Val) {
       : x.data(y.data(m, n), y.data(n, m)),
   );
 }
+function under(x: Val, y: Val) {
+  if (x.kind !== "function" || y.kind !== "function")
+    throw new Error("Operands to under must both be functions");
+  const arity = Math.max(x.arity, y.arity);
+  return F(arity, (...v) => {
+    const arr = v[arity - 1];
+    if (arr.kind !== "array")
+      throw new Error("Under argument must be an array");
+    const indices = iota(shape(arr));
+    const [t, ti] = [arr, indices].map((z) =>
+      y.arity === 1 ? y.data(z) : y.data(v[0], z),
+    );
+    console.log("ti", display(ti));
+    console.log("t", display(t));
+    const isOk = (x: Val) =>
+      x.kind === "number" &&
+      x.data >= 0 &&
+      x.data < arr.data.length &&
+      Number.isInteger(x.data);
+    if (isOk(ti)) {
+      const i = ti.data as number;
+      return A(
+        arr.shape,
+        arr.data.map((v, x) => (i === x ? t : v)),
+      );
+    } else if (ti.kind === "array") {
+      if (
+        t.kind !== "array" ||
+        !match(ti.shape, t.shape) ||
+        !ti.data.every(isOk) ||
+        new Set(ti.data.map((x) => x.data)).size !== ti.data.length
+      )
+        throw new Error("Invalid transformation");
+      const dat = x.data(t);
+      if (dat.kind !== "array" || !match(dat.shape, t.shape))
+        throw new Error("Function cannot change shape");
+      console.log(display(dat));
+      return each((v) => {
+        const i = v.data as number;
+        const g = ti.data.findIndex((z) => z.data === i);
+        if (g === -1) return arr.data[i];
+        return dat.data[g];
+      }, indices);
+    } else {
+      throw new Error(
+        "Under transformation must return a number or number array",
+      );
+    }
+  });
+}
 
 type PrimitiveName = keyof {
   [K in keyof typeof glyphs as (typeof glyphs)[K]["kind"] extends "syntax"
@@ -542,6 +593,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   con: contents,
   sca: scan,
   ov: over,
+  und: under,
   jot,
   ng,
 };
