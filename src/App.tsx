@@ -19,6 +19,25 @@ export default function App() {
           <p class="mb-10 text-center text-lg italic">
             A simple APL derivative, built on fixed-arity functions
           </p>
+          <details class="mb-10 text-sm text-amber-200">
+            <summary class="text-amber-400 italic">
+              <strong class="text-orange-400">Note:</strong> This language and
+              website are in beta. Lots of things are unfinished.
+            </summary>
+            <p>
+              Several planned primitives have not been implemented yet. There is
+              currently zero documentation for the language. The settings button
+              does nothing. The existing help text on the site is either
+              outdated or speculative. Expect everything to change.
+            </p>
+            <p class="mt-2">
+              If you do find bugs with the existing primitives, please report
+              them to me, either via GitHub issues or on Discord (DM @jacob.abc
+              or ping me in the #general-programming channel of the Uiua
+              discord.)
+            </p>
+          </details>
+
           <details>
             <summary class="text-emerald-500 underline underline-offset-2">
               Why fixed arity
