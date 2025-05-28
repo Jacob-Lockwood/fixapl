@@ -20,9 +20,12 @@ export default function App() {
             A simple APL derivative, built on fixed-arity functions
           </p>
           <details class="mb-10 text-sm text-amber-200">
-            <summary class="text-amber-400 italic">
-              <strong class="text-orange-400">Note:</strong> This language and
-              website are in beta. Lots of things are unfinished.
+            <summary class="text-orange-400 italic">
+              <strong>Note:</strong>{" "}
+              <span class="text-amber-400">
+                This language and website are in beta. Lots of things are
+                unfinished.
+              </span>
             </summary>
             <p>
               Several planned primitives have not been implemented yet. There is
