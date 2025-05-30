@@ -19,7 +19,7 @@ export const glyphs = {
   mul: { name: "multiply", glyph: "×", kind: "dyadic function" },
   div: { name: "divide", glyph: "÷", kind: "dyadic function" },
   mod: { name: "modulo", glyph: "|", kind: "dyadic function" },
-  // tra: { name: "transpose", glyph: "⍉", kind: "monadic function" },
+  tra: { name: "transpose", glyph: "⍉", kind: "monadic function" },
   iot: { name: "iota", glyph: "⍳", kind: "monadic function" },
   len: { name: "length", glyph: "⧻", kind: "monadic function" },
   sha: { name: "shape", glyph: "△", kind: "monadic function" },

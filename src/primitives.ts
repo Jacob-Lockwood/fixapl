@@ -497,51 +497,25 @@ function rotate(x: Val, y: Val): Val {
     ).data(arr);
   } else throw new Error("Invalid take amount");
 }
-// function transpose(y: Val) {
-//   if (y.kind !== "array" || y.shape.length === 0) return y;
-//   // const sh = y.shape.slice(1);
-//   // sh.push(y.shape[0]);
-//   const sh = y.shape.slice();
-//   console.log("sh", sh);
-//   // sh.push(y.shape[0]);
-//   // const sh = y.shape.slice(0, -1);
-//   // sh.unshift(y.shape.at(-1)!);
-//   const pr = [1];
-//   for (let i = sh.length - 1; i > 0; i--) {
-//     pr.unshift(pr[0] * sh[i]);
-//   }
-//   // pr.unshift(pr.pop()!);
-//   // pr.reverse();
-//   console.log("pr", pr);
-//   const o = y.data.map((_, i, a) => {
-//     // console.log(i);
-//     const tr = [...y.shape]
-//       .reverse()
-//       .map((ax) => {
-//         const j = i % ax;
-//         i = Math.floor(i / ax);
-//         return j;
-//       })
-//       .reverse();
-//     //   .reverse();
-//     // const d = tr.map((v, i) => v * pr[i]).reduce((a, b) => a + b);
-//     // .reverse();
-//     // tr.push(tr.shift()!);
-//     tr.unshift(tr.pop()!);
-//     const d = tr.reduce((tot, ax, i) => tot * sh[i] + ax);
-//     // const d = tr.reduce((tot, ax, i) => tot)
-//     console.log(
-//       tr,
-//       d,
-//       // tr.map((v, i) => v * pr[i]).reduce((a, b) => a + b),
-//     );
-//     return a[d];
-//   });
-//   // console.log(o);
-//   // console.log(sh);
-//   return A(sh, o);
-// }
-
+function transpose(y: Val) {
+  if (y.kind !== "array" || y.shape.length === 0) return y;
+  const sh = y.shape.slice(1);
+  sh.push(y.shape[0]);
+  const o = y.data.map((_, i, a) => {
+    const idx = [...sh]
+      .reverse()
+      .map((ax) => {
+        const j = i % ax;
+        i = Math.floor(i / ax);
+        return j;
+      })
+      .reverse();
+    idx.unshift(idx.pop()!);
+    const d = idx.reduce((tot, ax, i) => tot * y.shape[i] + ax, 0);
+    return a[d];
+  });
+  return A(sh, o);
+}
 function over(x: Val, y: Val) {
   if (x.kind !== "function" || y.kind !== "function")
     throw new Error("Operands to over must both be functions");
@@ -634,7 +608,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   sha: shape,
   fla: flat,
   rep: repeat,
-  // tra: transpose,
+  tra: transpose,
   enc: enclose,
   enl: enlist,
   par: pair,
