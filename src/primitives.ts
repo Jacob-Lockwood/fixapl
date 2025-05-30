@@ -291,6 +291,15 @@ function reduce(y: Val) {
     return c.data.reduce((acc, val) => y.data(acc, val));
   });
 }
+function fold(y: Val) {
+  if (y.kind !== "function" || y.arity !== 2)
+    throw new Error("Operand to fold must be a dyadic function");
+  return F(2, (v, w) => {
+    if (w.kind !== "array") throw new Error(`Cannot reduce ${w.kind}`);
+    const c = cells(w, -1);
+    return c.data.reduce((acc, val) => y.data(acc, val), v);
+  });
+}
 function scan(y: Val) {
   if (y.kind !== "function" || y.arity !== 2)
     throw new Error("Operand to scan must be a dyadic function");
@@ -398,6 +407,26 @@ function reshape(x: Val, y: Val) {
 function flat(y: Val) {
   if (y.kind !== "array") return y;
   return A([y.shape.reduce((x, y) => x * y, 1)], y.data);
+}
+function replicate(x: Val, y: Val) {
+  if (y.kind !== "array") throw new Error("Cannot replicate non-array");
+  const cel = cells(y, -1);
+  const isOk = (v: Val) =>
+    v.kind === "number" && v.data >= 0 && Number.isInteger(v.data);
+  if (
+    !isOk(x) &&
+    (x.kind !== "array" || (x.shape.length !== 1 && !x.data.every(isOk)))
+  )
+    throw new Error("Invalid replicate amount");
+  const amounts = (x.kind === "array" ? x.data : [x]).map(
+    (v) => v.data as number,
+  );
+  if (amounts.length > cel.shape[0])
+    throw new Error("Replicate amount may not be longer than array");
+  return A(
+    cel.shape,
+    cel.data.flatMap((x, i) => Array(amounts[i % amounts.length]).fill(x)),
+  );
 }
 function select(x: Val, y: Val) {
   if (y.kind !== "array") throw new Error("Cannot select from non-array");
@@ -516,6 +545,10 @@ function transpose(y: Val) {
   });
   return A(sh, o);
 }
+function reverse(y: Val) {
+  if (y.kind !== "array") return y;
+  return A(y.shape, [...y.data].reverse());
+}
 function over(x: Val, y: Val) {
   if (x.kind !== "function" || y.kind !== "function")
     throw new Error("Operands to over must both be functions");
@@ -609,12 +642,14 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   fla: flat,
   rep: repeat,
   tra: transpose,
+  rev: reverse,
   enc: enclose,
   enl: enlist,
   par: pair,
   cat,
   res: reshape,
   sel: select,
+  rpl: replicate,
   pic: pick,
   tak: take,
   dro: drop,
@@ -627,6 +662,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   mer: merge,
   con: contents,
   sca: scan,
+  fol: fold,
   ov: over,
   und: under,
   jot,
