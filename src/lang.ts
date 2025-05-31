@@ -299,15 +299,15 @@ export class Visitor {
       if (tines.length === 1) return tines[0];
       type Cmp = (r: Val & { kind: "function" }) => Val & { kind: "function" };
       const fns: Cmp[] = [];
-      function fork(l: Val, g: Val & { kind: "function" }): Cmp {
-        const isF = l.kind === "function";
+      function fork(x: Val, g: Val & { kind: "function" }): Cmp {
+        const l = x.kind === "function" ? x : F(0, (_) => x);
         return (r) => {
-          const arity = Math.max(r.arity, isF ? l.arity : 0);
-          return F(arity, (x, y) => {
-            const lft = isF ? (arity > l.arity ? l.data(y) : l.data(x, y)) : l;
-            const rgt = arity > r.arity ? r.data(y) : r.data(x, y);
-            return g.data(lft, rgt);
-          });
+          const arity = Math.max(r.arity, l.arity);
+          const rgt =
+            arity === 2 && r.arity === 1 ? F(2, (_, w) => r.data(w)) : r;
+          const lft =
+            arity === 2 && l.arity === 1 ? F(2, (_, w) => l.data(w)) : l;
+          return F(arity, (...v) => g.data(lft.data(...v), rgt.data(...v)));
         };
       }
       function atop(g: Val & { kind: "function" }): Cmp {

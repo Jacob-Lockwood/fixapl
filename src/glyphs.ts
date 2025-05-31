@@ -49,7 +49,6 @@ export const glyphs = {
   fol: { name: "fold", glyph: "⫽", kind: "monadic modifier" },
   rep: { name: "repeat", glyph: "↺", kind: "monadic modifier" },
   unt: { name: "until", glyph: "⍣", kind: "dyadic modifier" },
-  // jot: { name: "atop/bind", glyph: "∘", kind: "dyadic modifier" },
   bef: { name: "before", glyph: "⊸", kind: "dyadic modifier" },
   aft: { name: "after", glyph: "⟜", kind: "dyadic modifier" },
   ov: { name: "over", glyph: "○", kind: "dyadic modifier" },
