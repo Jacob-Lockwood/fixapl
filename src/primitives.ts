@@ -363,18 +363,24 @@ function self(y: Val) {
   if (y.arity !== 2) throw new Error("Operand to self must be dyadic");
   return F(1, (v) => y.data(v, v));
 }
-function jot(x: Val, y: Val) {
-  if (x.kind !== "function") {
-    if (y.kind !== "function")
-      throw new Error("Cannot compose two non-functions");
-    return jot(backwards(y), x);
+// ([x] F y) G y
+function before(x: Val, y: Val) {
+  if (y.kind !== "function")
+    throw new Error("Right operand to before must be a function");
+  if (y.arity === 1) return after(y, x);
+  const l = x.kind === "function" ? x : F(1, () => x);
+  return F(l.arity, (v, w) => y.data(l.data(v, w), l.arity === 1 ? v : w));
+}
+// [x] F ([x] G y)
+function after(x: Val, y: Val) {
+  if (x.kind !== "function")
+    throw new Error("Left operand to after must be a dyadic function");
+  if (y.kind !== "function") {
+    if (x.arity === 1) return x.data(y);
+    return F(1, (v) => x.data(v, y));
   }
-  if (y.kind === "function") {
-    if (x.arity === 1) return F(y.arity, (...v) => x.data(y.data(...v)));
-    return F(2, (g, h) => x.data(g, y.arity === 1 ? y.data(h) : y.data(g, h)));
-  }
-  if (x.arity === 1) return x.data(y);
-  return F(1, (g) => x.data(g, y));
+  if (x.arity === 1) return F(y.arity, (...v) => x.data(y.data(...v)));
+  return F(2, (v, w) => x.data(v, y.arity === 1 ? y.data(w) : y.data(v, w)));
 }
 function length(y: Val) {
   return N(y.kind === "array" ? (y.shape[0] ?? 0) : 0);
@@ -694,7 +700,8 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   ov: over,
   und: under,
   unt: until,
-  jot,
+  bef: before,
+  aft: after,
   ng,
 };
 export function primitiveByGlyph(glyph: string) {

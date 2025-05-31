@@ -20,11 +20,11 @@ export const Highlight: Component<{ tokens: readonly Token[] }> = (props) => {
       case "monadic modifier":
       case "dyadic modifier":
         const color = glyphColors[kind];
-        const alias = Object.entries(glyphs).find(
+        const { name } = Object.entries(glyphs).find(
           ([_, d]) => d.glyph === image,
-        )![0];
+        )![1];
         return (
-          <span title={alias} class={color}>
+          <span title={name} class={color}>
             {image}
           </span>
         );
