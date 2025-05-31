@@ -274,7 +274,6 @@ function repeat(y: Val) {
   return F(2, (w, x) => {
     if (w.kind !== "number" || !(Number.isInteger(w.data) && w.data >= 0))
       throw new Error("Repetition count must be a nonnegative integer");
-
     let cur: Val = x;
     for (let i = 0; i < w.data; i++) {
       cur = fn(N(i), cur);
@@ -282,11 +281,40 @@ function repeat(y: Val) {
     return cur;
   });
 }
+function until(x: Val, y: Val) {
+  if (x.kind !== "function" || (y.kind !== "function" && y.kind !== "number"))
+    throw new Error("Invalid operand types to while");
+  const iter = x.arity === 2 ? x.data : (_: Val, v: Val) => x.data(v);
+  const cond = y.kind === "function" ? y : F(1, () => y);
+  const end = (...v: Val[]) => {
+    const r = cond.data(...v);
+    if (r.kind !== "number" && (r.data === 0 || r.data === 1))
+      throw new Error("Condition function must return a boolean");
+    return r.data;
+  };
+  if (cond.arity === 1)
+    return F(x.arity, (v, w) => {
+      let g = x.arity === 1 ? v : w;
+      while (!end(g)) g = iter(v, g);
+      return g;
+    });
+  return F(x.arity, (v, w) => {
+    let g = x.arity === 1 ? v : w;
+    let h: Val;
+    while (true) {
+      h = iter(v, g);
+      if (end(g, h)) return h;
+      g = iter(v, h);
+      if (end(h, g)) return g;
+    }
+  });
+}
 function reduce(y: Val) {
   if (y.kind !== "function" || y.arity !== 2)
     throw new Error("Operand to reduce must be a dyadic function");
   return F(1, (x) => {
-    if (x.kind !== "array") throw new Error(`Cannot reduce ${x.kind}`);
+    if (x.kind !== "array") return x;
+    if (x.data.length === 0) throw new Error("Cannot reduce empty array");
     const c = cells(x, -1);
     return c.data.reduce((acc, val) => y.data(acc, val));
   });
@@ -665,6 +693,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   fol: fold,
   ov: over,
   und: under,
+  unt: until,
   jot,
   ng,
 };
