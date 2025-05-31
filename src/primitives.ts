@@ -371,7 +371,7 @@ function jot(x: Val, y: Val) {
   }
   if (y.kind === "function") {
     if (x.arity === 1) return F(y.arity, (...v) => x.data(y.data(...v)));
-    return F(y.arity, (g, h) => x.data(g, y.data(g, h)));
+    return F(2, (g, h) => x.data(g, y.arity === 1 ? y.data(h) : y.data(g, h)));
   }
   if (x.arity === 1) return x.data(y);
   return F(1, (g) => x.data(g, y));

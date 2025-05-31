@@ -272,14 +272,8 @@ export class Parser {
   }
 }
 
-//* Visit tree
-//* if node is binding:
-//* - if arity is declared, set it
-//* - push name to stack
-//* - visit value
-//* - set value
 export class Visitor {
-  private bindings = new Map<string, Val>();
+  public bindings = new Map<string, Val>();
   visit(node: AstNode): Val {
     if (node.kind === "number" || node.kind === "character") {
       return { kind: node.kind, data: node.value };
