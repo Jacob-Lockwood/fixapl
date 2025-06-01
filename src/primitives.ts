@@ -623,9 +623,10 @@ function under(x: Val, y: Val) {
       Number.isInteger(x.data);
     if (isOk(ti)) {
       const i = ti.data as number;
+      const z = x.data(t);
       return A(
         arr.shape,
-        arr.data.map((v, x) => (i === x ? t : v)),
+        arr.data.map((v, x) => (i === x ? z : v)),
       );
     } else if (ti.kind === "array") {
       if (
