@@ -50,23 +50,34 @@ export function display(val: Val): string {
 export function match(a: readonly unknown[], b: readonly unknown[]) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
-function each(fn: (...x: Val[]) => Val, ...x: Val[]): Val {
-  const [a, b] = x;
-  if (a.kind === "array") {
-    if (b?.kind === "array") {
-      if (!match(a.shape, b.shape))
-        throw new Error("Cannot iterate over arrays of different shape");
-      const d = a.data.map((v, i) => fn(v, b.data[i]));
-      return A(a.shape, d);
+function each(fn: (...x: Val[]) => Val, ...v: Val[]): Val {
+  const [x, y] = v;
+  if (x.kind === "array") {
+    if (y?.kind === "array") {
+      if (match(x.shape, y.shape)) {
+        const d = x.data.map((v, i) => fn(v, y.data[i]));
+        return A(x.shape, d);
+      }
+      const [sx, sy] = [x.shape, y.shape];
+      const m = Math.min(sx.length, sy.length);
+      if (!match(sx.slice(0, m), sy.slice(0, m)))
+        throw new Error("Cannot iterate over arrays with different frames");
+      if (m === sx.length) {
+        const cy = cells(y, -m);
+        const d = cy.data.map((v, i) => fn(x.data[i] ?? x.data[0], v));
+        return A(cy.shape, d);
+      } else {
+        const cx = cells(y, -m);
+        const d = cx.data.map((v, i) => fn(v, y.data[i] ?? y.data[0]));
+        return A(cx.shape, d);
+      }
     }
-    const d = a.data.map((v) => fn(v, b));
-    return A(a.shape, d);
-  }
-  if (b?.kind === "array") {
-    const d = b.data.map((v) => fn(a, v));
-    return A(b.shape, d);
-  }
-  return fn(a, b);
+    const d = x.data.map((v) => fn(v, y));
+    return A(x.shape, d);
+  } else if (y?.kind === "array") {
+    const d = y.data.map((v) => fn(x, v));
+    return A(y.shape, d);
+  } else return fn(x, y);
 }
 export function cells(arr: Val, r: number) {
   if (arr.kind !== "array") return A([1], [arr]);
