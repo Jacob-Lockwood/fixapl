@@ -241,7 +241,7 @@ function ne(x: Val, y: Val) {
   return not(eq(x, y));
 }
 function grt(x: Val, y: Val) {
-  if (x.kind === "array" || y.kind === "array") return each(grt, y);
+  if (x.kind === "array" || y.kind === "array") return each(grt, x, y);
   if (x.kind !== y.kind)
     throw new Error(`Cannot compare ${x.kind} and ${y.kind}`);
   if (x.kind === "function" || y.kind === "function")
