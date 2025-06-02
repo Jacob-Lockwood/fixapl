@@ -14,6 +14,7 @@ export const glyphs = {
   flo: { name: "floor", glyph: "⌊", kind: "monadic function" },
   rou: { name: "round", glyph: "⁅", kind: "monadic function" },
   cei: { name: "ceiling", glyph: "⌈", kind: "monadic function" },
+  rol: { name: "roll", glyph: "?", kind: "monadic function" },
   add: { name: "add", glyph: "+", kind: "dyadic function" },
   sub: { name: "subtract", glyph: "-", kind: "dyadic function" },
   mul: { name: "multiply", glyph: "×", kind: "dyadic function" },

@@ -237,6 +237,12 @@ function sign(y: Val) {
   }
   throw new Error(`Cannot take sign of ${y.kind}`);
 }
+function roll(y: Val) {
+  if (y.kind === "array") return each(roll, y);
+  if (y.kind !== "number" || !Number.isInteger(y.data) || y.data < 0)
+    throw new Error("Argument to roll must be a nonnegative integer array");
+  return N(y.data === 0 ? Math.random() : Math.floor(Math.random() * y.data));
+}
 function ng(y: Val) {
   if (y.kind === "array") return each(ng, y);
   if (y.kind === "number") return sub(N(0), y);
@@ -700,6 +706,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   rou: round,
   cei: ceil,
   sig: sign,
+  rol: roll,
   abs,
   sqr,
   mat: fMatch,
