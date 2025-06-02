@@ -12,7 +12,10 @@ const glyphColors = {
   syntax: "text-gray-300",
 };
 
-export const Highlight: Component<{ tokens: readonly Token[] }> = (props) => {
+export const Highlight: Component<{
+  tokens: readonly Token[];
+  bindings?: Map<string, number>;
+}> = (props) => {
   return props.tokens.map(({ kind, image }) => {
     switch (kind) {
       case "monadic function":
@@ -29,8 +32,15 @@ export const Highlight: Component<{ tokens: readonly Token[] }> = (props) => {
           </span>
         );
       case "identifier":
+        const arity = props.bindings?.get(image);
+        const c = [
+          "text-white",
+          glyphColors["monadic function"],
+          glyphColors["dyadic function"],
+          "text-red-400 underline decoration-wavy",
+        ][arity ?? 3];
         return (
-          <span class="identifier" data-name={image}>
+          <span class={`identifier ${c}`} data-name={image}>
             {image}
           </span>
         );
@@ -127,7 +137,17 @@ export function Repl() {
                   >
                     <code>
                       {result.tokens ? (
-                        <Highlight tokens={result.tokens} />
+                        <Highlight
+                          tokens={result.tokens}
+                          bindings={
+                            new Map(
+                              [...visitor.bindings.entries()].map((z) => [
+                                z[0],
+                                z[1].kind === "function" ? z[1].arity : 0,
+                              ]),
+                            )
+                          }
+                        />
                       ) : (
                         result.source
                       )}
