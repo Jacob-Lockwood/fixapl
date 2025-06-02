@@ -298,11 +298,33 @@ function repeat(y: Val) {
     return cur;
   });
 }
-function mIf(x: Val, y: Val) {
-  return F(1, (v) => {
-    if (v.kind === "number" && (v.data === 0 || v.data === 1))
-      return v.data ? x : y;
-    throw new Error("If condition must be a boolean");
+function choose(x: Val, y: Val) {
+  if (x.kind !== "array" || x.shape.length !== 1)
+    throw new Error("Left operand to choose must be an list");
+  if (y.kind !== "function")
+    throw new Error("Right operand to choose must be a function");
+  const fs = [y, ...x.data];
+  const arity = Math.max(
+    1,
+    ...fs.map((v) => (v.kind === "function" ? v.arity : 0)),
+  );
+  const [cond, ...cfs] = fs.map((v) =>
+    v.kind === "function"
+      ? arity === 2 && v.arity !== 2
+        ? (_: Val, z: Val) => v.data(z)
+        : v.data
+      : () => v,
+  );
+  return F(arity, (...v) => {
+    const idx = cond(...v);
+    if (
+      idx.kind !== "number" ||
+      !Number.isInteger(idx.data) ||
+      idx.data < 0 ||
+      idx.data >= cfs.length
+    )
+      throw new Error("Invalid choose index");
+    return cfs[idx.data](...v);
   });
 }
 function until(x: Val, y: Val) {
@@ -396,9 +418,9 @@ function backwards(y: Val) {
   throw new Error("Operand to backwards must be dyadic");
 }
 function self(y: Val) {
-  if (y.kind !== "function")
-    throw new Error("Operand to self must be a function");
-  if (y.arity !== 2) throw new Error("Operand to self must be dyadic");
+  if (y.kind !== "function") return F(1, (_) => y);
+  if (y.arity !== 2)
+    throw new Error("If self's operand is a function it must be dyadic");
   return F(1, (v) => y.data(v, v));
 }
 // ([x] F y) G y
@@ -740,7 +762,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   tab: table,
   ov: over,
   und: under,
-  if: mIf,
+  cho: choose,
   unt: until,
   bef: before,
   aft: after,

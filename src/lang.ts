@@ -5,6 +5,7 @@ const basic = {
   character: /^'(\\.|[^'\\])*'/,
   identifier: /^[A-Z][A-Za-z]*/,
   number: /^\d+(\.\d+)?/,
+  semi: /^;/,
   comment: /^#.*/m,
   space: /^ +/,
   newline: /^\n/,
@@ -15,7 +16,9 @@ type SyntaxName = {
     ? (typeof glyphs)[K]["name"]
     : never]: 1;
 };
-type TokenKind = keyof Omit<typeof basic & SyntaxName, "other"> | PrimitiveKind;
+type TokenKind =
+  | keyof Omit<typeof basic & SyntaxName, "other" | "semi">
+  | PrimitiveKind;
 export type Token = { kind: TokenKind; line: number; image: string };
 export function lex(source: string) {
   const o: Token[] = [];
@@ -27,6 +30,7 @@ export function lex(source: string) {
       if (!mat) continue;
       let [m] = mat;
       source = source.slice(m.length);
+      if (bkind === "semi") continue lex;
       if (bkind !== "other") {
         o.push({ kind: bkind as TokenKind, line, image: m });
         continue lex;
@@ -58,8 +62,8 @@ export function lex(source: string) {
         if (kind === "syntax") {
           let image = glyph;
           if (name === "binding") {
-            const d = "₀₁₂012";
-            const a = d[d.indexOf(m[0]) % 3] ?? "";
+            const d = "₁₂12";
+            const a = d[d.indexOf(m[0]) % 2] ?? "";
             m = m.slice(a.length);
             image += a;
           }
@@ -249,7 +253,7 @@ export class Parser {
     const tok2 = this.tokens[this.i + 1];
     if (tok2?.kind !== "binding") return;
     this.i += 2;
-    const declaredArity = "⓪①②".indexOf(tok2.image[1]);
+    const declaredArity = 1 + "₁₂".indexOf(tok2.image[1]) || -1;
     return {
       kind: "binding",
       name: tok1.image,
@@ -274,6 +278,7 @@ export class Parser {
 
 export class Visitor {
   public bindings = new Map<string, Val>();
+  private thisBinding?: [string, number];
   visit(node: AstNode): Val {
     if (node.kind === "number" || node.kind === "character") {
       return { kind: node.kind, data: node.value };
@@ -356,10 +361,23 @@ export class Visitor {
       }
       throw new Error("Elements of array literal must have matching shapes");
     } else if (node.kind === "reference") {
-      if (this.bindings.has(node.name)) return this.bindings.get(node.name)!;
+      if (this.thisBinding?.[0] === node.name) {
+        const arity = this.thisBinding[1];
+        if (arity === -1)
+          throw new Error(
+            `Recursive binding ${node.name} must declare its arity`,
+          );
+        return F(arity, (...v) => {
+          const g = this.bindings.get(node.name) as Val & { kind: "function" };
+          return g.data(...v);
+        });
+      } else if (this.bindings.has(node.name))
+        return this.bindings.get(node.name)!;
       throw new Error(`Unrecognized identifier '${node.name}'`);
     } else if (node.kind === "binding") {
+      this.thisBinding = [node.name, node.declaredArity];
       const v = this.visit(node.value);
+      this.thisBinding = undefined;
       this.bindings.set(node.name, v);
       return v;
     }
