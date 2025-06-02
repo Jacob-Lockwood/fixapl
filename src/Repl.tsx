@@ -37,7 +37,7 @@ export const Highlight: Component<{
           "text-white",
           glyphColors["monadic function"],
           glyphColors["dyadic function"],
-          "text-red-400 underline decoration-wavy",
+          "decoration-red-400 underline decoration-wavy decoration-1",
         ][arity ?? 3];
         return (
           <span class={`identifier ${c}`} data-name={image}>
