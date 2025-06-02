@@ -359,6 +359,20 @@ function scan(y: Val) {
     return A(c.shape, o);
   });
 }
+function table(y: Val) {
+  if (y.kind !== "function" || y.arity !== 2)
+    throw new Error("Operand to table must be a dyadic function");
+  return F(2, (v, w) => {
+    const sv = v.kind === "array" ? v.shape.slice(0, 1) : [];
+    const sw = w.kind === "array" ? w.shape.slice(0, 1) : [];
+    const shape = sv.concat(sw);
+    const cv = cells(v, -1);
+    const cw = cells(w, -1);
+    const o = [];
+    for (const h of cv.data) for (const g of cw.data) o.push(y.data(h, g));
+    return A(shape, o);
+  });
+}
 function fMatch(x: Val, y: Val): Val {
   if (x.kind !== y.kind) return N(0);
   if (x.kind !== "array") return N(x.data === y.data ? 1 : 0);
@@ -716,6 +730,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   con: contents,
   sca: scan,
   fol: fold,
+  tab: table,
   ov: over,
   und: under,
   if: mIf,
