@@ -61,12 +61,25 @@ type Result = {
   error: string | null;
 };
 
+function setting(name: string, def: boolean) {
+  const initial = localStorage.getItem(name);
+  const [sig, setSig] = createSignal<boolean>(
+    initial ? initial === "true" : def,
+  );
+  const toggle = (val: boolean) => {
+    setSig(val);
+    localStorage.setItem(name, "" + val);
+  };
+  return [sig, toggle] as const;
+}
+
 export function Repl() {
   const [results, setResults] = createSignal<Result[]>([]);
   const [settingsOpen, setSettingsOpen] = createSignal(false);
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
+  const [clearPrompt, setClearPrompt] = setting("clearPrompt", true);
 
   const visitor = new Visitor();
   const process = (source: string) => {
@@ -121,7 +134,13 @@ export function Repl() {
             <p class="mb-1 text-sm italic">Settings</p>
             <div class="flex gap-4">
               <label for="clear">Clear prompt on enter</label>
-              <input type="checkbox" name="clear" id="clear" />
+              <input
+                type="checkbox"
+                name="clear"
+                id="clear"
+                checked={clearPrompt()}
+                onInput={(e) => setClearPrompt(e.target.checked)}
+              />
             </div>
           </div>
           <ul class="flex h-full flex-col-reverse overflow-scroll pb-5 text-lg">
@@ -177,8 +196,9 @@ export function Repl() {
               if (ev.key === "Enter" && !ev.shiftKey) {
                 ev.preventDefault();
                 process(textarea.value);
-                // todo: make clearing the textarea a configurable option
-                textarea.parentElement!.dataset.value = textarea.value = "";
+                if (clearPrompt()) {
+                  textarea.parentElement!.dataset.value = textarea.value = "";
+                }
                 return;
               }
               if (!ev.altKey || !"ArrowUp,ArrowDown".includes(ev.key)) {
