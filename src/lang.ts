@@ -58,12 +58,12 @@ export function lex(source: string) {
         if (kind === "syntax") {
           let image = glyph;
           if (name === "binding") {
-            const d = "⓪①②012";
-            const a = d[d.indexOf(m[1]) % 3] ?? "";
+            const d = "₀₁₂012";
+            const a = d[d.indexOf(m[0]) % 3] ?? "";
             m = m.slice(a.length);
             image += a;
           }
-          o.push({ kind: name, line, image: glyph });
+          o.push({ kind: name, line, image });
         } else {
           o.push({ kind, line, image: glyph });
         }

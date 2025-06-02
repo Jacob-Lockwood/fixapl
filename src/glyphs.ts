@@ -50,6 +50,7 @@ export const glyphs = {
   rep: { name: "repeat", glyph: "↺", kind: "monadic modifier" },
   unt: { name: "until", glyph: "⍣", kind: "dyadic modifier" },
   und: { name: "under", glyph: "⍢", kind: "dyadic modifier" },
+  if: { name: "if", glyph: "⍰", kind: "dyadic modifier" },
   bef: { name: "before", glyph: "⊸", kind: "dyadic modifier" },
   aft: { name: "after", glyph: "⟜", kind: "dyadic modifier" },
   ov: { name: "over", glyph: "○", kind: "dyadic modifier" },

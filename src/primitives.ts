@@ -292,6 +292,13 @@ function repeat(y: Val) {
     return cur;
   });
 }
+function mIf(x: Val, y: Val) {
+  return F(1, (v) => {
+    if (v.kind === "number" && (v.data === 0 || v.data === 1))
+      return v.data ? x : y;
+    throw new Error("If condition must be a boolean");
+  });
+}
 function until(x: Val, y: Val) {
   if (x.kind !== "function" || (y.kind !== "function" && y.kind !== "number"))
     throw new Error("Invalid operand types to while");
@@ -711,6 +718,7 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   fol: fold,
   ov: over,
   und: under,
+  if: mIf,
   unt: until,
   bef: before,
   aft: after,
