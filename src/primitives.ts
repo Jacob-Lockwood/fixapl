@@ -412,10 +412,8 @@ function noMatch(x: Val, y: Val) {
   return not(fMatch(x, y));
 }
 function backwards(y: Val) {
-  if (y.kind !== "function")
-    throw new Error("Operand to backwards must be a function");
-  if (y.arity === 2) return F(2, (g, h) => y.data(h, g));
-  throw new Error("Operand to backwards must be dyadic");
+  if (y.kind !== "function") return F(2, (_) => y);
+  return F(2, (g, h) => y.data(h, g));
 }
 function self(y: Val) {
   if (y.kind !== "function") return F(1, (_) => y);
