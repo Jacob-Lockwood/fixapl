@@ -300,7 +300,7 @@ function repeat(y: Val) {
 }
 function choose(x: Val, y: Val) {
   if (x.kind !== "array" || x.shape.length !== 1)
-    throw new Error("Left operand to choose must be an list");
+    throw new Error("Left operand to choose must be a list");
   if (y.kind !== "function")
     throw new Error("Right operand to choose must be a function");
   const fs = [y, ...x.data];
