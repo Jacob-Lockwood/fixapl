@@ -329,7 +329,7 @@ function choose(x: Val, y: Val) {
 }
 function until(x: Val, y: Val) {
   if (x.kind !== "function" || (y.kind !== "function" && y.kind !== "number"))
-    throw new Error("Invalid operand types to while");
+    throw new Error("Invalid operand types to until");
   const iter = x.arity === 2 ? x.data : (_: Val, v: Val) => x.data(v);
   const cond = y.kind === "function" ? y : F(1, () => y);
   const end = (...v: Val[]) => {
@@ -338,21 +338,33 @@ function until(x: Val, y: Val) {
       throw new Error("Condition function must return a boolean");
     return r.data;
   };
+  const maxIter = 10000;
   if (cond.arity === 1)
     return F(x.arity, (v, w) => {
       let g = x.arity === 1 ? v : w;
-      while (!end(g)) g = iter(v, g);
+      for (let i = 0; !end(g); i++) {
+        if (i > maxIter)
+          throw new Error(
+            `Maximum iteration count reached; last value ${display(g)}`,
+          );
+        g = iter(v, g);
+      }
       return g;
     });
   return F(x.arity, (v, w) => {
     let g = x.arity === 1 ? v : w;
     let h: Val;
-    while (true) {
+    let i = 0;
+    for (; i < maxIter; i++) {
       h = iter(v, g);
       if (end(g, h)) return h;
+      i++;
       g = iter(v, h);
       if (end(h, g)) return g;
     }
+    throw new Error(
+      `Maximum iteration count reached; last value ${display(g)}`,
+    );
   });
 }
 function reduce(y: Val) {
