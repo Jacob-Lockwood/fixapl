@@ -29,6 +29,8 @@ export const glyphs = {
   enc: { name: "enclose", glyph: "□", kind: "monadic function" },
   enl: { name: "enlist", glyph: "⋄", kind: "monadic function" },
   mer: { name: "merge", glyph: "⊡", kind: "monadic function" },
+  gru: { name: "grade up", glyph: "⍋", kind: "monadic function" },
+  grd: { name: "grade down", glyph: "⍒", kind: "monadic function" },
   mat: { name: "match", glyph: "≡", kind: "dyadic function" },
   nmt: { name: "nomatch", glyph: "≢", kind: "dyadic function" },
   par: { name: "pair", glyph: "⍮", kind: "dyadic function" },

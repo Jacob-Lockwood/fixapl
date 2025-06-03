@@ -259,11 +259,10 @@ function ne(x: Val, y: Val) {
 }
 function grt(x: Val, y: Val) {
   if (x.kind === "array" || y.kind === "array") return each(grt, x, y);
-  if (x.kind !== y.kind)
-    throw new Error(`Cannot compare ${x.kind} and ${y.kind}`);
   if (x.kind === "function" || y.kind === "function")
     throw new Error(`Cannot compare functions`);
-  return N(x.data > y.data ? 1 : 0);
+  if (x.kind === y.kind) return N(x.data > y.data ? 1 : 0);
+  return N(x.kind === "character" ? 1 : 0);
 }
 function gte(x: Val, y: Val) {
   return max(grt(x, y), eq(x, y));
@@ -512,6 +511,25 @@ function flat(y: Val) {
   if (y.kind !== "array") return y;
   return A([y.shape.reduce((x, y) => x * y, 1)], y.data);
 }
+function compare(x: Val, y: Val) {
+  if (x.kind === "array" || y.kind === "array")
+    throw new Error("Cannot compare arrays");
+  return grt(x, y).data ? 1 : eq(x, y).data ? 0 : -1;
+}
+function gradeUp(y: Val) {
+  if (y.kind !== "array" || y.shape.length < 1)
+    throw new Error("Grade argument must have at least rank 1");
+  const { shape, data: d } = cells(y, -1);
+  const s = d.map((_, i) => i).sort((a, b) => compare(d[a], d[b]));
+  return A(shape, s.map(N));
+}
+function gradeDown(y: Val) {
+  if (y.kind !== "array" || y.shape.length < 1)
+    throw new Error("Grade argument must have at least rank 1");
+  const { shape, data: d } = cells(y, -1);
+  const s = d.map((_, i) => i).sort((a, b) => -compare(d[a], d[b]));
+  return A(shape, s.map(N));
+}
 function replicate(x: Val, y: Val) {
   if (y.kind !== "array") throw new Error("Cannot replicate non-array");
   const cel = cells(y, -1);
@@ -729,6 +747,8 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   rgt: (_, y) => y,
   id: (x) => x,
   iot: iota,
+  gru: gradeUp,
+  grd: gradeDown,
   add,
   sub,
   mul,
