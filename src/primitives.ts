@@ -201,6 +201,18 @@ function div(x: Val, y: Val) {
     throw new Error(`Cannot divide ${x.kind} and ${y.kind}`);
   return N(x.data / y.data);
 }
+function pow(x: Val, y: Val) {
+  if (x.kind === "array" || y.kind === "array") return each(pow, x, y);
+  if (x.kind !== "number" || y.kind !== "number")
+    throw new Error("Arguments to power must be numbers");
+  return N(x.data ** y.data);
+}
+function log(x: Val, y: Val) {
+  if (x.kind === "array" || y.kind === "array") return each(log, x, y);
+  if (x.kind !== "number" || y.kind !== "number")
+    throw new Error("Arguments to logarithm must be numbers");
+  return N(Math.log(y.data) / Math.log(x.data));
+}
 function floor(x: Val) {
   if (x.kind === "array") return each(floor, x);
   if (x.kind !== "number") throw new Error(`Cannot take floor of ${x.kind}`);
@@ -754,6 +766,8 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   mul,
   div,
   mod,
+  pow,
+  log,
   flo: floor,
   rou: round,
   cei: ceil,
