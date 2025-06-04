@@ -542,6 +542,12 @@ function gradeDown(y: Val) {
   const s = d.map((_, i) => i).sort((a, b) => -compare(d[a], d[b]));
   return A(shape, s.map(N));
 }
+function sortUp(y: Val) {
+  return select(gradeUp(y), y);
+}
+function sortDown(y: Val) {
+  return select(gradeDown(y), y);
+}
 function replicate(x: Val, y: Val) {
   if (y.kind !== "array") throw new Error("Cannot replicate non-array");
   const cel = cells(y, -1);
@@ -761,6 +767,8 @@ export const primitives: Record<PrimitiveName, (...v: Val[]) => Val> = {
   iot: iota,
   gru: gradeUp,
   grd: gradeDown,
+  sru: sortUp,
+  srd: sortDown,
   add,
   sub,
   mul,
