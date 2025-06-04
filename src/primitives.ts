@@ -97,6 +97,12 @@ export function atRank(ranks: number[], fn: (...x: Val[]) => Val) {
   return (...xs: Val[]) =>
     merge(each(fn, ...xs.map((x, i) => cells(x, ranks[i] ?? ranks[0]))));
 }
+function pervasive(fn: (...xs: Exclude<Val, { kind: "array" }>[]) => Val) {
+  return function x(...xs: Val[]) {
+    if (xs.every((v) => v?.kind !== "array")) return fn(...xs);
+    return each(x, ...xs);
+  };
+}
 function merge(y: Val) {
   if (y.kind !== "array") return y;
   const [sh, ...shs] = y.data.map(shape);
@@ -119,20 +125,6 @@ function contents(y: Val) {
 function disclose(y: Val) {
   return y.kind === "array" ? y.data[0] : y;
 }
-// function atDepth(
-//   depths: number[],
-//   fn: (...x: Val[]) => Val,
-// ): (...xs: Val[]) => Val {
-//   if (depths.every((n) => n === 0)) return fn;
-//   return (...xs: Val[]) =>
-//     each(
-//       atDepth(
-//         depths.map((n) => n && Math.min(n - 1, n + 1)),
-//         fn,
-//       ),
-//       ...depths.map((d, i) => (d === 0 ? A([1], [xs[i]]) : xs[i])),
-//     );
-// }
 export const range = (shape: number[]): Val =>
   A(
     shape,
@@ -152,15 +144,14 @@ function iota(y: Val) {
   }
   throw new Error(`Cannot take range of ${y.kind}`);
 }
-function add(x: Val, y: Val): Val {
-  if (x.kind === "array" || y.kind === "array") return each(add, x, y);
+const add = pervasive((x, y) => {
   if (x.kind !== "number") {
     if (y.kind === "number") return add(y, x);
     throw new Error(`Cannot add ${x.kind} and ${y.kind}`);
   }
   if (y.kind === "function") throw new Error(`Cannot add number and function`);
-  return { kind: y.kind, data: x.data + y.data };
-}
+  return { kind: y.kind, data: x.data + y.data } as Val;
+});
 function sub(x: Val, y: Val): Val {
   if (x.kind === "array" || y.kind === "array") return each(sub, x, y);
   if (x.kind === "character" && y.kind === "character")
