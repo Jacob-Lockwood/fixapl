@@ -7,6 +7,7 @@ export const glyphs = {
   gte: { name: "greater or equal", glyph: "≥", kind: "dyadic function" },
   les: { name: "less than", glyph: "<", kind: "dyadic function" },
   lte: { name: "less or equal", glyph: "≤", kind: "dyadic function" },
+
   not: { name: "not", glyph: "¬", kind: "monadic function" },
   ng: { name: "negate", glyph: "¯", kind: "monadic function" },
   sig: { name: "sign", glyph: "±", kind: "monadic function" },
@@ -16,6 +17,7 @@ export const glyphs = {
   rou: { name: "round", glyph: "⁅", kind: "monadic function" },
   cei: { name: "ceiling", glyph: "⌈", kind: "monadic function" },
   rol: { name: "roll", glyph: "?", kind: "monadic function" },
+
   add: { name: "add", glyph: "+", kind: "dyadic function" },
   sub: { name: "subtract", glyph: "-", kind: "dyadic function" },
   mul: { name: "multiply", glyph: "×", kind: "dyadic function" },
@@ -25,6 +27,7 @@ export const glyphs = {
   log: { name: "logarithm", glyph: "⍟", kind: "dyadic function" },
   max: { name: "maximum", glyph: "↥", kind: "dyadic function" },
   min: { name: "minimum", glyph: "↧", kind: "dyadic function" },
+
   rev: { name: "reverse", glyph: "⋈", kind: "monadic function" },
   tra: { name: "transpose", glyph: "⍉", kind: "monadic function" },
   iot: { name: "iota", glyph: "⍳", kind: "monadic function" },
@@ -38,6 +41,7 @@ export const glyphs = {
   grd: { name: "grade down", glyph: "⍒", kind: "monadic function" },
   sru: { name: "sort up", glyph: "⊴", kind: "monadic function" },
   srd: { name: "sort down", glyph: "⊵", kind: "monadic function" },
+
   mat: { name: "match", glyph: "≡", kind: "dyadic function" },
   nmt: { name: "nomatch", glyph: "≢", kind: "dyadic function" },
   par: { name: "pair", glyph: "⍮", kind: "dyadic function" },
@@ -49,6 +53,8 @@ export const glyphs = {
   tak: { name: "take", glyph: "↑", kind: "dyadic function" },
   dro: { name: "drop", glyph: "↓", kind: "dyadic function" },
   rot: { name: "rotate", glyph: "⌽", kind: "dyadic function" },
+  gro: { name: "group", glyph: "⊔", kind: "dyadic function" },
+
   slf: { name: "self/const1", glyph: "⍨", kind: "monadic modifier" },
   bac: { name: "backward/const2", glyph: "˜", kind: "monadic modifier" },
   cel: { name: "cells", glyph: "◡", kind: "monadic modifier" },
@@ -59,15 +65,18 @@ export const glyphs = {
   fol: { name: "fold", glyph: "⫽", kind: "monadic modifier" },
   tab: { name: "table", glyph: "⊞", kind: "monadic modifier" },
   rep: { name: "repeat", glyph: "↺", kind: "monadic modifier" },
+
   unt: { name: "until", glyph: "⍣", kind: "dyadic modifier" },
   und: { name: "under", glyph: "⍢", kind: "dyadic modifier" },
   cho: { name: "choose", glyph: "◶", kind: "dyadic modifier" },
   bef: { name: "before", glyph: "⊸", kind: "dyadic modifier" },
   aft: { name: "after", glyph: "⟜", kind: "dyadic modifier" },
   ov: { name: "over", glyph: "○", kind: "dyadic modifier" },
+
   lft: { name: "left argument", glyph: "⊣", kind: "dyadic function" },
   rgt: { name: "right argument", glyph: "⊢", kind: "dyadic function" },
   id: { name: "identity", glyph: "⋅", kind: "monadic function" },
+
   "(": { name: "open parenthesis", glyph: "(", kind: "syntax" },
   ")": { name: "close parenthesis", glyph: ")", kind: "syntax" },
   "[": { name: "open array", glyph: "[", kind: "syntax" },

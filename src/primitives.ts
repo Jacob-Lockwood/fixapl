@@ -50,7 +50,7 @@ export function display(val: Val): string {
 export function match(a: readonly unknown[], b: readonly unknown[]) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
-
+const fromCells = (arr: Val[]) => A([arr.length], arr);
 function map(fn: (...v: Val[]) => Val, ...arrs: (Val & { kind: "array" })[]) {
   const shape = arrs[0].shape;
   const d = arrs[0].data.map((v, i) => fn(v, arrs[1]?.data[i]));
@@ -496,6 +496,29 @@ const p: Record<PrimitiveName, (...v: Val[]) => Val> = {
       );
     } else throw new Error("Invalid take amount");
   }),
+  gro: (x, y) => {
+    const cel = cells(y, -1);
+    const [len] = cel.shape;
+    if (
+      x.kind !== "array" ||
+      x.shape.length !== 1 ||
+      !x.data.every((v) => v.kind === "number")
+    )
+      throw new Error("Left argument to group must be a list of numbers");
+    if (x.shape[0] !== len)
+      throw new Error("Group arguments must have equal length");
+    const buckets: Val[][] = [];
+    for (let i = 0; i < len; i++) {
+      const gi = x.data[i].data;
+      if (gi < 0 || gi > len || !Number.isInteger(gi))
+        throw new Error(
+          "Group indices must be integers between 0 and the array length",
+        );
+      if (gi >= buckets.length) while (buckets.length <= gi) buckets.push([]);
+      buckets[gi].push(cel.data[i]);
+    }
+    return fromCells(buckets.map(fromCells));
+  },
   slf: (y) => F(1, y.kind === "function" ? (v) => y.data(v, v) : (_) => y),
   bac: (y) => F(2, y.kind === "function" ? (g, h) => y.data(h, g) : (_) => y),
   cel: (y) => rank(y, N(-1)),
