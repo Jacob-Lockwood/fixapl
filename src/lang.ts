@@ -62,8 +62,8 @@ export function lex(source: string) {
         if (kind === "syntax") {
           let image = glyph;
           if (name === "binding") {
-            const d = "₁₂12";
-            const a = d[d.indexOf(m[0]) % 2] ?? "";
+            const d = "₀₁₂012";
+            const a = d[d.indexOf(m[0]) % 3] ?? "";
             m = m.slice(a.length);
             image += a;
           }
@@ -253,7 +253,7 @@ export class Parser {
     const tok2 = this.tokens[this.i + 1];
     if (tok2?.kind !== "binding") return;
     this.i += 2;
-    const declaredArity = 1 + "₁₂".indexOf(tok2.image[1]) || -1;
+    const declaredArity = "₀₁₂".indexOf(tok2.image[1]);
     return {
       kind: "binding",
       name: tok1.image,
@@ -375,8 +375,19 @@ export class Visitor {
         return this.bindings.get(node.name)!;
       throw new Error(`Unrecognized identifier '${node.name}'`);
     } else if (node.kind === "binding") {
-      this.thisBinding = [node.name, node.declaredArity];
-      const v = this.visit(node.value);
+      const { name, declaredArity, value } = node;
+      this.thisBinding = [name, declaredArity];
+      const v = this.visit(value);
+      if (
+        (declaredArity > 0 &&
+          (v.kind !== "function" || v.arity !== declaredArity)) ||
+        (declaredArity === 0 && v.kind === "function")
+      ) {
+        const inferred = v.kind === "function" ? v.arity : 0;
+        throw new Error(
+          `in ${name}: arity was declared ${declaredArity} but inferred ${inferred}`,
+        );
+      }
       this.thisBinding = undefined;
       this.bindings.set(node.name, v);
       return v;
