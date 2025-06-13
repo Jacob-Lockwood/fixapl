@@ -1,5 +1,8 @@
-import { Val, F, A, match, primitiveByGlyph } from "./primitives";
-import { glyphs, PrimitiveKind } from "./glyphs";
+import { Val, F, A, match } from "./util";
+import { glyphs, PrimitiveKind, prims } from "./glyphs";
+function primitiveByGlyph(s: string) {
+  return prims[s as keyof typeof prims].def;
+}
 const basic = {
   string: /^"(\\.|[^"$])*"/,
   character: /^'(\\.|[^'\\])*'/,

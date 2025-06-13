@@ -1,81 +1,21 @@
+import * as p from "./primitives";
+import { order, type Entry } from "./primitives";
+
+export const prims = Object.fromEntries(
+  Object.entries(p)
+    .filter((g) => g[0] !== "display" && g[0] !== "order")
+    .sort(
+      (a, b) =>
+        order.indexOf((a[1] as Entry).glyph) -
+        order.indexOf((b[1] as Entry).glyph),
+    ),
+) as Omit<typeof p, "display" | "order">;
+
 export type PrimitiveKind = `${"mon" | "dy"}adic ${"function" | "modifier"}`;
+
 type GlyphKind = PrimitiveKind | "syntax";
 export const glyphs = {
-  eq: { name: "equal", glyph: "=", kind: "dyadic function" },
-  ne: { name: "not equal", glyph: "≠", kind: "dyadic function" },
-  grt: { name: "greater than", glyph: ">", kind: "dyadic function" },
-  gte: { name: "greater or equal", glyph: "≥", kind: "dyadic function" },
-  les: { name: "less than", glyph: "<", kind: "dyadic function" },
-  lte: { name: "less or equal", glyph: "≤", kind: "dyadic function" },
-
-  not: { name: "not", glyph: "¬", kind: "monadic function" },
-  ng: { name: "negate", glyph: "¯", kind: "monadic function" },
-  sig: { name: "sign", glyph: "±", kind: "monadic function" },
-  abs: { name: "absolute value", glyph: "⌵", kind: "monadic function" },
-  sqr: { name: "square root", glyph: "√", kind: "monadic function" },
-  flo: { name: "floor", glyph: "⌊", kind: "monadic function" },
-  rou: { name: "round", glyph: "⁅", kind: "monadic function" },
-  cei: { name: "ceiling", glyph: "⌈", kind: "monadic function" },
-  rol: { name: "roll", glyph: "?", kind: "monadic function" },
-
-  add: { name: "add", glyph: "+", kind: "dyadic function" },
-  sub: { name: "subtract", glyph: "-", kind: "dyadic function" },
-  mul: { name: "multiply", glyph: "×", kind: "dyadic function" },
-  div: { name: "divide", glyph: "÷", kind: "dyadic function" },
-  mod: { name: "modulo", glyph: "|", kind: "dyadic function" },
-  pow: { name: "power", glyph: "*", kind: "dyadic function" },
-  log: { name: "logarithm", glyph: "⍟", kind: "dyadic function" },
-  max: { name: "maximum", glyph: "↥", kind: "dyadic function" },
-  min: { name: "minimum", glyph: "↧", kind: "dyadic function" },
-
-  rev: { name: "reverse", glyph: "⋈", kind: "monadic function" },
-  tra: { name: "transpose", glyph: "⍉", kind: "monadic function" },
-  iot: { name: "iota", glyph: "⍳", kind: "monadic function" },
-  len: { name: "length", glyph: "⧻", kind: "monadic function" },
-  sha: { name: "shape", glyph: "△", kind: "monadic function" },
-  fla: { name: "flat", glyph: "▽", kind: "monadic function" },
-  enc: { name: "enclose", glyph: "□", kind: "monadic function" },
-  enl: { name: "enlist", glyph: "⋄", kind: "monadic function" },
-  mer: { name: "merge", glyph: "⊡", kind: "monadic function" },
-  gru: { name: "grade up", glyph: "⍋", kind: "monadic function" },
-  grd: { name: "grade down", glyph: "⍒", kind: "monadic function" },
-  sru: { name: "sort up", glyph: "⊴", kind: "monadic function" },
-  srd: { name: "sort down", glyph: "⊵", kind: "monadic function" },
-
-  mat: { name: "match", glyph: "≡", kind: "dyadic function" },
-  nmt: { name: "nomatch", glyph: "≢", kind: "dyadic function" },
-  par: { name: "pair", glyph: "⍮", kind: "dyadic function" },
-  cat: { name: "catenate", glyph: "⍪", kind: "dyadic function" },
-  res: { name: "reshape", glyph: "⍴", kind: "dyadic function" },
-  rpl: { name: "replicate", glyph: "⌿", kind: "dyadic function" },
-  sel: { name: "select", glyph: "⊇", kind: "dyadic function" },
-  pic: { name: "pick", glyph: "⊃", kind: "dyadic function" },
-  tak: { name: "take", glyph: "↑", kind: "dyadic function" },
-  dro: { name: "drop", glyph: "↓", kind: "dyadic function" },
-  rot: { name: "rotate", glyph: "⌽", kind: "dyadic function" },
-  gro: { name: "group", glyph: "⊔", kind: "dyadic function" },
-
-  slf: { name: "self/const1", glyph: "⍨", kind: "monadic modifier" },
-  bac: { name: "backward/const2", glyph: "˜", kind: "monadic modifier" },
-  cel: { name: "cells", glyph: "◡", kind: "monadic modifier" },
-  con: { name: "contents", glyph: "⊙", kind: "monadic modifier" },
-  eac: { name: "each", glyph: "¨", kind: "monadic modifier" },
-  red: { name: "reduce", glyph: "/", kind: "monadic modifier" },
-  sca: { name: "scan", glyph: "\\", kind: "monadic modifier" },
-  fol: { name: "fold", glyph: "⫽", kind: "monadic modifier" },
-  tab: { name: "table", glyph: "⊞", kind: "monadic modifier" },
-  rep: { name: "repeat", glyph: "↺", kind: "monadic modifier" },
-
-  unt: { name: "until", glyph: "⍣", kind: "dyadic modifier" },
-  und: { name: "under", glyph: "⍢", kind: "dyadic modifier" },
-  cho: { name: "choose", glyph: "◶", kind: "dyadic modifier" },
-  bef: { name: "before", glyph: "⊸", kind: "dyadic modifier" },
-  aft: { name: "after", glyph: "⟜", kind: "dyadic modifier" },
-  ov: { name: "over", glyph: "○", kind: "dyadic modifier" },
-
-  lft: { name: "left argument", glyph: "⊣", kind: "dyadic function" },
-  rgt: { name: "right argument", glyph: "⊢", kind: "dyadic function" },
-  id: { name: "identity", glyph: "⋅", kind: "monadic function" },
+  ...prims,
 
   "(": { name: "open parenthesis", glyph: "(", kind: "syntax" },
   ")": { name: "close parenthesis", glyph: ")", kind: "syntax" },

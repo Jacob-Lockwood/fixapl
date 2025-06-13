@@ -23,9 +23,7 @@ export const Highlight: Component<{
       case "monadic modifier":
       case "dyadic modifier":
         const color = glyphColors[kind];
-        const { name } = Object.entries(glyphs).find(
-          ([_, d]) => d.glyph === image,
-        )![1];
+        const { name } = Object.values(glyphs).find((d) => d.glyph === image)!;
         return (
           <span title={name} class={color}>
             {image}
@@ -45,7 +43,8 @@ export const Highlight: Component<{
           </span>
         );
       case "string":
-        return <span class="text-green-300">{image}</span>;
+      case "character":
+        return <span class="text-teal-300">{image}</span>;
       case "number":
         return <span class="text-orange-400">{image}</span>;
       default:
@@ -92,7 +91,7 @@ export function Repl() {
       const p = new Parser(t).program();
       output = p.map((e) => display(visitor.visit(e))).join("\n");
     } catch (e) {
-      error = e + "";
+      error = e instanceof Error ? e.message : e + "";
       console.error(e);
     }
     setResults((results) => [{ source, tokens, output, error }, ...results]);
