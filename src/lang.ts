@@ -1,7 +1,7 @@
 import { Val, F, A, match } from "./util";
 import { glyphs, PrimitiveKind, prims } from "./glyphs";
 function primitiveByGlyph(s: string) {
-  return prims[s as keyof typeof prims].def;
+  return Object.values(prims).find((v) => v.glyph === s)!.def;
 }
 const basic = {
   string: /^"(\\.|[^"$])*"/,
