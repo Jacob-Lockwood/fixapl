@@ -30,3 +30,5 @@ export const glyphs = {
   string,
   { glyph: string; name: string; kind: GlyphKind }
 >;
+
+export const subscripts = "₀₁₂012";

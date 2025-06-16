@@ -1,5 +1,5 @@
 import { Val, F, A, match } from "./util";
-import { glyphs, PrimitiveKind, prims } from "./glyphs";
+import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
 function primitiveByGlyph(s: string) {
   return Object.values(prims).find((v) => v.glyph === s)!.def;
 }
@@ -65,8 +65,7 @@ export function lex(source: string) {
         if (kind === "syntax") {
           let image = glyph;
           if (name === "binding") {
-            const d = "₀₁₂012";
-            const a = d[d.indexOf(m[0]) % 3] ?? "";
+            const a = subscripts[subscripts.indexOf(m[0]) % 3] ?? "";
             m = m.slice(a.length);
             image += a;
           }
@@ -256,7 +255,7 @@ export class Parser {
     const tok2 = this.tokens[this.i + 1];
     if (tok2?.kind !== "binding") return;
     this.i += 2;
-    const declaredArity = "₀₁₂".indexOf(tok2.image[1]);
+    const declaredArity = subscripts.indexOf(tok2.image[1]);
     return {
       kind: "binding",
       name: tok1.image,
