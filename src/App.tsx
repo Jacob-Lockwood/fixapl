@@ -19,7 +19,7 @@ export default function App() {
           <p class="mb-10 text-center text-lg italic">
             A simple APL derivative, built on fixed-arity functions
           </p>
-          <details class="mb-10 text-sm text-amber-200">
+          <details class="mb-10 text-amber-200">
             <summary class="text-orange-400 italic">
               <strong>Note:</strong>{" "}
               <span class="text-amber-400">
@@ -29,9 +29,9 @@ export default function App() {
             </summary>
             <p class="mt-1">
               Several planned primitives have not been implemented yet. There is
-              currently zero documentation for the language. The settings button
-              does nothing. The existing help text on the site is either
-              outdated or speculative. Expect everything to change.
+              currently zero documentation for the language. The existing help
+              text on the site is either outdated or speculative. Expect
+              everything to change.
             </p>
             <p class="mt-2">
               If you do find bugs with the existing primitives, please report
@@ -140,17 +140,6 @@ export default function App() {
       </div>
       <footer class="mx-auto mt-60 flex max-w-prose flex-col gap-2 text-center text-emerald-600">
         <p>
-          Contribute to or view this page's source on{" "}
-          <a
-            href="https://github.com/Jacob-Lockwood/fixapl"
-            class="underline"
-            target="_blank"
-          >
-            GitHub
-          </a>
-          .
-        </p>
-        <p>
           Created by{" "}
           <a
             href="https://github.com/Jacob-Lockwood"
@@ -162,13 +151,40 @@ export default function App() {
           .
         </p>
         <p>
-          The monospaced font used on this page is{" "}
+          Contribute to or view this page's source on{" "}
+          <a
+            href="https://github.com/Jacob-Lockwood/fixapl"
+            class="underline"
+            target="_blank"
+          >
+            GitHub
+          </a>
+          .
+        </p>
+        <p>
+          This page uses the fonts{" "}
+          <a
+            href="https://fonts.google.com/specimen/Tilt+Neon"
+            class="underline"
+            target="_blank"
+          >
+            Tilt Neon
+          </a>
+          ,{" "}
           <a
             href="https://github.com/RubenVerg/tinyapl386/blob/97fb8c10bbb5ac9d34555812cfed0070c545fa4c/TinyAPL386.ttf"
             class="underline"
             target="_blank"
           >
             TinyAPL386
+          </a>
+          , and{" "}
+          <a
+            href="https://github.com/uiua-lang/uiua/blob/main/src/algorithm/Uiua386.ttf"
+            class="underline"
+            target="_blank"
+          >
+            Uiua386
           </a>
           .
         </p>

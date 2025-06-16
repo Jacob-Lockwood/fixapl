@@ -100,7 +100,7 @@ export function Repl() {
   let textarea!: HTMLTextAreaElement;
   return (
     <div class="sticky top-10 flex flex-col gap-2">
-      <div class="flex flex-col rounded-md bg-black/20 p-4 pt-1 font-mono">
+      <div class="flex flex-col rounded-md bg-black/20 p-4 pt-1">
         <div class="flex items-center gap-4">
           <h2 class="mr-auto">REPL</h2>
           <button
@@ -142,7 +142,7 @@ export function Repl() {
               />
             </div>
           </div>
-          <ul class="flex h-full flex-col-reverse overflow-scroll pb-5 text-lg">
+          <ul class="flex h-full flex-col-reverse overflow-scroll pb-5 font-mono text-lg">
             <For each={results()}>
               {(result) => (
                 <li>
@@ -182,7 +182,7 @@ export function Repl() {
           </ul>
         </div>
         <div
-          class="-m-2 mt-auto grid overflow-x-scroll p-2 text-lg"
+          class="-m-2 mt-auto grid overflow-x-scroll p-2 font-mono text-lg"
           id="wrapper"
         >
           <textarea
@@ -248,12 +248,13 @@ export function Repl() {
             onBlur={() => setSelectedGlyph(-1)}
             onMouseLeave={() => setSelectedGlyph(-1)}
           >
-            <span class={"-z-10 p-2 " + glyphColors[data.kind]}>
+            <span class={"-z-10 p-2 font-mono " + glyphColors[data.kind]}>
               {data.glyph}
             </span>
             <Show when={selectedGlyph() === i}>
-              <p class="absolute z-10 w-max rounded-sm rounded-tl-none bg-emerald-800 px-2 py-1 text-sm">
-                {data.name} <br /> alias: {alias} <br /> {data.kind}
+              <p class="absolute z-10 w-max rounded-sm rounded-tl-none bg-emerald-800 px-2 py-1 text-base">
+                {data.name} <br /> alias: <code>{alias}</code> <br />{" "}
+                {data.kind}
               </p>
             </Show>
           </button>
