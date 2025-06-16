@@ -15,7 +15,6 @@ body {
 }
 #code-input,
 #wrapper::after {
-  @apply "font-mono";
   padding: 1px;
   padding-left: 8ch;
   font: inherit;
