@@ -252,13 +252,17 @@ export function Repl() {
               {data.glyph}
             </span>
             <Show when={selectedGlyph() === i}>
-              <p class="absolute z-10 w-max rounded-sm rounded-tl-none bg-emerald-800 p-1 text-sm">
+              <p class="absolute z-10 w-max rounded-sm rounded-tl-none bg-emerald-800 px-2 py-1 text-sm">
                 {data.name} <br /> alias: {alias} <br /> {data.kind}
               </p>
             </Show>
           </button>
         ))}
       </div>
+      <p class="mx-auto my-4 max-w-80 text-center text-sm text-green-600">
+        Hover over a glyph to see its name and alias. Click on it to enter the
+        glyph.
+      </p>
     </div>
   );
 }
