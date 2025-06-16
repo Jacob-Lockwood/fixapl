@@ -138,7 +138,7 @@ export default function App() {
           <Repl />
         </main>
       </div>
-      <footer class="mx-auto mt-60 flex max-w-prose flex-col gap-2 text-center text-emerald-600">
+      <footer class="mx-auto mt-60 flex max-w-prose flex-col gap-2 text-center text-sm text-emerald-500">
         <p>
           Created by{" "}
           <a

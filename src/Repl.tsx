@@ -102,7 +102,9 @@ export function Repl() {
     <div class="sticky top-10 flex flex-col gap-2">
       <div class="flex flex-col rounded-md bg-black/20 p-4 pt-1">
         <div class="flex items-center gap-4">
-          <h2 class="mr-auto">REPL</h2>
+          <h2 class="mr-auto" id="repl">
+            REPL
+          </h2>
           <button
             class="cursor-pointer text-2xl"
             title="Configuration options"
@@ -147,7 +149,7 @@ export function Repl() {
               {(result) => (
                 <li>
                   <pre
-                    class="min-w-max bg-teal-900/20 pl-[8ch] hover:bg-teal-900/50"
+                    class="min-w-max bg-teal-900/20 pl-[8ch] selection:!bg-black/30 hover:bg-teal-900/50"
                     onClick={(e) => {
                       textarea.parentElement!.dataset.value = textarea.value ||=
                         e.currentTarget.textContent ?? "";
@@ -188,7 +190,7 @@ export function Repl() {
           <textarea
             id="code-input"
             ref={textarea}
-            aria-label="REPL input line"
+            aria-labelledby="repl"
             class="resize-none overflow-hidden rounded-sm whitespace-pre ring-1 ring-green-500 focus:ring-2 focus:outline-0"
             rows="1"
             onKeyDown={(ev) => {
@@ -260,7 +262,7 @@ export function Repl() {
           </button>
         ))}
       </div>
-      <p class="mx-auto my-4 max-w-80 text-center text-sm text-green-600 selection:bg-green-900">
+      <p class="mx-auto my-4 max-w-80 text-center text-sm text-green-500 selection:!bg-black/30">
         Hover over a glyph to see its name and alias. Click on it to enter the
         glyph.
       </p>
