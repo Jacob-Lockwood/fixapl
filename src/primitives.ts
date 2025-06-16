@@ -134,7 +134,7 @@ const metaEntry =
 const df = metaEntry("dyadic function", (g) => `x${g}y`);
 const mf = metaEntry("monadic function", (g) => `${g}y`);
 const dm = metaEntry("dyadic modifier", (g) => `X${g}Y`);
-const mm = metaEntry("monadic modifier", (g) => `${g}Y`);
+const mm = metaEntry("monadic modifier", (g) => `X${g}`);
 
 export const eq = df("=", "equal", () =>
   pervasive((x, y) => {
@@ -305,7 +305,7 @@ export const tra = mf("⍉", "transpose", () => (y) => {
   });
   return A(sh, o);
 });
-export const iot = mf("⍳", "integers", (err) => (y) => {
+export const int = mf("⍳", "integers", (err) => (y) => {
   if (
     y.kind === "array" &&
     y.shape.length === 1 &&
@@ -623,6 +623,37 @@ export const tab = mm("⊞", "table", (err) => (y) => {
     return A(shape, o);
   });
 });
+export const win = mm("⊕", "windows", (err) => (X) => {
+  if (X.kind !== "function") throw err("X must be a function");
+  if (X.arity === 2)
+    return F(1, (w) => {
+      if (w.kind !== "array") throw err("Windows must be given an array");
+      const { data } = cells(w, -1);
+      const l = data.length - 1;
+      const o = A([l], []);
+      for (let i = 1; i <= l; i++) o.data.push(X.data(data[i - 1], data[i]));
+      return o;
+    });
+  else
+    return F(2, (v, w) => {
+      if (w.kind !== "array") throw err("Windows must be given an array");
+      if (v.kind === "number") {
+        const wn = v.data;
+        const { data } = cells(w, -1);
+        const l = data.length;
+        if (!Number.isInteger(wn) || wn < 2 || wn > l)
+          throw err(
+            "Window amount must be an integer between 2 and the array's length",
+          );
+        const len = 1 + l - wn;
+        const o = A([len], []);
+        for (let i = 0; i < len; i++)
+          o.data.push(X.data(A([wn], data.slice(i, i + wn))));
+        return o;
+      }
+      throw err("Windows can only take a number for now");
+    });
+});
 export const rep = mm("↺", "repeat", (err) => (y) => {
   if (y.kind !== "function") throw err("X must be a function");
   const fn = y.arity === 2 ? y.data : (_: Val, v: Val) => y.data(v);
@@ -682,7 +713,7 @@ export const und = dm("⍢", "under", (err) => (x, y) => {
   return F(arity, (...v) => {
     const arr = v[arity - 1];
     if (arr.kind !== "array") throw err("Under argument must be an array");
-    const indices = iot.def(sha.def(arr));
+    const indices = int.def(sha.def(arr));
     const [t, ti] = [arr, indices].map((z) =>
       y.arity === 1 ? y.data(z) : y.data(v[0], z),
     );
