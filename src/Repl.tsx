@@ -260,7 +260,7 @@ export function Repl() {
           </button>
         ))}
       </div>
-      <p class="mx-auto my-4 max-w-80 text-center text-sm text-green-600">
+      <p class="mx-auto my-4 max-w-80 text-center text-sm text-green-600 selection:bg-green-900">
         Hover over a glyph to see its name and alias. Click on it to enter the
         glyph.
       </p>
