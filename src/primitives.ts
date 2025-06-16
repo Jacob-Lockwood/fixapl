@@ -151,24 +151,15 @@ export const grt = df(">", "greater than", (err) =>
     return N(x.kind === "character" ? 1 : 0);
   }),
 );
-export const gte = df(
-  "≥",
-  "greater or equal",
-  () => (x, y) => max.def(grt.def(x, y), eq.def(x, y)),
-);
+export const gte = df("≥", "greater or equal", () => (x, y) => {
+  return max.def(grt.def(x, y), eq.def(x, y));
+});
 export const les = df("<", "less than", () => (x, y) => not.def(gte.def(x, y)));
-export const lte = df(
-  "≤",
-  "less or equal",
-  () => (x, y) => not.def(grt.def(x, y)),
-);
+export const lte = df("≤", "less or equal", () => (x, y) => {
+  return not.def(grt.def(x, y));
+});
 
-export const not = mf("¬", "not", (err) =>
-  pervasive((y) => {
-    if (y.kind === "number") return N(1 - y.data);
-    throw err(`Cannot take NOT ${y.kind}`);
-  }),
-);
+export const not = mf("¬", "not", () => (y) => sub.def(N(1), y));
 export const ng = mf("¯", "negate", (err) =>
   pervasive((y) => {
     if (y.kind === "number") return sub.def(N(0), y);
@@ -178,7 +169,7 @@ export const ng = mf("¯", "negate", (err) =>
       const lw = str.toLowerCase();
       return C(str === up ? lw : up);
     }
-    throw err(`Cannot negate ${y.kind}`);
+    throw err(`y can only be numbers or characters`);
   }),
 );
 export const sig = mf("±", "sign", (err) =>
@@ -190,7 +181,7 @@ export const sig = mf("±", "sign", (err) =>
       const lw = str.toLowerCase();
       return N(up === lw ? 0 : str === up ? 1 : -1);
     }
-    throw err(`Cannot take sign of ${y.kind}`);
+    throw err(`y can only be numbers or characters`);
   }),
 );
 export const abs = mf("⌵", "absolute value", (err) =>
@@ -198,37 +189,37 @@ export const abs = mf("⌵", "absolute value", (err) =>
     if (y.kind === "character")
       return C(String.fromCodePoint(y.data).toUpperCase());
     if (y.kind === "number") return N(Math.abs(y.data));
-    throw err(`Cannot take absolute value of ${y.kind}`);
+    throw err(`y can only be numbers or characters`);
   }),
 );
 export const sqr = mf("√", "square root", (err) =>
   pervasive((y) => {
     if (y.kind === "number") return N(Math.sqrt(y.data));
-    throw err(`Cannot take absolute value of ${y.kind}`);
+    throw err(`square root is only defined for numbers`);
   }),
 );
 export const flo = mf("⌊", "floor", (err) =>
   pervasive((y) => {
     if (y.kind === "number") return N(Math.floor(y.data));
-    throw err(`Cannot take floor of ${y.kind}`);
+    throw err(`y must be numbers`);
   }),
 );
 export const rou = mf("⁅", "round", (err) =>
   pervasive((y) => {
     if (y.kind === "number") return N(Math.round(y.data));
-    throw err(`Cannot round ${y.kind}`);
+    throw err(`y must be numbers`);
   }),
 );
 export const cei = mf("⌈", "ceiling", (err) =>
   pervasive((y) => {
     if (y.kind === "number") return N(Math.ceil(y.data));
-    throw err(`Cannot take ceil of ${y.kind}`);
+    throw err(`y must be numbers`);
   }),
 );
 export const rol = mf("?", "roll", (err) =>
   pervasive((y) => {
     if (y.kind !== "number" || !Number.isInteger(y.data) || y.data < 0)
-      throw err("Argument to roll must be a nonnegative integer array");
+      throw err("y must be nonnegative integers");
     return N(y.data === 0 ? Math.random() : Math.floor(Math.random() * y.data));
   }),
 );
@@ -255,37 +246,34 @@ export const sub = df("-", "subtract", (err) =>
 );
 export const mul = df("×", "multiply", (err) =>
   pervasive((x, y) => {
-    if (x.kind !== "number" || y.kind !== "number")
-      throw err(`Cannot multiply ${x.kind} and ${y.kind}`);
-    return N(x.data * y.data);
+    if (x.kind === "number" && y.kind === "number") return N(x.data * y.data);
+    throw err(`x and y must be numbers`);
   }),
 );
 export const div = df("÷", "divide", (err) =>
   pervasive((x, y) => {
-    if (x.kind !== "number" || y.kind !== "number")
-      throw err(`Cannot divide ${x.kind} and ${y.kind}`);
-    return N(x.data * y.data);
+    if (x.kind === "number" && y.kind === "number") return N(x.data * y.data);
+    throw err(`x and y must be numbers`);
   }),
 );
 export const mod = df("|", "modulo", (err) =>
   pervasive((x, y) => {
     if (x.kind !== "number" || y.kind !== "number")
-      throw err(`Cannot mod ${x.kind} and ${y.kind}`);
+      throw err(`x and y must be numbers`);
     return N(y.data >= 0 ? y.data % x.data : x.data + (y.data % x.data));
   }),
 );
 export const pow = df("*", "power", (err) =>
   pervasive((x, y) => {
-    if (x.kind !== "number" || y.kind !== "number")
-      throw err(`Cannot power ${x.kind} and ${y.kind}`);
-    return N(x.data ** y.data);
+    if (x.kind === "number" && y.kind === "number") return N(x.data ** y.data);
+    throw err(`x and y must be numbers`);
   }),
 );
 export const log = df("⍟", "logarithm", (err) =>
   pervasive((x, y) => {
-    if (x.kind !== "number" || y.kind !== "number")
-      throw err(`Cannot log ${x.kind} and ${y.kind}`);
-    return N(Math.log(y.data) / Math.log(x.data));
+    if (x.kind === "number" && y.kind === "number")
+      return N(Math.log(y.data) / Math.log(x.data));
+    throw err(`x and y must be numbers`);
   }),
 );
 export const max = df("↥", "maximum", () =>
@@ -295,11 +283,9 @@ export const min = df("↧", "minimum", () =>
   pervasive((x, y) => (grt.def(y, x).data ? x : y)),
 );
 
-export const rev = mf(
-  "⋈",
-  "reverse",
-  () => (y) => (y.kind === "array" ? A(y.shape, [...y.data].reverse()) : y),
-);
+export const rev = mf("⋈", "reverse", () => (y) => {
+  return y.kind === "array" ? A(y.shape, [...y.data].reverse()) : y;
+});
 export const tra = mf("⍉", "transpose", () => (y) => {
   if (y.kind !== "array" || y.shape.length === 0) return y;
   const sh = y.shape.slice(1);
@@ -319,23 +305,23 @@ export const tra = mf("⍉", "transpose", () => (y) => {
   });
   return A(sh, o);
 });
-export const iot = mf("⍳", "iota", (err) => (y) => {
-  if (y.kind === "number") return range([y.data]);
-  if (y.kind === "array") {
-    if (y.shape.length === 1) {
-      if (y.data.every((v) => v.kind === "number"))
-        return range(y.data.map((v) => v.data));
-      throw err("Cannot take range of non-numeric vector");
-    }
-    throw err("Cannot take range of non-vector array");
-  }
-  throw err(`Cannot take range of ${y.kind}`);
+export const iot = mf("⍳", "integers", (err) => (y) => {
+  if (
+    y.kind === "array" &&
+    y.shape.length === 1 &&
+    y.data.every(
+      (v) => v.kind === "number" && Number.isInteger(v.data) && v.data >= 0,
+    )
+  )
+    return range(y.data.map((v) => v.data as number));
+  if (y.kind !== "number") throw err("invalid y");
+  if (!Number.isInteger(y.data) || y.data < 0)
+    throw err("y must be an integer");
+  return range([y.data]);
 });
-export const len = mf(
-  "⧻",
-  "length",
-  () => (y) => N(y.kind === "array" ? (y.shape[0] ?? 0) : 0),
-);
+export const len = mf("⧻", "length", () => (y) => {
+  return N(y.kind === "array" ? (y.shape[0] ?? 0) : 0);
+});
 export const sha = mf("△", "shape", () => shape);
 export const fla = mf(
   "▽",
@@ -389,7 +375,7 @@ export const cat = df("⍪", "catenate", (err) =>
       if (xsh.length === ysh.length + 1) return cat(x, A([1, ...ysh], y.data));
       if (xsh.length + 1 === ysh.length) return cat(A([1, ...xsh], x.data), y);
       if (xsh.length !== ysh.length || !match(xsh.slice(1), ysh.slice(1)))
-        throw err("Arguments to catenate must have matching cells");
+        throw err("x and y must have matching cells");
       return A([xsh[0] + ysh[0], ...xsh.slice(1)], x.data.concat(y.data));
     } else if (x.kind === "array") {
       const sh = [1, ...x.shape.slice(1)];
@@ -420,7 +406,7 @@ export const res = df("⍴", "reshape", (err) => (x, y) => {
     )
   ) {
     sh.push(...x.data.map((v) => v.data as number));
-  } else throw err("Left argument to reshape must be a valid shape");
+  } else throw err("x must be a valid shape");
   const data = y.kind === "array" ? y.data : [y];
   if (data.length === 0) throw err("Cannot reshape empty array");
   const len = sh.reduce((x, y) => x * y, 1);
@@ -431,7 +417,7 @@ export const res = df("⍴", "reshape", (err) => (x, y) => {
   return A(sh, o);
 });
 export const rpl = df("⌿", "replicate", (err) => (x, y) => {
-  if (y.kind !== "array") throw err("Cannot replicate non-array");
+  if (y.kind !== "array") throw err("y must be an array");
   const cel = cells(y, -1);
   const isOk = (v: Val) =>
     v.kind === "number" && v.data >= 0 && Number.isInteger(v.data);
@@ -451,7 +437,7 @@ export const rpl = df("⌿", "replicate", (err) => (x, y) => {
   );
 });
 export const sel = df("⊇", "select", (err) => (x, y) => {
-  if (y.kind !== "array") throw err("Cannot select from non-array");
+  if (y.kind !== "array") throw err("y must be an array");
   const c = cells(y, -1);
   const len = y.shape[0];
   return each((v) => {
@@ -465,7 +451,7 @@ export const sel = df("⊇", "select", (err) => (x, y) => {
 });
 export const pic = df("⊃", "pick", (err) =>
   recur((pick, x, y) => {
-    if (y.kind !== "array") throw err("Cannot pick from non-array");
+    if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") return pick(A([1], [x]), y);
     else if (x.kind === "array") {
       if (x.shape.length === 1 && x.data.every((v) => v.kind === "number")) {
@@ -487,7 +473,7 @@ export const pic = df("⊃", "pick", (err) =>
 );
 export const tak = df("↑", "take", (err) =>
   recur((take, x, y) => {
-    if (y.kind !== "array") throw err("Cannot take from non-array");
+    if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") {
       const cel = cells(y, -1);
       const len = y.shape[0];
@@ -505,12 +491,12 @@ export const tak = df("↑", "take", (err) =>
         (z) => take(A([x.shape[0] - 1], x.data.slice(1)), z),
         cells(arr, -1),
       );
-    } else throw err("Invalid take amount");
+    } else throw err("Invalid x");
   }),
 );
 export const dro = df("↓", "drop", (err) =>
   recur((drop, x, y) => {
-    if (y.kind !== "array") throw err("Cannot drop from non-array");
+    if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") {
       const cel = cells(y, -1);
       const len = y.shape[0];
@@ -528,12 +514,12 @@ export const dro = df("↓", "drop", (err) =>
         (z) => drop(A([x.shape[0] - 1], x.data.slice(1)), z),
         cells(arr, -1),
       );
-    } else throw err("Invalid take amount");
+    } else throw err("Invalid x");
   }),
 );
 export const rot = df("⌽", "rotate", (err) =>
   recur((rot, x, y) => {
-    if (y.kind !== "array") throw err("Cannot rotate non-array");
+    if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") {
       const cel = cells(y, -1);
       const len = y.shape[0];
@@ -550,7 +536,7 @@ export const rot = df("⌽", "rotate", (err) =>
         (z) => rot(A([x.shape[0] - 1], x.data.slice(1)), z),
         cells(arr, -1),
       );
-    } else throw err("Invalid take amount");
+    } else throw err("Invalid x");
   }),
 );
 export const gro = df("⊔", "group", (err) => (x, y) => {
@@ -561,7 +547,7 @@ export const gro = df("⊔", "group", (err) => (x, y) => {
     x.shape.length !== 1 ||
     !x.data.every((v) => v.kind === "number")
   )
-    throw err("Left argument to group must be a list of numbers");
+    throw err("x must be a list of numbers");
   if (x.shape[0] !== len) throw err("Group arguments must have equal length");
   const buckets: Val[][] = [];
   for (let i = 0; i < len; i++) {
@@ -576,16 +562,12 @@ export const gro = df("⊔", "group", (err) => (x, y) => {
   return fromCells(buckets.map(fromCells));
 });
 
-export const slf = mm(
-  "⍨",
-  "self/const1",
-  () => (y) => F(1, y.kind === "function" ? (v) => y.data(v, v) : (_) => y),
-);
-export const bac = mm(
-  "˜",
-  "backward/const2",
-  () => (y) => F(2, y.kind === "function" ? (g, h) => y.data(h, g) : (_) => y),
-);
+export const slf = mm("⍨", "self/const1", () => (y) => {
+  return F(1, y.kind === "function" ? (v) => y.data(v, v) : (_) => y);
+});
+export const bac = mm("˜", "backward/const2", () => (y) => {
+  return F(2, y.kind === "function" ? (g, h) => y.data(h, g) : (_) => y);
+});
 export const cel = mm("◡", "cells", () => (y) => rank(y, N(-1)));
 export const con = mm("⊙", "contents", (err) => (y) => {
   if (y.kind !== "function") throw err("X contents must be a function");
