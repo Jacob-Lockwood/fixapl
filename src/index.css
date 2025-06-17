@@ -29,8 +29,12 @@ body {
   font-family: TinyAPL386;
   src: url("/TinyAPL386.ttf") format("truetype");
 }
+@font-face {
+  font-family: APL333;
+  src: url("/APL333.ttf") format("truetype");
+}
 @theme {
-  --font-sans: "Tilt Neon", sans-serif;
+  --font-sans: APL333, sans-serif;
   --font-mono: TinyAPL386, Uiua386, monospace;
 }
 @custom-variant hocus (&:hover, &:focus);

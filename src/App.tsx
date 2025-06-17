@@ -164,11 +164,11 @@ export default function App() {
         <p>
           This page uses the fonts{" "}
           <a
-            href="https://fonts.google.com/specimen/Tilt+Neon"
+            href="https://apl385.com/fonts/index.htm"
             class="underline"
             target="_blank"
           >
-            Tilt Neon
+            APL333
           </a>
           ,{" "}
           <a
