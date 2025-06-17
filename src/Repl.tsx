@@ -255,7 +255,8 @@ export function Repl() {
             </span>
             <Show when={selectedGlyph() === i}>
               <p class="absolute z-10 w-max rounded-sm rounded-tl-none bg-emerald-800 px-2 py-1 text-base">
-                {data.name} <br /> alias: <code>{alias}</code> <br />{" "}
+                {data.name} <br /> alias:{" "}
+                <code class="bg-emerald-900 px-1">{alias}</code> <br />{" "}
                 {data.kind}
               </p>
             </Show>
