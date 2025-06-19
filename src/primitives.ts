@@ -356,6 +356,14 @@ export const grd = mf("⍒", "grade down", (err) => (y) => {
 export const sru = mf("⊴", "sort up", () => (y) => sel.def(gru.def(y), y));
 export const srd = mf("⊵", "sort down", () => (y) => sel.def(grd.def(y), y));
 
+export const mem = df("∊", "member of", (err) => (x, y) => {
+  if (y.kind !== "array" || y.shape.length < 1)
+    throw err("y must have rank at least 1");
+  return map(
+    (e) => N(y.data.some((v) => mat.def(e, v).data === 1) ? 1 : 0),
+    x.kind === "array" ? x : A([], [x]),
+  );
+});
 export const mat = df("≡", "match", (err) =>
   recur((mat, x, y) => {
     if (x.kind !== y.kind) return N(0);
