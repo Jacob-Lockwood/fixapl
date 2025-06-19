@@ -4,7 +4,7 @@ function primitiveByGlyph(s: string) {
   return Object.values(prims).find((v) => v.glyph === s)!.def;
 }
 const basic = {
-  string: /^"(\\.|[^"$])*"/,
+  string: /^"(\\.|[^"])*"/,
   character: /^'(\\.|[^'\\])*'/,
   identifier: /^[A-Z][A-Za-z]*/,
   number: /^\d+(\.\d+)?/,
