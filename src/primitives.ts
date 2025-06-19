@@ -133,6 +133,7 @@ const ct = (glyph: string, name: string, def: () => Val) => {
 export const inf = ct("∞", "infinity", () => N(Infinity));
 export const pi = ct("π", "pi", () => N(Math.PI));
 export const tau = ct("τ", "pi", () => N(Math.PI * 2));
+export const emp = ct("⍬", "empty vector", () => A([0], []));
 
 export const eq = df("=", "equal", () =>
   pervasive((x, y) => {
