@@ -431,7 +431,7 @@ export class Visitor {
           node.kind === "list" ||
           node.kind === "strand"
         )
-          return node.values.map(getArity).reduce((x, y) => Math.max(x, y));
+          return node.values.map(getArity).reduce((x, y) => Math.max(x, y), 1);
         return 1;
       }
       const arity = getArity(node.def);
