@@ -18,6 +18,8 @@ export const glyphs = {
   ...prims,
   "(": { name: "open parenthesis", glyph: "(", kind: "syntax" },
   ")": { name: "close parenthesis", glyph: ")", kind: "syntax" },
+  "{": { name: "open dfn", glyph: "{", kind: "syntax" },
+  "}": { name: "close dfn", glyph: "}", kind: "syntax" },
   "[": { name: "open array", glyph: "[", kind: "syntax" },
   "]": { name: "close array", glyph: "]", kind: "syntax" },
   "<<": { name: "open list", glyph: "⟨", kind: "syntax" },
