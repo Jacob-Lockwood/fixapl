@@ -21,7 +21,8 @@ type SyntaxName = {
 };
 type TokenKind =
   | keyof Omit<typeof basic & SyntaxName, "other" | "semi">
-  | PrimitiveKind;
+  | PrimitiveKind
+  | "constant";
 export type Token = { kind: TokenKind; line: number; image: string };
 export function lex(source: string) {
   const o: Token[] = [];
@@ -140,6 +141,9 @@ export class Parser {
       return this.array();
     } else if (tok.kind === "open list") {
       return this.list();
+    } else if (tok.kind === "constant") {
+      this.i++;
+      return { kind: "glyph reference", arity: 0, glyph: tok.image };
     } else if (tok.kind.includes("function")) {
       this.i++;
       return {
@@ -210,14 +214,14 @@ export class Parser {
     }
   }
   modifierExpression() {
-    let p = this.primary();
+    let p = this.strand();
     if (!p) return;
     while (true) {
       p = this.monadicModifierStack(p);
       const tok = this.tokens[this.i];
       if (tok?.kind !== "dyadic modifier") return p;
       this.i++;
-      const r = this.primary();
+      const r = this.strand();
       if (!r)
         throw this.expected("right argument to dyadic modifier", this.tok());
       p = { kind: "dyadic modifier", glyph: tok.image, fns: [p!, r] };
@@ -225,13 +229,13 @@ export class Parser {
   }
   strand(): AstNode | void {
     const values: AstNode[] = [];
-    let m = this.modifierExpression();
+    let m = this.primary();
     while (m) {
       values.push(m);
       const t = this.tok();
       if (t?.kind !== "ligature") break;
       this.i++;
-      m = this.modifierExpression();
+      m = this.primary();
       if (!m) {
         throw this.error("strand cannot end with a ligature");
       }
@@ -243,7 +247,7 @@ export class Parser {
   expression(): AstNode | void {
     const values: AstNode[] = [];
     while (true) {
-      const m = this.strand();
+      const m = this.modifierExpression();
       if (!m) break;
       values.push(m);
     }
@@ -294,6 +298,7 @@ export class Visitor {
         })),
       };
     } else if (node.kind === "glyph reference") {
+      if (node.arity === 0) return primitiveByGlyph(node.glyph)();
       return F(node.arity, primitiveByGlyph(node.glyph));
     } else if (node.kind === "monadic modifier") {
       return primitiveByGlyph(node.glyph)(this.visit(node.fn));

@@ -10,6 +10,7 @@ const glyphColors = {
   "monadic modifier": "text-yellow-400",
   "dyadic modifier": "text-purple-300",
   syntax: "text-gray-300",
+  constant: "text-orange-400",
 };
 
 export const Highlight: Component<{
@@ -22,6 +23,7 @@ export const Highlight: Component<{
       case "dyadic function":
       case "monadic modifier":
       case "dyadic modifier":
+      case "constant":
         const color = glyphColors[kind];
         const { name } = Object.values(glyphs).find((d) => d.glyph === image)!;
         return (
@@ -149,7 +151,7 @@ export function Repl() {
               {(result) => (
                 <li>
                   <pre
-                    class="min-w-max bg-teal-900/20 pl-[8ch] selection:!bg-black/30 hover:bg-teal-900/50"
+                    class="min-w-max bg-teal-900/20 pl-[8ch] selection:!bg-black/50 hover:bg-teal-900/50"
                     onClick={(e) => {
                       textarea.parentElement!.dataset.value = textarea.value ||=
                         e.currentTarget.textContent ?? "";

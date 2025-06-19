@@ -20,7 +20,7 @@ export function display(val: Val): string {
     return `⟨${val.data.map(display).join(", ")}⟩`;
   }
   if (val.shape.includes(0)) return `[shape ${val.shape.join("×")}]`;
-  const c = cells(val, -1).data;
+  const c = cells(val).data;
   return `[${c.map(display).join(", ")}]`;
 }
 
@@ -56,7 +56,7 @@ function each(fn: (...x: Val[]) => Val, ...v: Val[]): Val {
     return A(y.shape, d);
   } else return fn(x, y);
 }
-function cells(arr: Val, r: number) {
+function cells(arr: Val, r = -1) {
   if (arr.kind !== "array") return A([1], [arr]);
   if (r === 0) return arr;
   const frame = arr.shape.slice(0, -r);
@@ -69,21 +69,6 @@ function cells(arr: Val, r: number) {
     data.push(A(cell, chunk));
   }
   return A(frame, data);
-}
-function rank(x: Val, y: Val) {
-  if (x.kind !== "function") throw new Error("X must be function");
-  if (y.kind === "number") y = A([1], [y]);
-  if (
-    y.kind !== "array" ||
-    y.shape.length !== 1 ||
-    y.shape[0] === 0 ||
-    !y.data.every((v) => v.kind === "number" && Number.isInteger(v.data))
-  )
-    throw new Error("Rank must be an integer or non-empty integer vector");
-  const r = y.data.map((v) => v.data as number);
-  return F(x.arity, (...xs: Val[]) =>
-    mer.def(each(x.data, ...xs.map((x, i) => cells(x, r[i] ?? r[0])))),
-  );
 }
 function recur(fn: (g: (...xs: Val[]) => Val, ...xs: Val[]) => Val) {
   return function g(...xs: Val[]) {
@@ -121,20 +106,33 @@ const metaEntry =
   (
     glyph: string,
     name: string,
-    fn: (err: (s: string) => Error) => (...xs: Val[]) => Val,
+    fn: (
+      err: (s: string) => Error,
+      r: Record<"err1" | "err2", (s: string) => Error>,
+    ) => (...xs: Val[]) => Val,
   ): Entry => {
     order.push(glyph);
-    return {
-      kind,
-      glyph,
-      name,
-      def: fn((s) => new Error(err(glyph) + ": " + s)),
-    };
+    const e = err(glyph);
+    const e1 = `(${e})y`;
+    const e2 = `x${e1}`;
+    const [f, err1, err2] = [e, e1, e2].map(
+      (s) => (m: string) => new Error(s + ": " + m),
+    );
+    return { kind, glyph, name, def: fn(f, { err1, err2 }) };
   };
 const df = metaEntry("dyadic function", (g) => `x${g}y`);
 const mf = metaEntry("monadic function", (g) => `${g}y`);
 const dm = metaEntry("dyadic modifier", (g) => `X${g}Y`);
 const mm = metaEntry("monadic modifier", (g) => `X${g}`);
+
+const ct = (glyph: string, name: string, def: () => Val) => {
+  order.push(glyph);
+  return { kind: "constant" as const, glyph, name, def };
+};
+
+export const inf = ct("∞", "infinity", () => N(Infinity));
+export const pi = ct("π", "pi", () => N(Math.PI));
+export const tau = ct("τ", "pi", () => N(Math.PI * 2));
 
 export const eq = df("=", "equal", () =>
   pervasive((x, y) => {
@@ -343,14 +341,14 @@ export const mer = mf("⊡", "merge", (err) => (y) => {
 export const gru = mf("⍋", "grade up", (err) => (y) => {
   if (y.kind !== "array" || y.shape.length < 1)
     throw err("Grade argument must have at least rank 1");
-  const { shape, data: d } = cells(y, -1);
+  const { shape, data: d } = cells(y);
   const s = d.map((_, i) => i).sort((a, b) => compare(d[a], d[b]));
   return A(shape, s.map(N));
 });
 export const grd = mf("⍒", "grade down", (err) => (y) => {
   if (y.kind !== "array" || y.shape.length < 1)
     throw err("Grade argument must have at least rank 1");
-  const { shape, data: d } = cells(y, -1);
+  const { shape, data: d } = cells(y);
   const s = d.map((_, i) => i).sort((a, b) => -compare(d[a], d[b]));
   return A(shape, s.map(N));
 });
@@ -418,7 +416,7 @@ export const res = df("⍴", "reshape", (err) => (x, y) => {
 });
 export const rpl = df("⌿", "replicate", (err) => (x, y) => {
   if (y.kind !== "array") throw err("y must be an array");
-  const cel = cells(y, -1);
+  const cel = cells(y);
   const isOk = (v: Val) =>
     v.kind === "number" && v.data >= 0 && Number.isInteger(v.data);
   if (
@@ -438,7 +436,7 @@ export const rpl = df("⌿", "replicate", (err) => (x, y) => {
 });
 export const sel = df("⊇", "select", (err) => (x, y) => {
   if (y.kind !== "array") throw err("y must be an array");
-  const c = cells(y, -1);
+  const c = cells(y);
   const len = y.shape[0];
   return each((v) => {
     if (v.kind !== "number") throw err("Cannot select non-number");
@@ -475,7 +473,7 @@ export const tak = df("↑", "take", (err) =>
   recur((take, x, y) => {
     if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") {
-      const cel = cells(y, -1);
+      const cel = cells(y);
       const len = y.shape[0];
       if (x.data > len || x.data < -len)
         throw err(`Take amount outside of bounds for length ${len}`);
@@ -489,7 +487,7 @@ export const tak = df("↑", "take", (err) =>
       if (x.data.length === 1) return arr;
       return map(
         (z) => take(A([x.shape[0] - 1], x.data.slice(1)), z),
-        cells(arr, -1),
+        cells(arr),
       );
     } else throw err("Invalid x");
   }),
@@ -498,7 +496,7 @@ export const dro = df("↓", "drop", (err) =>
   recur((drop, x, y) => {
     if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") {
-      const cel = cells(y, -1);
+      const cel = cells(y);
       const len = y.shape[0];
       if (x.data > len || x.data < -len)
         throw err(`Take amount outside of bounds for length ${len}`);
@@ -512,7 +510,7 @@ export const dro = df("↓", "drop", (err) =>
       if (x.data.length === 1) return arr;
       return map(
         (z) => drop(A([x.shape[0] - 1], x.data.slice(1)), z),
-        cells(arr, -1),
+        cells(arr),
       );
     } else throw err("Invalid x");
   }),
@@ -521,7 +519,7 @@ export const rot = df("⌽", "rotate", (err) =>
   recur((rot, x, y) => {
     if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") {
-      const cel = cells(y, -1);
+      const cel = cells(y);
       const len = y.shape[0];
       const rot = (x.data % len) + (x.data < 0 ? len : 0);
       const d = cel.data.slice(rot).concat(cel.data.slice(0, rot));
@@ -534,13 +532,13 @@ export const rot = df("⌽", "rotate", (err) =>
       if (x.data.length === 1) return arr;
       return map(
         (z) => rot(A([x.shape[0] - 1], x.data.slice(1)), z),
-        cells(arr, -1),
+        cells(arr),
       );
     } else throw err("Invalid x");
   }),
 );
 export const gro = df("⊔", "group", (err) => (x, y) => {
-  const cel = cells(y, -1);
+  const cel = cells(y);
   const [len] = cel.shape;
   if (
     x.kind !== "array" ||
@@ -562,51 +560,51 @@ export const gro = df("⊔", "group", (err) => (x, y) => {
   return fromCells(buckets.map(fromCells));
 });
 
-export const slf = mm("⍨", "self/const1", () => (y) => {
-  return F(1, y.kind === "function" ? (v) => y.data(v, v) : (_) => y);
+export const slf = mm("⍨", "self/const1", () => (X) => {
+  return F(1, X.kind === "function" ? (v) => X.data(v, v) : (_) => X);
 });
-export const bac = mm("˜", "backward/const2", () => (y) => {
-  return F(2, y.kind === "function" ? (g, h) => y.data(h, g) : (_) => y);
+export const bac = mm("˜", "backward/const2", () => (X) => {
+  return F(2, X.kind === "function" ? (g, h) => X.data(h, g) : (_) => X);
 });
-export const cel = mm("◡", "cells", () => (y) => rank(y, N(-1)));
-export const con = mm("⊙", "contents", (err) => (y) => {
-  if (y.kind !== "function") throw err("X contents must be a function");
-  return F(y.arity, (...v) => y.data(...v.map((x) => x && disclose(x))));
+export const cel = mm("◡", "cells", () => (X) => rnk.def(X, N(-1)));
+export const con = mm("⊙", "contents", (err) => (X) => {
+  if (X.kind !== "function") throw err("X must be a function");
+  return F(X.arity, (...v) => X.data(...v.map((z) => z && disclose(z))));
 });
-export const eac = mm("¨", "each", (err) => (y) => {
-  if (y.kind !== "function") throw err("X must be a function");
-  return F(y.arity, (...x) => each(y.data, ...x));
+export const eac = mm("¨", "each", (err) => (X) => {
+  if (X.kind !== "function") throw err("X must be a function");
+  return F(X.arity, (...x) => each(X.data, ...x));
 });
-export const red = mm("/", "reduce", (err) => (y) => {
-  if (y.kind !== "function" || y.arity !== 2)
+export const red = mm("/", "reduce", (err, { err1 }) => (X) => {
+  if (X.kind !== "function" || X.arity !== 2)
     throw err("X must be a dyadic function");
-  return F(1, (x) => {
-    if (x.kind !== "array") return x;
-    if (x.data.length === 0) throw err("Cannot reduce empty array");
-    const c = cells(x, -1);
-    return c.data.reduce((acc, val) => y.data(acc, val));
+  return F(1, (y) => {
+    if (y.kind !== "array") return y;
+    if (y.data.length === 0) throw err1("y may not be empty");
+    const c = cells(y);
+    return c.data.reduce((acc, val) => X.data(acc, val));
   });
 });
-export const sca = mm("\\", "scan", (err) => (y) => {
-  if (y.kind !== "function" || y.arity !== 2)
+export const sca = mm("\\", "scan", (err, { err1 }) => (X) => {
+  if (X.kind !== "function" || X.arity !== 2)
     throw err("X must be a dyadic function");
-  return F(1, (x) => {
-    if (x.kind !== "array") throw err(`Cannot scan ${x.kind}`);
-    const cel = cells(x, -1);
+  return F(1, (y) => {
+    if (y.kind !== "array") throw err1(`y must be an array`);
+    const cel = cells(y);
     const o = [cel.data[0]];
     for (let i = 1, acc = cel.data[0]; i < cel.shape[0]; i++) {
-      o.push((acc = y.data(acc, cel.data[i])));
+      o.push((acc = X.data(acc, cel.data[i])));
     }
     return A(cel.shape, o);
   });
 });
-export const fol = mm("⫽", "fold", (err) => (y) => {
-  if (y.kind !== "function" || y.arity !== 2)
+export const fol = mm("⫽", "fold", (err, { err2 }) => (X) => {
+  if (X.kind !== "function" || X.arity !== 2)
     throw err("X must be a dyadic function");
   return F(2, (v, w) => {
-    if (w.kind !== "array") throw err(`Cannot reduce ${w.kind}`);
-    const c = cells(w, -1);
-    return c.data.reduce((acc, val) => y.data(acc, val), v);
+    if (w.kind !== "array") throw err2(`y must be an array`);
+    const c = cells(w);
+    return c.data.reduce((acc, val) => X.data(acc, val), v);
   });
 });
 export const tab = mm("⊞", "table", (err) => (y) => {
@@ -616,19 +614,19 @@ export const tab = mm("⊞", "table", (err) => (y) => {
     const sv = v.kind === "array" ? v.shape.slice(0, 1) : [];
     const sw = w.kind === "array" ? w.shape.slice(0, 1) : [];
     const shape = sv.concat(sw);
-    const cv = cells(v, -1);
-    const cw = cells(w, -1);
+    const cv = cells(v);
+    const cw = cells(w);
     const o = [];
     for (const h of cv.data) for (const g of cw.data) o.push(y.data(h, g));
     return A(shape, o);
   });
 });
-export const win = mm("⊕", "windows", (err) => (X) => {
+export const win = mm("⊕", "windows", (err, { err1, err2 }) => (X) => {
   if (X.kind !== "function") throw err("X must be a function");
   if (X.arity === 2)
     return F(1, (w) => {
-      if (w.kind !== "array") throw err("Windows must be given an array");
-      const { data } = cells(w, -1);
+      if (w.kind !== "array") throw err1("y must be an array");
+      const { data } = cells(w);
       const l = data.length - 1;
       const o = A([l], []);
       for (let i = 1; i <= l; i++) o.data.push(X.data(data[i - 1], data[i]));
@@ -636,86 +634,83 @@ export const win = mm("⊕", "windows", (err) => (X) => {
     });
   else
     return F(2, (v, w) => {
-      if (w.kind !== "array") throw err("Windows must be given an array");
+      if (w.kind !== "array") throw err2("y must be an array");
       if (v.kind === "number") {
         const wn = v.data;
-        const { data } = cells(w, -1);
+        const { data } = cells(w);
         const l = data.length;
-        if (!Number.isInteger(wn) || wn < 2 || wn > l)
-          throw err(
-            "Window amount must be an integer between 2 and the array's length",
-          );
+        if (wn < 1 || !Number.isInteger(wn))
+          throw err2("x must be a positive integer");
+        if (wn > l) return A([0], []);
         const len = 1 + l - wn;
         const o = A([len], []);
         for (let i = 0; i < len; i++)
           o.data.push(X.data(A([wn], data.slice(i, i + wn))));
         return o;
       }
-      throw err("Windows can only take a number for now");
+      throw err2("x can only be a number for now");
     });
 });
-export const rep = mm("↺", "repeat", (err) => (y) => {
-  if (y.kind !== "function") throw err("X must be a function");
-  const fn = y.arity === 2 ? y.data : (_: Val, v: Val) => y.data(v);
-  return F(2, (w, x) => {
-    if (w.kind !== "number" || !(Number.isInteger(w.data) && w.data >= 0))
-      throw err("Repetition count must be a nonnegative integer");
-    let cur: Val = x;
-    for (let i = 0; i < w.data; i++) {
-      cur = fn(N(i), cur);
-    }
+export const rep = mm("↺", "repeat", (err, { err2 }) => (X) => {
+  if (X.kind !== "function") throw err("X must be a function");
+  const fn = X.arity === 2 ? X.data : (_: Val, v: Val) => X.data(v);
+  return F(2, (v, w) => {
+    if (v.kind !== "number" || !Number.isInteger(v.data) || v.data < 0)
+      throw err2("Repetition count must be a nonnegative integer");
+    let cur = w;
+    for (let i = 0; i < v.data; i++) cur = fn(N(i), cur);
     return cur;
   });
 });
 
-export const unt = dm("⍣", "until", (err) => (x, y) => {
-  if (x.kind !== "function" || (y.kind !== "function" && y.kind !== "number"))
-    throw err("Invalid operand types to until");
-  const iter = x.arity === 2 ? x.data : (_: Val, v: Val) => x.data(v);
-  const cond = y.kind === "function" ? y : F(1, () => y);
+export const unt = dm("⍣", "until", (err, r) => (X, Y) => {
+  if (X.kind !== "function") throw err("X must be a function");
+  if (Y.kind !== "function" && Y.kind !== "number")
+    throw err("Y must be a function or number");
+  const iter = X.arity === 2 ? X.data : (_: Val, v: Val) => X.data(v);
+  const cond = Y.kind === "function" ? Y : F(1, () => Y);
+  const e = X.arity === 1 ? r.err1 : r.err2;
   const end = (...v: Val[]) => {
     const r = cond.data(...v);
-    if (r.kind !== "number" && (r.data === 0 || r.data === 1))
-      throw err("Condition function must return a boolean");
-    return r.data;
+    if (r.kind === "number" && (r.data === 0 || r.data === 1)) return r.data;
+    throw e("Condition function must return a boolean");
   };
+  const iterr = (v: Val) =>
+    e(`Maximum iteration count reached; last value:\n${display(v)}`);
   const maxIter = 10000;
   if (cond.arity === 1)
-    return F(x.arity, (v, w) => {
-      let g = x.arity === 1 ? v : w;
+    return F(X.arity, (v, w) => {
+      let g = X.arity === 1 ? v : w;
       for (let i = 0; !end(g); i++) {
-        if (i > maxIter)
-          throw err(
-            `Maximum iteration count reached; last value ${display(g)}`,
-          );
+        if (i > maxIter) throw iterr(g);
         g = iter(v, g);
       }
       return g;
     });
-  return F(x.arity, (v, w) => {
-    let g = x.arity === 1 ? v : w;
+  return F(X.arity, (v, w) => {
+    let g = X.arity === 1 ? v : w;
     let h: Val;
-    let i = 0;
-    for (; i < maxIter; i++) {
+    for (let i = 0; i < maxIter; i++) {
       h = iter(v, g);
       if (end(g, h)) return h;
       i++;
       g = iter(v, h);
       if (end(h, g)) return g;
     }
-    throw err(`Maximum iteration count reached; last value ${display(g)}`);
+    throw iterr(g);
   });
 });
-export const und = dm("⍢", "under", (err) => (x, y) => {
-  if (x.kind !== "function" || y.kind !== "function")
-    throw err("Operands to under must both be functions");
-  const arity = Math.max(x.arity, y.arity);
+export const und = dm("⍢", "under", (err, r) => (X, Y) => {
+  if (X.kind !== "function" || Y.kind !== "function")
+    throw err("X and Y must both be functions");
+  const arity = Math.max(X.arity, Y.arity);
+  const e = arity === 1 ? r.err1 : r.err2;
   return F(arity, (...v) => {
     const arr = v[arity - 1];
-    if (arr.kind !== "array") throw err("Under argument must be an array");
+    if (arr.kind !== "array") throw e("y must be an array");
     const indices = int.def(sha.def(arr));
     const [t, ti] = [arr, indices].map((z) =>
-      y.arity === 1 ? y.data(z) : y.data(v[0], z),
+      Y.arity === 1 ? Y.data(z) : Y.data(v[0], z),
     );
     const isOk = (x: Val) =>
       x.kind === "number" &&
@@ -724,7 +719,7 @@ export const und = dm("⍢", "under", (err) => (x, y) => {
       Number.isInteger(x.data);
     if (isOk(ti)) {
       const i = ti.data as number;
-      const z = x.data(t);
+      const z = X.data(t);
       return A(
         arr.shape,
         arr.data.map((v, x) => (i === x ? z : v)),
@@ -736,10 +731,10 @@ export const und = dm("⍢", "under", (err) => (x, y) => {
         !ti.data.every(isOk) ||
         new Set(ti.data.map((x) => x.data)).size !== ti.data.length
       )
-        throw err("Invalid transformation");
-      const dat = x.data(t);
+        throw e("Invalid transformation");
+      const dat = X.data(t);
       if (dat.kind !== "array" || !match(dat.shape, t.shape))
-        throw err("Function cannot change shape");
+        throw e("Function cannot change shape");
       return each((v) => {
         const i = v.data as number;
         const g = ti.data.findIndex((z) => z.data === i);
@@ -747,16 +742,32 @@ export const und = dm("⍢", "under", (err) => (x, y) => {
         return dat.data[g];
       }, indices);
     } else {
-      throw err("Under transformation must return a number or number array");
+      throw e("Under transformation must return a number or number array");
     }
   });
 });
-export const cho = dm("◶", "choose", (err) => (x, y) => {
-  if (x.kind !== "array" || x.shape.length !== 1)
-    throw err("Left operand to choose must be a list");
-  if (y.kind !== "function")
-    throw err("Right operand to choose must be a function");
-  const fs = [y, ...x.data];
+export const rnk = dm("⍤", "rank", (err) => (X, Y) => {
+  if (X.kind !== "function") throw err("X must be function");
+  if (Y.kind === "number") Y = A([1], [Y]);
+  if (Y.kind !== "array" || Y.shape.length !== 1 || Y.shape[0] === 0)
+    throw err("Y must be a number or non-empty list");
+  const r = Y.data.map((v) => {
+    if (
+      v.kind !== "number" ||
+      (!Number.isInteger(v.data) && Number.isFinite(v.data))
+    )
+      throw err("Y may only contain integers or infinity");
+    return v.data;
+  });
+  return F(X.arity, (...xs: Val[]) =>
+    mer.def(each(X.data, ...xs.map((x, i) => cells(x, r[i] ?? r[0])))),
+  );
+});
+export const dbg = dm("⬚", "debug", () => par.def);
+export const cho = dm("◶", "choose", (err, r) => (X, Y) => {
+  if (X.kind !== "array" || X.shape.length !== 1) throw err("X must be a list");
+  if (Y.kind !== "function") throw err("Y must be a function");
+  const fs = [Y, ...X.data];
   const arity = Math.max(
     1,
     ...fs.map((v) => (v.kind === "function" ? v.arity : 0)),
@@ -768,6 +779,7 @@ export const cho = dm("◶", "choose", (err) => (x, y) => {
         : v.data
       : () => v,
   );
+  const e = arity === 1 ? r.err1 : r.err2;
   return F(arity, (...v) => {
     const idx = cond(...v);
     if (
@@ -776,35 +788,33 @@ export const cho = dm("◶", "choose", (err) => (x, y) => {
       idx.data < 0 ||
       idx.data >= cfs.length
     )
-      throw err("Invalid choose index");
+      throw e("Invalid choose index");
     return cfs[idx.data](...v);
   });
 });
-export const bef = dm("⊸", "before", (err) => (x, y) => {
-  if (y.kind !== "function")
-    throw err("Right operand to before must be a function");
-  if (y.arity === 1) return aft.def(y, x);
-  const l = x.kind === "function" ? x : F(1, () => x);
-  return F(l.arity, (v, w) => y.data(l.data(v, w), l.arity === 1 ? v : w));
+export const bef = dm("⊸", "before", (err) => (X, Y) => {
+  if (Y.kind !== "function") throw err("Y must be a function");
+  if (Y.arity === 1) return aft.def(Y, X);
+  const l = X.kind === "function" ? X : F(1, () => X);
+  return F(l.arity, (v, w) => Y.data(l.data(v, w), l.arity === 1 ? v : w));
 });
-export const aft = dm("⟜", "after", (err) => (x, y) => {
-  if (x.kind !== "function")
-    throw err("Left operand to after must be a dyadic function");
-  if (y.kind !== "function") {
-    if (x.arity === 1) return x.data(y);
-    return F(1, (v) => x.data(v, y));
+export const aft = dm("⟜", "after", (err) => (X, Y) => {
+  if (X.kind !== "function") throw err("X must be a function");
+  if (Y.kind !== "function") {
+    if (X.arity === 1) return X.data(Y);
+    return F(1, (v) => X.data(v, Y));
   }
-  if (x.arity === 1) return F(y.arity, (...v) => x.data(y.data(...v)));
-  return F(2, (v, w) => x.data(v, y.arity === 1 ? y.data(w) : y.data(v, w)));
+  if (X.arity === 1) return F(Y.arity, (...v) => X.data(Y.data(...v)));
+  return F(2, (v, w) => X.data(v, Y.arity === 1 ? Y.data(w) : Y.data(v, w)));
 });
-export const ov = dm("○", "over", (err) => (x, y) => {
-  if (x.kind !== "function" || y.kind !== "function")
-    throw err("Operands to over must both be functions");
-  if (x.arity !== 2) throw err("Left operand to over must be dyadic");
-  return F(2, (n, m) =>
-    y.arity === 1
-      ? x.data(y.data(n), y.data(m))
-      : x.data(y.data(m, n), y.data(n, m)),
+export const ov = dm("○", "over", (err) => (X, Y) => {
+  if (X.kind !== "function" || Y.kind !== "function")
+    throw err("X and Y must both be functions");
+  if (X.arity !== 2) throw err("X must be dyadic");
+  return F(2, (v, w) =>
+    Y.arity === 1
+      ? X.data(Y.data(v), Y.data(w))
+      : X.data(Y.data(w, v), Y.data(v, w)),
   );
 });
 

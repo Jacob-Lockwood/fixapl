@@ -13,7 +13,7 @@ export const prims = Object.fromEntries(
 
 export type PrimitiveKind = `${"mon" | "dy"}adic ${"function" | "modifier"}`;
 
-type GlyphKind = PrimitiveKind | "syntax";
+type GlyphKind = PrimitiveKind | "syntax" | "constant";
 export const glyphs = {
   ...prims,
 
