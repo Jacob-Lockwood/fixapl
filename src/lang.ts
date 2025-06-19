@@ -9,7 +9,7 @@ const basic = {
   identifier: /^[A-Z][A-Za-z]*/,
   number: /^\d+(\.\d+)?/,
   semi: /^;/,
-  comment: /^#.*/m,
+  comment: /^⍝.*/m,
   space: /^ +/,
   newline: /^\n/,
   other: /^[^'"A-Z# \n]+/,
@@ -29,6 +29,7 @@ export function lex(source: string) {
   let line = 1;
   lex: while (source.length) {
     const cur = source.slice(0, 10);
+    if (source[0] === "#") source = glyphs["#"].glyph + source.slice(1);
     findtok: for (const [bkind, reg] of Object.entries(basic)) {
       const mat = source.match(reg);
       if (!mat) continue;
