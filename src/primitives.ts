@@ -438,10 +438,10 @@ export const rpl = df("⌿", "replicate", (err) => (x, y) => {
   );
   if (amounts.length > cel.shape[0])
     throw err("Replicate amount may not be longer than array");
-  return A(
-    cel.shape,
-    cel.data.flatMap((x, i) => Array(amounts[i % amounts.length]).fill(x)),
+  const dat = cel.data.flatMap(
+    (x, i) => Array(amounts[i % amounts.length]).fill(x) as Val[],
   );
+  return A([dat.length], dat);
 });
 export const sel = df("⊇", "select", (err) => (x, y) => {
   if (y.kind !== "array") throw err("y must be an array");
