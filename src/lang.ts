@@ -1,4 +1,4 @@
-import { Val, F, A, match } from "./util";
+import { Val, F, A, match, N } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
 function primitiveByGlyph(s: string) {
   return Object.values(prims).find((v) => v.glyph === s)!.def;
@@ -102,7 +102,9 @@ type AstNode =
   | { kind: "expression"; values: AstNode[] }
   | { kind: "strand"; values: AstNode[] }
   | { kind: "array"; values: AstNode[] }
-  | { kind: "list"; values: AstNode[] };
+  | { kind: "list"; values: AstNode[] }
+  | { kind: "dfn"; def: AstNode }
+  | { kind: "dfn arg"; left: boolean };
 
 export class Parser {
   private i = 0;
@@ -140,6 +142,9 @@ export class Parser {
         kind: "character",
         value: str.codePointAt(0)!,
       };
+    } else if (tok.kind.includes("dfn argument")) {
+      this.i++;
+      return { kind: "dfn arg", left: tok.image === "x" };
     } else if (tok.kind === "identifier") {
       this.i++;
       return { kind: "reference", name: tok.image };
@@ -149,6 +154,8 @@ export class Parser {
       return this.array();
     } else if (tok.kind === "open list") {
       return this.list();
+    } else if (tok.kind === "open dfn") {
+      return this.dfn();
     } else if (tok.kind === "constant") {
       this.i++;
       return { kind: "glyph reference", arity: 0, glyph: tok.image };
@@ -166,9 +173,8 @@ export class Parser {
     const expr = this.expression();
     if (!expr) throw this.error("Parentheses may not be empty");
     const tok = this.tok();
-    if (tok?.kind !== "close parenthesis") {
+    if (tok?.kind !== "close parenthesis")
       throw this.expected("closing parenthesis", tok);
-    }
     this.i++;
     return expr;
   }
@@ -211,6 +217,15 @@ export class Parser {
       if (!m) throw this.expected("expression after separator", this.tok());
     }
     return { kind: "array", values };
+  }
+  dfn(): AstNode {
+    this.i++;
+    const m = this.expression();
+    if (!m) throw this.expected("dfn body", this.tok());
+    const tok = this.tok();
+    if (tok?.kind !== "close dfn") throw this.expected("close dfn", tok);
+    this.i++;
+    return { kind: "dfn", def: m };
   }
   monadicModifierStack(p: AstNode | void) {
     if (!p) return;
@@ -293,6 +308,7 @@ export class Parser {
 export class Visitor {
   public bindings = new Map<string, Val>();
   private thisBinding?: [string, number];
+  private dfns?: Val[];
   visit(node: AstNode): Val {
     if (node.kind === "number" || node.kind === "character") {
       return { kind: node.kind, data: node.value };
@@ -406,6 +422,30 @@ export class Visitor {
       this.thisBinding = undefined;
       this.bindings.set(node.name, v);
       return v;
+    } else if (node.kind === "dfn") {
+      function getArity(node: AstNode): number {
+        if (node.kind === "dfn arg") return node.left ? 2 : 1;
+        if (
+          node.kind === "expression" ||
+          node.kind === "array" ||
+          node.kind === "list" ||
+          node.kind === "strand"
+        )
+          return node.values.map(getArity).reduce((x, y) => Math.max(x, y));
+        return 1;
+      }
+      const arity = getArity(node.def);
+      return F(arity, (...v) => {
+        const temp = this.dfns?.slice();
+        this.dfns = arity === 1 ? [N(0), v[0]] : v;
+        const e = this.visit(node.def);
+        this.dfns = temp;
+        return e;
+      });
+    } else if (node.kind === "dfn arg") {
+      if (!this.dfns)
+        throw new Error("Cannot reference dfn argument outside dfn");
+      return node.left ? this.dfns[0] : this.dfns[1];
     }
     throw new Error(
       "Interpreter error! Please report this as a bug!" +

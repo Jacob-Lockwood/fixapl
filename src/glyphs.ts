@@ -20,6 +20,8 @@ export const glyphs = {
   ")": { name: "close parenthesis", glyph: ")", kind: "syntax" },
   "{": { name: "open dfn", glyph: "{", kind: "syntax" },
   "}": { name: "close dfn", glyph: "}", kind: "syntax" },
+  x: { name: "left dfn argument", glyph: "x", kind: "syntax" },
+  y: { name: "right dfn argument", glyph: "y", kind: "syntax" },
   "[": { name: "open array", glyph: "[", kind: "syntax" },
   "]": { name: "close array", glyph: "]", kind: "syntax" },
   "<<": { name: "open list", glyph: "⟨", kind: "syntax" },

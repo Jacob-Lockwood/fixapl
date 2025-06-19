@@ -51,6 +51,9 @@ export const Highlight: Component<{
         return <span class="text-orange-400">{image}</span>;
       case "comment":
         return <span class="text-stone-400 italic">{image}</span>;
+      case "left dfn argument":
+      case "right dfn argument":
+        return <span class="text-red-400">{image}</span>;
       default:
         return <span class={glyphColors.syntax}>{image}</span>;
     }
