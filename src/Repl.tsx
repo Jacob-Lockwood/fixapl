@@ -177,8 +177,8 @@ export function Repl() {
                       )}
                     </code>
                   </pre>
-                  {result.output ? (
-                    <pre class="text-green-300">{result.output}</pre>
+                  {result.output !== null ? (
+                    <pre class="min-h-7 text-green-300">{result.output}</pre>
                   ) : (
                     <pre class="text-red-300">{result.error}</pre>
                   )}
