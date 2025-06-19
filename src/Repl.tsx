@@ -49,6 +49,8 @@ export const Highlight: Component<{
         return <span class="text-teal-300">{image}</span>;
       case "number":
         return <span class="text-orange-400">{image}</span>;
+      case "comment":
+        return <span class="text-stone-400 italic">{image}</span>;
       default:
         return <span class={glyphColors.syntax}>{image}</span>;
     }

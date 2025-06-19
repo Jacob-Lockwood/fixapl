@@ -47,6 +47,13 @@ export function lex(source: string) {
           m = m.slice(num[0].length);
           continue other;
         }
+        const brack = m.match(/^(<<|>>)/);
+        if (brack) {
+          const g = glyphs[brack[0] as "<<" | ">>"];
+          o.push({ kind: g.name, line, image: g.glyph });
+          m = m.slice(brack[0].length);
+          continue other;
+        }
         const en = Object.entries(glyphs).find(
           ([alias, { glyph }]) => m.startsWith(glyph) || m.startsWith(alias),
         );
@@ -400,7 +407,9 @@ export class Visitor {
       return v;
     }
     throw new Error(
-      "in 'visit' -- node: " + "\n" + JSON.stringify(node, null, 2),
+      "Interpreter error! Please report this as a bug!" +
+        "\n" +
+        JSON.stringify(node, null, 2),
     );
   }
 }
