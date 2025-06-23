@@ -140,11 +140,6 @@ const ct = (glyph: string, name: string, def: () => Val) => {
   return { kind: "constant" as const, glyph, name, def };
 };
 
-export const inf = ct("∞", "infinity", () => N(Infinity));
-export const pi = ct("π", "pi", () => N(Math.PI));
-export const tau = ct("τ", "pi", () => N(Math.PI * 2));
-export const emp = ct("⍬", "empty vector", () => A([0], []));
-
 export const eq = df("=", "equal", () =>
   pervasive((x, y) => {
     if (x.kind === "function" || y.kind === "function") return N(0);
@@ -860,3 +855,8 @@ export const ov = dm("○", "over", (err) => (X, Y) => {
 export const lft = df("⊣", "left argument", () => (x, _) => x);
 export const rgt = df("⊢", "right argument", () => (_, y) => y);
 export const id = mf("⋅", "identity", () => (y) => y);
+
+export const inf = ct("∞", "infinity", () => N(Infinity));
+export const pi = ct("π", "pi", () => N(Math.PI));
+export const tau = ct("τ", "pi", () => N(Math.PI * 2));
+export const emp = ct("⍬", "empty vector", () => A([0], []));

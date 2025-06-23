@@ -12,7 +12,7 @@ const basic = {
   comment: /^⍝.*/m,
   space: /^ +/,
   newline: /^\n/,
-  other: /^[^'"A-Z# \n]+/,
+  other: /^[^'"A-Z# \n;]+/,
 };
 type SyntaxName = {
   [K in keyof typeof glyphs as (typeof glyphs)[K]["kind"] extends "syntax"
