@@ -96,7 +96,12 @@ export function Repl() {
       tokens = lex(source);
       const t = tokens.filter((x) => !"whitespace,comment".includes(x.kind));
       const p = new Parser(t).program();
-      output = p.map((e) => display(visitor.visit(e))).join("\n");
+      output = p
+        .map((e) => {
+          const v = visitor.visit(e);
+          return display(v.kind === "function" && v.arity === 0 ? v.data() : v);
+        })
+        .join("\n");
     } catch (e) {
       error = e instanceof Error ? e.message : e + "";
       console.error(e);

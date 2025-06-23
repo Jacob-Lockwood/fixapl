@@ -305,6 +305,8 @@ export class Parser {
   }
 }
 
+export const execnoad = (v: Val): Val =>
+  v.kind === "function" && v.arity === 0 ? execnoad(v.data()) : v;
 export class Visitor {
   public bindings = new Map<string, Val>();
   private thisBinding?: [string, number];
@@ -325,10 +327,10 @@ export class Visitor {
       if (node.arity === 0) return primitiveByGlyph(node.glyph)();
       return F(node.arity, primitiveByGlyph(node.glyph));
     } else if (node.kind === "monadic modifier") {
-      return primitiveByGlyph(node.glyph)(this.visit(node.fn));
+      return primitiveByGlyph(node.glyph)(execnoad(this.visit(node.fn)));
     } else if (node.kind === "dyadic modifier") {
       return primitiveByGlyph(node.glyph)(
-        ...node.fns.map((f) => this.visit(f)),
+        ...node.fns.map((f) => execnoad(this.visit(f))),
       );
     } else if (node.kind === "expression") {
       const tines = node.values.map((n) => this.visit(n));
@@ -360,8 +362,7 @@ export class Visitor {
         if (!n) {
           t ??= F(1, (y) => y);
           const s = t.kind === "function" ? t : F(0, () => t);
-          const g = fns.reduceRight((r, fn) => fn(r), s);
-          return g.arity === 0 ? g.data() : g;
+          return fns.reduceRight((r, fn) => fn(r), s);
         }
         if (n.kind === "function" && n.arity === 2) {
           i++;
@@ -373,13 +374,13 @@ export class Visitor {
     } else if (node.kind === "strand" || node.kind === "list") {
       return A(
         [node.values.length],
-        node.values.map((v) => this.visit(v)),
+        node.values.map((v) => execnoad(this.visit(v))),
       );
     } else if (node.kind === "array") {
       if (node.values.length === 0) {
         throw new Error("Square brackets may not be empty");
       }
-      const v = node.values.map((n) => this.visit(n));
+      const v = node.values.map((n) => execnoad(this.visit(n)));
       if (v.every((d) => d.kind === "array")) {
         if (v.every((x, i) => match(x.shape, v[++i % v.length].shape))) {
           return A(
@@ -449,7 +450,7 @@ export class Visitor {
     }
     throw new Error(
       "Interpreter error! Please report this as a bug!" +
-        "\n" +
+        "current node: \n" +
         JSON.stringify(node, null, 2),
     );
   }

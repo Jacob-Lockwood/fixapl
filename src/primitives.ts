@@ -855,6 +855,15 @@ export const ov = dm("○", "over", (err) => (X, Y) => {
 export const lft = df("⊣", "left argument", () => (x, _) => x);
 export const rgt = df("⊢", "right argument", () => (_, y) => y);
 export const id = mf("⋅", "identity", () => (y) => y);
+export const sb = mm("₀", "subject", () => (X) => F(0, () => X));
+export const mn = mm("₁", "monad", (err) => (X) => {
+  if (X.kind === "function" && X.arity === 1) return X;
+  throw err("X must be a monadic function");
+});
+export const dy = mm("₂", "dyad", (err) => (X) => {
+  if (X.kind === "function" && X.arity === 2) return X;
+  throw err("X must be a dyadic function");
+});
 
 export const inf = ct("∞", "infinity", () => N(Infinity));
 export const pi = ct("π", "pi", () => N(Math.PI));
