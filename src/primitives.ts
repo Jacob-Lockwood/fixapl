@@ -24,7 +24,17 @@ export function display(val: Val): string {
   return `[${c.map(display).join(", ")}]`;
 }
 
-const fromCells = (arr: Val[]) => A([arr.length], arr);
+const list = (arr: Val[]) => A([arr.length], arr);
+function fromCells(arr: Val[]) {
+  const isA = arr[0].kind === "array";
+  const sh = isA ? (arr[0] as Val & { kind: "array" }).shape : [];
+  const d = arr.flatMap((v) => {
+    if (!isA && v.kind !== "array") return v;
+    if (isA && v.kind === "array" && match(sh, v.shape)) return v.data;
+    throw new Error("Cannot construct array from cells whose shapes differ");
+  });
+  return A([arr.length, ...sh], d);
+}
 function map(fn: (...v: Val[]) => Val, ...arrs: (Val & { kind: "array" })[]) {
   const shape = arrs[0].shape;
   const d = arrs[0].data.map((v, i) => fn(v, arrs[1]?.data[i]));
@@ -57,11 +67,11 @@ function each(fn: (...x: Val[]) => Val, ...v: Val[]): Val {
   } else return fn(x, y);
 }
 function cells(arr: Val, r = -1) {
-  if (arr.kind !== "array") return A([1], [arr]);
+  if (arr.kind !== "array") return A([], [arr]);
   if (r === 0) return arr;
   const frame = arr.shape.slice(0, -r);
   const cell = arr.shape.slice(-r);
-  if (cell.length === 0) return arr;
+  // if (cell.length === 0) return arr;
   const delta = cell.reduce((a, b) => a * b, 1);
   const data: Val[] = [];
   for (let i = 0; i < arr.data.length; i += delta) {
@@ -339,19 +349,35 @@ export const mer = mf("⊡", "merge", (err) => (y) => {
   const dat = y.data.flatMap((x) => (x.kind === "array" ? x.data : x));
   return A(newsh, dat);
 });
+export const whe = mf("⊚", "where", (err) => (y) => {
+  if (y.kind === "number") y = A([1], [y]);
+  if (y.kind !== "array" || y.shape.length !== 1) throw err("y must be a list");
+  return list(
+    y.data.flatMap((v, i) => {
+      if (v.kind !== "number") throw err("y can only contain numbers");
+      return Array(v.data).fill(N(i)) as Val[];
+    }),
+  );
+});
 export const gru = mf("⍋", "grade up", (err) => (y) => {
-  if (y.kind !== "array" || y.shape.length < 1)
-    throw err("Grade argument must have at least rank 1");
-  const { shape, data: d } = cells(y);
+  // if (y.kind !== "array" || y.shape.length < 1)
+  //   throw err("Grade argument must have at least rank 1");
+  // const { shape, data: d } = cells(y);
+  if (y.kind !== "array" || y.shape.length !== 1)
+    throw err("Grade argument must be a list");
+  const d = y.data;
   const s = d.map((_, i) => i).sort((a, b) => compare(d[a], d[b]));
-  return A(shape, s.map(N));
+  return list(s.map(N));
 });
 export const grd = mf("⍒", "grade down", (err) => (y) => {
-  if (y.kind !== "array" || y.shape.length < 1)
-    throw err("Grade argument must have at least rank 1");
-  const { shape, data: d } = cells(y);
+  // if (y.kind !== "array" || y.shape.length < 1)
+  //   throw err("Grade argument must have at least rank 1");
+  // const { shape, data: d } = cells(y);
+  if (y.kind !== "array" || y.shape.length !== 1)
+    throw err("Grade argument must be a list");
+  const d = y.data;
   const s = d.map((_, i) => i).sort((a, b) => -compare(d[a], d[b]));
-  return A(shape, s.map(N));
+  return list(s.map(N));
 });
 export const sru = mf("⊴", "sort up", () => (y) => sel.def(gru.def(y), y));
 export const srd = mf("⊵", "sort down", () => (y) => sel.def(grd.def(y), y));
@@ -374,7 +400,7 @@ export const mat = df("≡", "match", (err) =>
   }),
 );
 export const nmt = df("≢", "nomatch", () => (x, y) => not.def(mat.def(x, y)));
-export const par = df("⍮", "pair", () => (x, y) => A([2], [x, y]));
+export const pai = df("⍮", "pair", () => (x, y) => A([2], [x, y]));
 export const cat = df("⍪", "catenate", (err) =>
   recur((cat, x, y) => {
     if (x.kind === "array" && y.kind === "array") {
@@ -432,29 +458,32 @@ export const rpl = df("⌿", "replicate", (err) => (x, y) => {
     !isOk(x) &&
     (x.kind !== "array" || (x.shape.length !== 1 && !x.data.every(isOk)))
   )
-    throw err("Invalid replicate amount");
+    throw err("x must be a nonnegative integer or nonnegative integer list");
   const amounts = (x.kind === "array" ? x.data : [x]).map(
     (v) => v.data as number,
   );
   if (amounts.length > cel.shape[0])
     throw err("Replicate amount may not be longer than array");
-  const dat = cel.data.flatMap(
-    (x, i) => Array(amounts[i % amounts.length]).fill(x) as Val[],
-  );
-  return A([dat.length], dat);
+  const d = cel.data.flatMap((v, i) => {
+    const l = amounts[i % amounts.length];
+    return Array(l).fill(v.data).flat() as Val[];
+  });
+  return list(d);
 });
 export const sel = df("⊇", "select", (err) => (x, y) => {
   if (y.kind !== "array") throw err("y must be an array");
   const c = cells(y);
   const len = y.shape[0];
-  return each((v) => {
-    if (v.kind !== "number") throw err("Cannot select non-number");
-    let i = v.data;
-    if (i < 0) i += len;
-    if (i >= len || i < 0)
-      throw err(`Index ${i} out of bounds for length ${len}`);
-    return c.data[i];
-  }, x);
+  return mer.def(
+    each((v) => {
+      if (v.kind !== "number") throw err("Cannot select non-number");
+      let i = v.data;
+      if (i < 0) i += len;
+      if (i >= len || i < 0)
+        throw err(`Index ${i} out of bounds for length ${len}`);
+      return c.data[i];
+    }, x),
+  );
 });
 export const pic = df("⊃", "pick", (err) =>
   recur((pick, x, y) => {
@@ -478,72 +507,58 @@ export const pic = df("⊃", "pick", (err) =>
     } else throw err("Invalid indices to pick");
   }),
 );
-export const tak = df("↑", "take", (err) =>
-  recur((take, x, y) => {
+const eachAxis = (
+  err: (m: string) => Error,
+  fn: (x: Val & { kind: "number" }, y: Val & { kind: "array" }) => Val,
+) =>
+  recur((g, x, y) => {
     if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") {
-      const cel = cells(y);
-      const len = y.shape[0];
-      if (x.data > len || x.data < -len)
-        throw err(`Take amount outside of bounds for length ${len}`);
-      const d = x.data < 0 ? cel.data.slice(x.data) : cel.data.slice(0, x.data);
-      return A(
-        [d.length, ...y.shape.slice(1)],
-        d.flatMap((x) => (x.kind === "array" ? x.data : x)),
-      );
+      return fn(x, y);
     } else if (x.kind === "array" && x.data.every((v) => v.kind === "number")) {
-      const arr = take(x.data[0], y);
+      const arr = g(x.data[0], y);
       if (x.data.length === 1) return arr;
-      return map(
-        (z) => take(A([x.shape[0] - 1], x.data.slice(1)), z),
-        cells(arr),
+      return mer.def(
+        map((z) => g(A([x.shape[0] - 1], x.data.slice(1)), z), cells(arr)),
       );
     } else throw err("Invalid x");
+  });
+export const tak = df("↑", "take", (err) =>
+  eachAxis(err, (x, y) => {
+    const cel = cells(y);
+    const len = y.shape[0];
+    if (x.data > len || x.data < -len)
+      throw err(`Take amount outside of bounds for length ${len}`);
+    const d = x.data < 0 ? cel.data.slice(x.data) : cel.data.slice(0, x.data);
+    return A(
+      [d.length, ...y.shape.slice(1)],
+      d.flatMap((x) => (x.kind === "array" ? x.data : x)),
+    );
   }),
 );
 export const dro = df("↓", "drop", (err) =>
-  recur((drop, x, y) => {
-    if (y.kind !== "array") throw err("y must be an array");
-    if (x.kind === "number") {
-      const cel = cells(y);
-      const len = y.shape[0];
-      if (x.data > len || x.data < -len)
-        throw err(`Take amount outside of bounds for length ${len}`);
-      const d = x.data < 0 ? cel.data.slice(0, x.data) : cel.data.slice(x.data);
-      return A(
-        [d.length, ...y.shape.slice(1)],
-        d.flatMap((x) => (x.kind === "array" ? x.data : x)),
-      );
-    } else if (x.kind === "array" && x.data.every((v) => v.kind === "number")) {
-      const arr = drop(x.data[0], y);
-      if (x.data.length === 1) return arr;
-      return map(
-        (z) => drop(A([x.shape[0] - 1], x.data.slice(1)), z),
-        cells(arr),
-      );
-    } else throw err("Invalid x");
+  eachAxis(err, (x, y) => {
+    const cel = cells(y);
+    const len = y.shape[0];
+    if (x.data > len || x.data < -len)
+      throw err(`Take amount outside of bounds for length ${len}`);
+    const d = x.data < 0 ? cel.data.slice(0, x.data) : cel.data.slice(x.data);
+    return A(
+      [d.length, ...y.shape.slice(1)],
+      d.flatMap((x) => (x.kind === "array" ? x.data : x)),
+    );
   }),
 );
 export const rot = df("⌽", "rotate", (err) =>
-  recur((rot, x, y) => {
-    if (y.kind !== "array") throw err("y must be an array");
-    if (x.kind === "number") {
-      const cel = cells(y);
-      const len = y.shape[0];
-      const rot = (x.data % len) + (x.data < 0 ? len : 0);
-      const d = cel.data.slice(rot).concat(cel.data.slice(0, rot));
-      return A(
-        [d.length, ...y.shape.slice(1)],
-        d.flatMap((x) => (x.kind === "array" ? x.data : x)),
-      );
-    } else if (x.kind === "array" && x.data.every((v) => v.kind === "number")) {
-      const arr = rot(x.data[0], y);
-      if (x.data.length === 1) return arr;
-      return map(
-        (z) => rot(A([x.shape[0] - 1], x.data.slice(1)), z),
-        cells(arr),
-      );
-    } else throw err("Invalid x");
+  eachAxis(err, (x, y) => {
+    const cel = cells(y);
+    const len = y.shape[0];
+    const rot = (x.data % len) + (x.data < 0 ? len : 0);
+    const d = cel.data.slice(rot).concat(cel.data.slice(0, rot));
+    return A(
+      [d.length, ...y.shape.slice(1)],
+      d.flatMap((x) => (x.kind === "array" ? x.data : x)),
+    );
   }),
 );
 export const gro = df("⊔", "group", (err) => (x, y) => {
@@ -559,16 +574,14 @@ export const gro = df("⊔", "group", (err) => (x, y) => {
   const buckets: Val[][] = [];
   for (let i = 0; i < len; i++) {
     const gi = x.data[i].data;
-    if (gi < 0 || gi > len || !Number.isInteger(gi))
-      throw err(
-        "Group indices must be integers between 0 and the array length",
-      );
+    if (gi > len || !Number.isInteger(gi))
+      throw err("Group indices must be integers less than the array length");
+    if (gi < 0) continue;
     if (gi >= buckets.length) while (buckets.length <= gi) buckets.push([]);
     buckets[gi].push(cel.data[i]);
   }
-  return fromCells(buckets.map(fromCells));
+  return list(buckets.map(fromCells));
 });
-
 export const slf = mm("⍨", "self/const1", () => (X) => {
   return F(1, X.kind === "function" ? (v) => X.data(v, v) : (_) => X);
 });
@@ -604,7 +617,7 @@ export const sca = mm("\\", "scan", (err, { err1 }) => (X) => {
     for (let i = 1, acc = cel.data[0]; i < cel.shape[0]; i++) {
       o.push((acc = X.data(acc, cel.data[i])));
     }
-    return A(cel.shape, o);
+    return fromCells(o);
   });
 });
 export const fol = mm("⫽", "fold", (err, { err2 }) => (X) => {
@@ -652,10 +665,10 @@ export const win = mm("⊕", "windows", (err, { err1, err2 }) => (X) => {
           throw err2("x must be a positive integer");
         if (wn > l) return A([0], []);
         const len = 1 + l - wn;
-        const o = A([len], []);
+        const o = [];
         for (let i = 0; i < len; i++)
-          o.data.push(X.data(A([wn], data.slice(i, i + wn))));
-        return o;
+          o.push(X.data(fromCells(data.slice(i, i + wn))));
+        return fromCells(o);
       }
       throw err2("x can only be a number for now");
     });
@@ -768,11 +781,28 @@ export const rnk = dm("⍤", "rank", (err) => (X, Y) => {
       throw err("Y may only contain integers or infinity");
     return v.data;
   });
-  return F(X.arity, (...xs: Val[]) =>
-    mer.def(each(X.data, ...xs.map((x, i) => cells(x, r[i] ?? r[0])))),
-  );
+  return F(X.arity, (...xs: Val[]) => {
+    const cs = xs.map((y, i) => cells(y, r[i] ?? r[0]));
+    console.log(...cs.map(display));
+    return mer.def(each(X.data, ...cs));
+  });
+  // return F(X.arity, (...xs: Val[]) =>
+  //   mer.def(each(X.data, ...xs.map((x, i) => cells(x, r[i] ?? r[0])))),
+  // );
+  /* {
+    const cs = xs.map((x, i) => cells(x, r[i] ?? r[0]));
+    if (cs.length === 2 && !match(cs[0].shape, cs[1].shape))
+      throw err("Cannot apply at rank when cells do not match");
+    const arr = map(X.data, ...cs);
+    const s = shape(arr.data[0]);
+    const dat = arr.data.flatMap((v) => {
+      if (mat.def(s, shape(v)).data === 1) return v;
+      throw err("Cannot merge arrays with mismatched shapes");
+    });
+    return A(arr.shape.concat(s.data.map((v) => v.data as number)), dat);
+  }*/
 });
-export const dbg = dm("⬚", "debug", () => par.def);
+// export const dbg = dm("⬚", "debug", () => pai.def);
 export const cho = dm("◶", "choose", (err, r) => (X, Y) => {
   if (X.kind !== "array" || X.shape.length !== 1) throw err("X must be a list");
   if (Y.kind !== "function") throw err("Y must be a function");
