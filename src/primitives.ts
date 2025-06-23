@@ -857,12 +857,14 @@ export const rgt = df("⊢", "right argument", () => (_, y) => y);
 export const id = mf("⋅", "identity", () => (y) => y);
 export const sb = mm("₀", "subject", () => (X) => F(0, () => X));
 export const mn = mm("₁", "monad", (err) => (X) => {
-  if (X.kind === "function" && X.arity === 1) return X;
-  throw err("X must be a monadic function");
+  if (X.kind !== "function") return F(1, () => X);
+  if (X.arity === 2) throw err("Cannot coerce dyad to monad");
+  return X;
 });
-export const dy = mm("₂", "dyad", (err) => (X) => {
-  if (X.kind === "function" && X.arity === 2) return X;
-  throw err("X must be a dyadic function");
+export const dy = mm("₂", "dyad", () => (X) => {
+  if (X.kind !== "function") return F(2, () => X);
+  if (X.arity === 1) return F(2, (_, y) => X.data(y));
+  return X;
 });
 
 export const inf = ct("∞", "infinity", () => N(Infinity));
