@@ -1,4 +1,4 @@
-import { match, range, A, F, C, N, type Val } from "./util";
+import { match, range, A, F, C, N, type Val, execnoad } from "./util";
 import type { PrimitiveKind } from "./glyphs";
 
 export function display(val: Val): string {
@@ -256,7 +256,7 @@ export const mul = df("×", "multiply", (err) =>
 );
 export const div = df("÷", "divide", (err) =>
   pervasive((x, y) => {
-    if (x.kind === "number" && y.kind === "number") return N(x.data * y.data);
+    if (x.kind === "number" && y.kind === "number") return N(x.data / y.data);
     throw err(`x and y must be numbers`);
   }),
 );
@@ -688,7 +688,7 @@ export const unt = dm("⍣", "until", (err, r) => (X, Y) => {
   const cond = Y.kind === "function" ? Y : F(1, () => Y);
   const e = X.arity === 1 ? r.err1 : r.err2;
   const end = (...v: Val[]) => {
-    const r = cond.data(...v);
+    const r = execnoad(cond.data(...v));
     if (r.kind === "number" && (r.data === 0 || r.data === 1)) return r.data;
     throw e("Condition function must return a boolean");
   };
@@ -713,6 +713,7 @@ export const unt = dm("⍣", "until", (err, r) => (X, Y) => {
       i++;
       g = iter(v, h);
       if (end(h, g)) return g;
+      if (i > maxIter - 10) console.log("g", g, "h", h);
     }
     throw iterr(g);
   });
@@ -727,7 +728,7 @@ export const und = dm("⍢", "under", (err, r) => (X, Y) => {
     if (arr.kind !== "array") throw e("y must be an array");
     const indices = int.def(sha.def(arr));
     const [t, ti] = [arr, indices].map((z) =>
-      Y.arity === 1 ? Y.data(z) : Y.data(v[0], z),
+      execnoad(Y.arity === 1 ? Y.data(z) : Y.data(v[0], z)),
     );
     const isOk = (x: Val) =>
       x.kind === "number" &&
@@ -736,7 +737,7 @@ export const und = dm("⍢", "under", (err, r) => (X, Y) => {
       Number.isInteger(x.data);
     if (isOk(ti)) {
       const i = ti.data as number;
-      const z = X.data(t);
+      const z = execnoad(X.data(t));
       return A(
         arr.shape,
         arr.data.map((v, x) => (i === x ? z : v)),
@@ -749,7 +750,7 @@ export const und = dm("⍢", "under", (err, r) => (X, Y) => {
         new Set(ti.data.map((x) => x.data)).size !== ti.data.length
       )
         throw e("Invalid transformation");
-      const dat = X.data(t);
+      const dat = execnoad(X.data(t));
       if (dat.kind !== "array" || !match(dat.shape, t.shape))
         throw e("Function cannot change shape");
       return each((v) => {
@@ -764,6 +765,7 @@ export const und = dm("⍢", "under", (err, r) => (X, Y) => {
   });
 });
 export const rnk = dm("⍤", "rank", (err) => (X, Y) => {
+  Y = execnoad(Y);
   if (X.kind !== "function") throw err("X must be function");
   if (Y.kind === "number") Y = A([1], [Y]);
   if (Y.kind !== "array" || Y.shape.length !== 1 || Y.shape[0] === 0)
@@ -778,7 +780,6 @@ export const rnk = dm("⍤", "rank", (err) => (X, Y) => {
   });
   return F(X.arity, (...xs: Val[]) => {
     const cs = xs.map((y, i) => cells(y, r[i] ?? r[0]));
-    console.log(...cs.map(display));
     return mer.def(each(X.data, ...cs));
   });
   // return F(X.arity, (...xs: Val[]) =>
@@ -857,11 +858,13 @@ export const rgt = df("⊢", "right argument", () => (_, y) => y);
 export const id = mf("⋅", "identity", () => (y) => y);
 export const sb = mm("₀", "subject", () => (X) => F(0, () => X));
 export const mn = mm("₁", "monad", (err) => (X) => {
+  X = execnoad(X);
   if (X.kind !== "function") return F(1, () => X);
   if (X.arity === 2) throw err("Cannot coerce dyad to monad");
   return X;
 });
 export const dy = mm("₂", "dyad", () => (X) => {
+  X = execnoad(X);
   if (X.kind !== "function") return F(2, () => X);
   if (X.arity === 1) return F(2, (_, y) => X.data(y));
   return X;

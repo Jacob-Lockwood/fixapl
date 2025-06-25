@@ -31,3 +31,5 @@ export const range = (shape: number[]): Val =>
       .fill(0)
       .map((_, i) => N(i)),
   );
+export const execnoad = (v: Val): Val =>
+  v.kind === "function" && v.arity === 0 ? execnoad(v.data()) : v;

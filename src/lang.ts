@@ -1,4 +1,4 @@
-import { Val, F, A, match, N } from "./util";
+import { Val, F, A, match, N, execnoad } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
 function primitiveByGlyph(s: string) {
   return Object.values(prims).find((v) => v.glyph === s)!.def;
@@ -305,12 +305,28 @@ export class Parser {
   }
 }
 
-export const execnoad = (v: Val): Val =>
-  v.kind === "function" && v.arity === 0 ? execnoad(v.data()) : v;
 export class Visitor {
-  public bindings = new Map<string, Val>();
+  public bindings = new Map<string, Val>([
+    [
+      "Print",
+      F(1, (y) => {
+        if (
+          y.kind !== "array" ||
+          y.shape.length !== 1 ||
+          !y.data.every((v) => v.kind === "character")
+        )
+          throw new Error("Print y: y must be a string");
+        this.output +=
+          y.data.map((x) => String.fromCodePoint(x.data)).join("") + "\n";
+        return A([0], []);
+        // if (y.kind !== "string") throw new Error("Print y: y must be a string")
+        // this.output += y.data;
+      }),
+    ],
+  ]);
   private thisBinding?: [string, number];
   private dfns?: Val[];
+  public output: string = "";
   visit(node: AstNode): Val {
     if (node.kind === "number" || node.kind === "character") {
       return { kind: node.kind, data: node.value };
@@ -327,10 +343,10 @@ export class Visitor {
       if (node.arity === 0) return primitiveByGlyph(node.glyph)();
       return F(node.arity, primitiveByGlyph(node.glyph));
     } else if (node.kind === "monadic modifier") {
-      return primitiveByGlyph(node.glyph)(execnoad(this.visit(node.fn)));
+      return primitiveByGlyph(node.glyph)(this.visit(node.fn));
     } else if (node.kind === "dyadic modifier") {
       return primitiveByGlyph(node.glyph)(
-        ...node.fns.map((f) => execnoad(this.visit(f))),
+        ...node.fns.map((f) => this.visit(f)),
       );
     } else if (node.kind === "expression") {
       const tines = node.values.map((n) => this.visit(n));

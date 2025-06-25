@@ -96,12 +96,14 @@ export function Repl() {
       tokens = lex(source);
       const t = tokens.filter((x) => !"whitespace,comment".includes(x.kind));
       const p = new Parser(t).program();
+      visitor.output = "";
       output = p
         .map((e) => {
           const v = visitor.visit(e);
           return display(v.kind === "function" && v.arity === 0 ? v.data() : v);
         })
         .join("\n");
+      output = visitor.output + output;
     } catch (e) {
       error = e instanceof Error ? e.message : e + "";
       console.error(e);
