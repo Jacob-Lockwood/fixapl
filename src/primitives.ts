@@ -427,9 +427,9 @@ export const rpl = df("⌿", "replicate", (err) => async (x, y) => {
     throw err("Replicate amount may not be longer than array");
   const d = cel.data.flatMap((v, i) => {
     const l = amounts[i % amounts.length];
-    return Array(l).fill(v.data).flat() as Val[];
+    return Array(l).fill(v) as Val[];
   });
-  return list(d);
+  return fromCells(d);
 });
 export const sel = df("⊇", "select", (err) => async (x, y) => {
   if (y.kind !== "array") throw err("y must be an array");
