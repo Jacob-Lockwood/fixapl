@@ -103,7 +103,10 @@ export function Repl() {
 
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
   const ctx: ReplContext = {
-    write: (s) => setData("output", (v) => v + s),
+    write: (s) => {
+      setData("output", (v) => v + s);
+      if (s.includes("\b")) new Audio("/wee-wuh.mp3").play();
+    },
     read: async () => prompt("input"),
   };
   const visitor = new Visitor(ctx);
