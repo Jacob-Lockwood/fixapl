@@ -1,5 +1,6 @@
 import { Val, F, A, match, N, execnoad } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
+import quads from "./quads";
 function primitiveByGlyph(s: string) {
   return Object.values(prims).find((v) => v.glyph === s)!.def;
 }
@@ -70,10 +71,16 @@ export function lex(source: string) {
             o.push({ kind: "number", line, image: glyph + n });
             continue other;
           }
-        }
-        if (kind === "syntax") {
+        } else if (kind === "syntax") {
           let image = glyph;
-          if (name === "binding") {
+          if (name === "quad") {
+            const ident = source.match(basic.identifier);
+            if (m === "" && ident) {
+              source = source.slice(ident[0].length);
+              o.push({ kind: name, line, image: glyph + ident[0] });
+              continue other;
+            }
+          } else if (name === "binding") {
             const a = subscripts[subscripts.indexOf(m[0]) % 3] ?? "";
             m = m.slice(a.length);
             image += a;
@@ -87,6 +94,7 @@ export function lex(source: string) {
     }
     throw new Error(`Lexing error on line ${line} near ${cur}`);
   }
+  console.log(o);
   return o;
 }
 
@@ -97,6 +105,7 @@ type AstNode =
   | { kind: "monadic modifier"; glyph: string; fn: AstNode }
   | { kind: "dyadic modifier"; glyph: string; fns: [AstNode, AstNode] }
   | { kind: "reference"; name: string }
+  | { kind: "quad"; name: string }
   | { kind: "glyph reference"; arity: number; glyph: string }
   | { kind: "binding"; name: string; declaredArity: number; value: AstNode }
   | { kind: "expression"; values: AstNode[] }
@@ -148,6 +157,9 @@ export class Parser {
     } else if (tok.kind === "identifier") {
       this.i++;
       return { kind: "reference", name: tok.image };
+    } else if (tok.kind === "quad") {
+      this.i++;
+      return { kind: "quad", name: tok.image.slice(1) };
     } else if (tok.kind === "open parenthesis") {
       return this.parenthesized();
     } else if (tok.kind === "open array") {
@@ -304,29 +316,18 @@ export class Parser {
     return statements;
   }
 }
-
+export type ReplContext = {
+  write: (s: string) => void;
+  read: () => string | null;
+};
 export class Visitor {
-  public bindings = new Map<string, Val>([
-    [
-      "Print",
-      F(1, (y) => {
-        if (
-          y.kind !== "array" ||
-          y.shape.length !== 1 ||
-          !y.data.every((v) => v.kind === "character")
-        )
-          throw new Error("Print y: y must be a string");
-        this.output +=
-          y.data.map((x) => String.fromCodePoint(x.data)).join("") + "\n";
-        return A([0], []);
-        // if (y.kind !== "string") throw new Error("Print y: y must be a string")
-        // this.output += y.data;
-      }),
-    ],
-  ]);
+  public bindings = new Map<string, Val>([]);
   private thisBinding?: [string, number];
   private dfns?: Val[];
-  public output: string = "";
+  public q: ReturnType<typeof quads>;
+  constructor(ctx: ReplContext) {
+    this.q = quads(ctx);
+  }
   visit(node: AstNode): Val {
     if (node.kind === "number" || node.kind === "character") {
       return { kind: node.kind, data: node.value };
@@ -339,6 +340,9 @@ export class Visitor {
           data: c.codePointAt(0)!,
         })),
       };
+    } else if (node.kind === "quad") {
+      if (this.q.has(node.name)) return this.q.get(node.name)!;
+      throw new Error("Unrecognized quad");
     } else if (node.kind === "glyph reference") {
       if (node.arity === 0) return primitiveByGlyph(node.glyph)();
       return F(node.arity, primitiveByGlyph(node.glyph));

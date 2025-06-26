@@ -1,8 +1,10 @@
-import { createSignal, For, Show } from "solid-js";
-import { Visitor, Token, lex, Parser } from "./lang";
+import { Accessor, createSignal, For, Show } from "solid-js";
+import { Visitor, Token, lex, Parser, ReplContext } from "./lang";
 import { display } from "./primitives";
 import { Component } from "solid-js";
 import { glyphs } from "./glyphs";
+import { quadsList } from "./quads";
+import { execnoad, Val } from "./util";
 
 const glyphColors = {
   "monadic function": "text-lime-400",
@@ -31,8 +33,12 @@ export const Highlight: Component<{
             {image}
           </span>
         );
+      case "quad":
       case "identifier":
-        const arity = props.bindings?.get(image);
+        const arity =
+          kind === "quad"
+            ? quadsList.get(image.slice(1))!
+            : props.bindings?.get(image);
         const c = [
           "text-white",
           glyphColors["monadic function"],
@@ -62,9 +68,10 @@ export const Highlight: Component<{
 
 type Result = {
   source: string;
-  tokens: Token[] | null;
-  output: string | null;
-  error: string | null;
+  tokens: Accessor<Token[] | null>;
+  output: Accessor<string>;
+  result: Accessor<Val[]>;
+  error: Accessor<string>;
 };
 
 function setting(name: string, def: boolean) {
@@ -86,29 +93,42 @@ export function Repl() {
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
   const [clearPrompt, setClearPrompt] = setting("clearPrompt", true);
+  let tokens = createSignal<Token[] | null>(null);
+  let output = createSignal("");
+  let result = createSignal<Val[]>([]);
+  let error = createSignal("");
 
-  const visitor = new Visitor();
+  const ctx: ReplContext = {
+    write: (s) => output[1]((v) => v + s),
+    read: () => prompt("input"),
+  };
+
+  const visitor = new Visitor(ctx);
   const process = (source: string) => {
-    let tokens: Token[] | null = null;
-    let output: string | null = null;
-    let error: string | null = null;
+    tokens = createSignal<Token[] | null>(null);
+    output = createSignal("");
+    result = createSignal<Val[]>([]);
+    error = createSignal("");
+    setResults((res) => {
+      const n = {
+        source,
+        tokens: tokens[0],
+        output: output[0],
+        result: result[0],
+        error: error[0],
+      };
+      return [n, ...res];
+    });
     try {
-      tokens = lex(source);
-      const t = tokens.filter((x) => !"whitespace,comment".includes(x.kind));
+      const toks = lex(source);
+      tokens[1](toks);
+      const t = toks.filter((x) => !"whitespace,comment".includes(x.kind));
       const p = new Parser(t).program();
-      visitor.output = "";
-      output = p
-        .map((e) => {
-          const v = visitor.visit(e);
-          return display(v.kind === "function" && v.arity === 0 ? v.data() : v);
-        })
-        .join("\n");
-      output = visitor.output + output;
+      for (const n of p) result[1]((r) => [...r, execnoad(visitor.visit(n))]);
     } catch (e) {
-      error = e instanceof Error ? e.message : e + "";
+      error[1](e instanceof Error ? e.message : e + "");
       console.error(e);
     }
-    setResults((results) => [{ source, tokens, output, error }, ...results]);
   };
   process(`"Hello, world!"`);
   let textarea!: HTMLTextAreaElement;
@@ -170,9 +190,9 @@ export function Repl() {
                     }}
                   >
                     <code>
-                      {result.tokens ? (
+                      {result.tokens() ? (
                         <Highlight
-                          tokens={result.tokens}
+                          tokens={result.tokens()!}
                           bindings={
                             new Map(
                               [...visitor.bindings.entries()].map((z) => [
@@ -187,11 +207,13 @@ export function Repl() {
                       )}
                     </code>
                   </pre>
-                  {result.output !== null ? (
-                    <pre class="min-h-7 text-green-300">{result.output}</pre>
-                  ) : (
-                    <pre class="text-red-300">{result.error}</pre>
-                  )}
+                  <div class="min-h-7">
+                    <pre class="text-emerald-500">{result.output()}</pre>
+                    <pre class="text-green-300">
+                      {result.result().map(display).join("\n")}
+                    </pre>
+                    <pre class="text-red-300">{result.error()}</pre>
+                  </div>
                 </li>
               )}
             </For>
@@ -240,7 +262,11 @@ export function Repl() {
                 }
               }
               const r = results()[historyIdx()];
-              const txt = r.tokens?.map((z) => z.image).join("") ?? r.source;
+              const txt =
+                r
+                  .tokens()
+                  ?.map((z) => z.image)
+                  .join("") ?? r.source;
               textarea.parentElement!.dataset.value = textarea.value = txt;
             }}
             onInput={() =>
