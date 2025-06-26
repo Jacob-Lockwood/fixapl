@@ -105,7 +105,11 @@ export function Repl() {
   const ctx: ReplContext = {
     write: (s) => {
       setData("output", (v) => v + s);
-      if (s.includes("\b")) new Audio("/wee-wuh.mp3").play();
+      if (s.includes("\b")) {
+        const aud = new Audio("/minecraft_bell.wav");
+        aud.volume = 0.5;
+        aud.play();
+      }
     },
     read: async () => prompt("input"),
   };
