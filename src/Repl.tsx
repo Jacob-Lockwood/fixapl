@@ -79,6 +79,7 @@ type ReplEntry = {
   output: string;
   result: Val[];
   error: string;
+  images: ImageData[];
 };
 
 function setting(name: string, def: boolean) {
@@ -112,6 +113,7 @@ export function Repl() {
       }
     },
     read: async () => prompt("input"),
+    drawImage: (d) => setData("images", (i) => [...i, d]),
   };
   const visitor = new Visitor(ctx);
   const process = async (source: string) => {
@@ -123,6 +125,7 @@ export function Repl() {
       output: "",
       result: [],
       error: "",
+      images: [],
     });
     setResults((res) => [data, ...res]);
     try {
@@ -219,6 +222,16 @@ export function Repl() {
                   </pre>
                   <div class="min-h-7">
                     <pre class="text-emerald-500">{result.output}</pre>
+                    <For each={result.images}>
+                      {(dat) => {
+                        const canv = (
+                          <canvas width={dat.width} height={dat.height} />
+                        ) as HTMLCanvasElement;
+                        const ctx = canv.getContext("2d")!;
+                        ctx.putImageData(dat, 0, 0);
+                        return canv;
+                      }}
+                    </For>
                     <pre class="text-green-300">
                       {result.result.map(display).join("\n")}
                     </pre>

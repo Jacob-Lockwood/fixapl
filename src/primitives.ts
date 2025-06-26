@@ -375,13 +375,13 @@ export const cat = df("⍪", "catenate", (err) =>
       const sh = [1, ...x.shape.slice(1)];
       const d = Array(sh.reduce((a, b) => a * b))
         .fill(0)
-        .map((_) => y);
+        .map(() => y);
       return cat(x, A(sh, d));
     } else if (y.kind === "array") {
       const sh = [1, ...y.shape.slice(1)];
       const d = Array(sh.reduce((a, b) => a * b))
         .fill(0)
-        .map((_) => x);
+        .map(() => x);
       return cat(A(sh, d), y);
     } else {
       return A([2], [x, y]);
@@ -547,10 +547,10 @@ export const gro = df("⊔", "group", (err) => async (x, y) => {
   return list(buckets.map(fromCells));
 });
 export const slf = mm("⍨", "self/const1", () => async (X) => {
-  return F(1, X.kind === "function" ? (v) => X.data(v, v) : async (_) => X);
+  return F(1, X.kind === "function" ? (v) => X.data(v, v) : async () => X);
 });
 export const bac = mm("˜", "backward/const2", () => async (X) => {
-  return F(2, X.kind === "function" ? (g, h) => X.data(h, g) : async (_) => X);
+  return F(2, X.kind === "function" ? (g, h) => X.data(h, g) : async () => X);
 });
 export const cel = mm("◡", "cells", () => (X) => rnk.def(X, N(-1)));
 export const con = mm("⊙", "contents", (err) => async (X) => {
@@ -818,7 +818,7 @@ export const ov = dm("○", "over", (err) => async (X, Y) => {
   );
 });
 
-export const lft = df("⊣", "left argument", () => async (x, _) => x);
+export const lft = df("⊣", "left argument", () => async (x) => x);
 export const rgt = df("⊢", "right argument", () => async (_, y) => y);
 export const id = mf("⋅", "identity", () => async (y) => y);
 export const sb = mm("₀", "subject", () => async (X) => F(0, async () => X));

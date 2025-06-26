@@ -317,6 +317,7 @@ export class Parser {
   }
 }
 export type ReplContext = {
+  drawImage: (d: ImageData) => void;
   write: (s: string) => void;
   read: () => Promise<string | null>;
 };

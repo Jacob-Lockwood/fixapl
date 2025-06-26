@@ -45,4 +45,23 @@ export default (ctx: ReplContext) =>
       await new Promise((res) => setTimeout(res, y.data * 1000));
       return N((Date.now() - t1) / 1000);
     }),
+    q("ShowImage", 1, (err) => async (y) => {
+      if (
+        y.kind !== "array" ||
+        y.shape.length !== 2 ||
+        !y.data.every((v) => v.kind === "number")
+      )
+        throw err("y must be a 2d array of numbers");
+      const colors = new Uint8ClampedArray(
+        y.data.flatMap((v) => {
+          const x = Math.round(v.data * 255);
+          // const x = Math.max(0, Math.min(255, 255 * v.data));
+          return [x, x, x, 255];
+        }),
+      );
+      console.log(y.shape);
+      const dat = new ImageData(colors, y.shape[0], y.shape[1]);
+      ctx.drawImage(dat);
+      return A([0], []);
+    }),
   ]);
