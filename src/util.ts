@@ -5,8 +5,13 @@ export type Val =
   | { kind: "character"; data: number }
   | { kind: "number"; data: number }
   | { kind: "array"; shape: number[]; data: Val[] }
-  | { kind: "function"; arity: number; data: (...x: Val[]) => Val };
-export const F = (arity: number, data: (...v: Val[]) => Val) =>
+  | {
+      kind: "function";
+      arity: number;
+      data: Fn;
+    };
+type Fn = (...x: Val[]) => Promise<Val>;
+export const F = (arity: number, data: Fn) =>
   ({
     kind: "function",
     arity,
@@ -31,8 +36,8 @@ export const range = (shape: number[]): Val =>
       .fill(0)
       .map((_, i) => N(i)),
   );
-export const execnoad = (v: Val): Val =>
-  v.kind === "function" && v.arity === 0 ? execnoad(v.data()) : v;
+export const execnoad = async (v: Val): Promise<Val> =>
+  v.kind === "function" && v.arity === 0 ? execnoad(await v.data()) : v;
 
 export const list = (arr: Val[]) => A([arr.length], arr);
 export function fromCells(arr: Val[]) {
@@ -45,15 +50,30 @@ export function fromCells(arr: Val[]) {
   });
   return A([arr.length, ...sh], d);
 }
-export function map(
-  fn: (...v: Val[]) => Val,
+export async function asyncMap<U, T>(
+  arr: U[],
+  fn: (v: U, i: number) => Promise<T>,
+) {
+  const d: T[] = [];
+  for (let i = 0; i < arr.length; i++) d.push(await fn(arr[i], i));
+  return d;
+}
+export async function asyncEvery<T>(
+  arr: T[],
+  fn: (v: T, i: number) => unknown,
+) {
+  for (let i = 0; i < arr.length; i++) if (!(await fn(arr[i], i))) return false;
+  return true;
+}
+export async function map(
+  fn: (...v: Val[]) => Promise<Val>,
   ...arrs: (Val & { kind: "array" })[]
 ) {
   const shape = arrs[0].shape;
-  const d = arrs[0].data.map((v, i) => fn(v, arrs[1]?.data[i]));
+  const d = await asyncMap(arrs[0].data, (v, i) => fn(v, arrs[1]?.data[i]));
   return A(shape, d);
 }
-export function each(fn: (...x: Val[]) => Val, ...v: Val[]): Val {
+export async function each(fn: Fn, ...v: Val[]): Promise<Val> {
   const [x, y] = v;
   if (x.kind === "array") {
     if (y?.kind === "array") {
@@ -64,18 +84,22 @@ export function each(fn: (...x: Val[]) => Val, ...v: Val[]): Val {
         throw new Error("Cannot iterate over arrays with different frames");
       if (m === sx.length) {
         const cy = cells(y, -m);
-        const d = cy.data.map((v, i) => fn(x.data[i] ?? x.data[0], v));
+        const d = await asyncMap(cy.data, (v, i) =>
+          fn(x.data[i] ?? x.data[0], v),
+        );
         return A(cy.shape, d);
       } else {
         const cx = cells(x, -m);
-        const d = cx.data.map((v, i) => fn(v, y.data[i] ?? y.data[0]));
+        const d = await asyncMap(cx.data, (v, i) =>
+          fn(v, y.data[i] ?? y.data[0]),
+        );
         return A(cx.shape, d);
       }
     }
-    const d = x.data.map((v) => fn(v, y));
+    const d = await asyncMap(x.data, (v) => fn(v, y));
     return A(x.shape, d);
   } else if (y?.kind === "array") {
-    const d = y.data.map((v) => fn(x, v));
+    const d = await asyncMap(y.data, (v) => fn(x, v));
     return A(y.shape, d);
   } else return fn(x, y);
 }
@@ -84,7 +108,6 @@ export function cells(arr: Val, r = -1) {
   if (r === 0) return arr;
   const frame = arr.shape.slice(0, -r);
   const cell = arr.shape.slice(-r);
-  // if (cell.length === 0) return arr;
   const delta = cell.reduce((a, b) => a * b, 1);
   const data: Val[] = [];
   for (let i = 0; i < arr.data.length; i += delta) {
@@ -93,3 +116,17 @@ export function cells(arr: Val, r = -1) {
   }
   return A(frame, data);
 }
+
+export function recur(fn: (g: Fn, ...xs: Val[]) => Promise<Val>) {
+  return function g(...xs: Val[]) {
+    return fn(g, ...xs);
+  };
+}
+export function pervasive(fn: (...xs: Atom[]) => Promise<Val>) {
+  return recur((g, ...xs) =>
+    xs.every((v) => v?.kind !== "array") ? fn(...xs) : each(g, ...xs),
+  );
+}
+
+export type Atom = Exclude<Val, { kind: "array" }>;
+export type Arr = Extract<Val, { kind: "array" }>;

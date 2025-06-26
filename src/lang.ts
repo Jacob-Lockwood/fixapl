@@ -1,4 +1,4 @@
-import { Val, F, A, match, N, execnoad } from "./util";
+import { Val, F, A, match, N, execnoad, asyncMap, list } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
 import quads from "./quads";
 function primitiveByGlyph(s: string) {
@@ -39,6 +39,7 @@ export function lex(source: string) {
       if (bkind === "semi") continue lex;
       if (bkind !== "other") {
         o.push({ kind: bkind as TokenKind, line, image: m });
+        line += m.split("\n").length - 1;
         continue lex;
       }
       m = m.replaceAll("`", glyphs.ng.glyph);
@@ -94,7 +95,6 @@ export function lex(source: string) {
     }
     throw new Error(`Lexing error on line ${line} near ${cur}`);
   }
-  console.log(o);
   return o;
 }
 
@@ -127,7 +127,7 @@ export class Parser {
     return this.error(`expected ${exp} but got ${got}`);
   }
   tok(): Token | undefined {
-    let tok = this.tokens[this.i];
+    const tok = this.tokens[this.i];
     if (tok) this.line = tok.line;
     return tok;
   }
@@ -318,7 +318,7 @@ export class Parser {
 }
 export type ReplContext = {
   write: (s: string) => void;
-  read: () => string | null;
+  read: () => Promise<string | null>;
 };
 export class Visitor {
   public bindings = new Map<string, Val>([]);
@@ -328,7 +328,7 @@ export class Visitor {
   constructor(ctx: ReplContext) {
     this.q = quads(ctx);
   }
-  visit(node: AstNode): Val {
+  async visit(node: AstNode): Promise<Val> {
     if (node.kind === "number" || node.kind === "character") {
       return { kind: node.kind, data: node.value };
     } else if (node.kind === "string") {
@@ -344,44 +344,50 @@ export class Visitor {
       if (this.q.has(node.name)) return this.q.get(node.name)!;
       throw new Error("Unrecognized quad");
     } else if (node.kind === "glyph reference") {
-      if (node.arity === 0) return primitiveByGlyph(node.glyph)();
-      return F(node.arity, primitiveByGlyph(node.glyph));
+      if (node.arity === 0) return await primitiveByGlyph(node.glyph)();
+      return F(
+        node.arity,
+        primitiveByGlyph(node.glyph) as (...args: Val[]) => Promise<Val>,
+      );
     } else if (node.kind === "monadic modifier") {
-      return primitiveByGlyph(node.glyph)(this.visit(node.fn));
+      return primitiveByGlyph(node.glyph)(await this.visit(node.fn));
     } else if (node.kind === "dyadic modifier") {
       return primitiveByGlyph(node.glyph)(
-        ...node.fns.map((f) => this.visit(f)),
+        ...(await asyncMap(node.fns, (f) => this.visit(f))),
       );
     } else if (node.kind === "expression") {
-      const tines = node.values.map((n) => this.visit(n));
+      const tines = await asyncMap(node.values, (n) => this.visit(n));
       if (tines.length === 1) return tines[0];
       type Cmp = (r: Val & { kind: "function" }) => Val & { kind: "function" };
       const fns: Cmp[] = [];
       function fork(x: Val, g: Val & { kind: "function" }): Cmp {
-        const l = x.kind === "function" ? x : F(0, (_) => x);
+        const l = x.kind === "function" ? x : F(0, async () => x);
         return (r) => {
           const arity = Math.max(r.arity, l.arity);
           const rgt =
             arity === 2 && r.arity === 1 ? F(2, (_, w) => r.data(w)) : r;
           const lft =
             arity === 2 && l.arity === 1 ? F(2, (_, w) => l.data(w)) : l;
-          return F(arity, (...v) => g.data(lft.data(...v), rgt.data(...v)));
+          return F(arity, async (...v) =>
+            g.data(await lft.data(...v), await rgt.data(...v)),
+          );
         };
       }
       function atop(g: Val & { kind: "function" }): Cmp {
         if (g.arity === 2)
           return (r) => {
-            if (r.arity === 0) return F(1, (x) => g.data(x, r.data()));
-            return F(r.arity, (x, y) => g.data(x, r.data(x, y)));
+            if (r.arity === 0)
+              return F(1, async (x) => g.data(x, await r.data()));
+            return F(r.arity, async (x, y) => g.data(x, await r.data(x, y)));
           };
-        return (r) => F(r.arity, (...v) => g.data(r.data(...v)));
+        return (r) => F(r.arity, async (...v) => g.data(await r.data(...v)));
       }
       for (let i = 0; ; i++) {
         let t = tines[i];
         const n = tines[i + 1];
         if (!n) {
-          t ??= F(1, (y) => y);
-          const s = t.kind === "function" ? t : F(0, () => t);
+          t ??= F(1, async (y) => y);
+          const s = t.kind === "function" ? t : F(0, async () => t);
           return fns.reduceRight((r, fn) => fn(r), s);
         }
         if (n.kind === "function" && n.arity === 2) {
@@ -392,15 +398,16 @@ export class Visitor {
         } else throw new Error("Cannot have nilad outside of fork");
       }
     } else if (node.kind === "strand" || node.kind === "list") {
-      return A(
-        [node.values.length],
-        node.values.map((v) => execnoad(this.visit(v))),
+      return list(
+        await asyncMap(node.values, async (v) => execnoad(await this.visit(v))),
       );
     } else if (node.kind === "array") {
       if (node.values.length === 0) {
         throw new Error("Square brackets may not be empty");
       }
-      const v = node.values.map((n) => execnoad(this.visit(n)));
+      const v = await asyncMap(node.values, async (n) =>
+        execnoad(await this.visit(n)),
+      );
       if (v.every((d) => d.kind === "array")) {
         if (v.every((x, i) => match(x.shape, v[++i % v.length].shape))) {
           return A(
@@ -429,7 +436,7 @@ export class Visitor {
     } else if (node.kind === "binding") {
       const { name, declaredArity, value } = node;
       this.thisBinding = [name, declaredArity];
-      const v = this.visit(value);
+      const v = await this.visit(value);
       if (
         (declaredArity > 0 &&
           (v.kind !== "function" || v.arity !== declaredArity)) ||
@@ -456,10 +463,10 @@ export class Visitor {
         return 1;
       }
       const arity = getArity(node.def);
-      return F(arity, (...v) => {
+      return F(arity, async (...v) => {
         const temp = this.dfns?.slice();
         this.dfns = arity === 1 ? [N(0), v[0]] : v;
-        const e = this.visit(node.def);
+        const e = await this.visit(node.def);
         this.dfns = temp;
         return e;
       });

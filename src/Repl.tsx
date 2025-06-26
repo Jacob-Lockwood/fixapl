@@ -1,10 +1,11 @@
-import { Accessor, createSignal, For, Show } from "solid-js";
+import { createEffect, createSignal, For, Show } from "solid-js";
 import { Visitor, Token, lex, Parser, ReplContext } from "./lang";
 import { display } from "./primitives";
 import { Component } from "solid-js";
 import { glyphs } from "./glyphs";
 import { quadsList } from "./quads";
 import { execnoad, Val } from "./util";
+import { createStore, SetStoreFunction } from "solid-js/store";
 
 const glyphColors = {
   "monadic function": "text-lime-400",
@@ -17,61 +18,67 @@ const glyphColors = {
 
 export const Highlight: Component<{
   tokens: readonly Token[];
-  bindings?: Map<string, number>;
+  bindings: Map<string, number>;
 }> = (props) => {
-  return props.tokens.map(({ kind, image }) => {
-    switch (kind) {
-      case "monadic function":
-      case "dyadic function":
-      case "monadic modifier":
-      case "dyadic modifier":
-      case "constant":
-        const color = glyphColors[kind];
-        const { name } = Object.values(glyphs).find((d) => d.glyph === image)!;
-        return (
-          <span title={name} class={color}>
-            {image}
-          </span>
-        );
-      case "quad":
-      case "identifier":
-        const arity =
-          kind === "quad"
-            ? quadsList.get(image.slice(1))!
-            : props.bindings?.get(image);
-        const c = [
-          "text-white",
-          glyphColors["monadic function"],
-          glyphColors["dyadic function"],
-          "decoration-red-400 underline decoration-wavy decoration-1",
-        ][arity ?? 3];
-        return (
-          <span class={`identifier ${c}`} data-name={image}>
-            {image}
-          </span>
-        );
-      case "string":
-      case "character":
-        return <span class="text-teal-300">{image}</span>;
-      case "number":
-        return <span class="text-orange-400">{image}</span>;
-      case "comment":
-        return <span class="text-stone-400 italic">{image}</span>;
-      case "left dfn argument":
-      case "right dfn argument":
-        return <span class="text-red-400">{image}</span>;
-      default:
-        return <span class={glyphColors.syntax}>{image}</span>;
-    }
-  });
+  return (
+    <For each={props.tokens}>
+      {({ kind, image }) => {
+        switch (kind) {
+          case "monadic function":
+          case "dyadic function":
+          case "monadic modifier":
+          case "dyadic modifier":
+          case "constant":
+            const color = glyphColors[kind];
+            const { name } = Object.values(glyphs).find(
+              (d) => d.glyph === image,
+            )!;
+            return (
+              <span title={name} class={color}>
+                {image}
+              </span>
+            );
+          case "quad":
+          case "identifier":
+            const arity = () =>
+              kind === "quad"
+                ? quadsList.get(image.slice(1))!
+                : props.bindings?.get(image);
+            const cl = [
+              "text-white",
+              glyphColors["monadic function"],
+              glyphColors["dyadic function"],
+              "decoration-red-400 underline decoration-wavy decoration-1",
+            ];
+            return (
+              <span class={`identifier ${cl[arity() ?? 3]}`} data-name={image}>
+                {image}
+              </span>
+            );
+          case "string":
+          case "character":
+            return <span class="text-teal-300">{image}</span>;
+          case "number":
+            return <span class="text-orange-400">{image}</span>;
+          case "comment":
+            return <span class="text-stone-400 italic">{image}</span>;
+          case "left dfn argument":
+          case "right dfn argument":
+            return <span class="text-red-400">{image}</span>;
+          default:
+            return <span class={glyphColors.syntax}>{image}</span>;
+        }
+      }}
+    </For>
+  );
 };
 
-type Result = {
+type ReplEntry = {
   source: string;
-  tokens: Accessor<Token[] | null>;
-  output: Accessor<string>;
-  result: Accessor<Val[]>;
-  error: Accessor<string>;
+  tokens: Token[] | null;
+  output: string;
+  result: Val[];
+  error: string;
 };
 
 function setting(name: string, def: boolean) {
@@ -85,52 +92,55 @@ function setting(name: string, def: boolean) {
   };
   return [sig, toggle] as const;
 }
-
 export function Repl() {
-  const [results, setResults] = createSignal<Result[]>([]);
+  const [results, setResults] = createSignal<ReplEntry[]>([]);
   const [settingsOpen, setSettingsOpen] = createSignal(false);
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
   const [clearPrompt, setClearPrompt] = setting("clearPrompt", true);
-  let tokens = createSignal<Token[] | null>(null);
-  let output = createSignal("");
-  let result = createSignal<Val[]>([]);
-  let error = createSignal("");
+  const [bindings, setBindings] = createSignal(new Map<string, number>());
 
+  let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
   const ctx: ReplContext = {
-    write: (s) => output[1]((v) => v + s),
-    read: () => prompt("input"),
+    write: (s) => setData("output", (v) => v + s),
+    read: async () => prompt("input"),
   };
-
   const visitor = new Visitor(ctx);
-  const process = (source: string) => {
-    tokens = createSignal<Token[] | null>(null);
-    output = createSignal("");
-    result = createSignal<Val[]>([]);
-    error = createSignal("");
-    setResults((res) => {
-      const n = {
-        source,
-        tokens: tokens[0],
-        output: output[0],
-        result: result[0],
-        error: error[0],
-      };
-      return [n, ...res];
+  const process = async (source: string) => {
+    // data is re-assigned so each entry gets its own store
+    // eslint-disable-next-line solid/reactivity
+    [data, setData] = createStore<ReplEntry>({
+      source,
+      tokens: [],
+      output: "",
+      result: [],
+      error: "",
     });
+    setResults((res) => [data, ...res]);
     try {
       const toks = lex(source);
-      tokens[1](toks);
+      setData("tokens", toks);
       const t = toks.filter((x) => !"whitespace,comment".includes(x.kind));
       const p = new Parser(t).program();
-      for (const n of p) result[1]((r) => [...r, execnoad(visitor.visit(n))]);
+      for (const n of p) {
+        const v = await execnoad(await visitor.visit(n));
+        setData("result", (r) => [...r, v]);
+      }
+      setBindings(
+        new Map(
+          [...visitor.bindings.entries()].map((z) => [
+            z[0],
+            z[1].kind === "function" ? z[1].arity : 0,
+          ]),
+        ),
+      );
     } catch (e) {
-      error[1](e instanceof Error ? e.message : e + "");
+      setData("error", e instanceof Error ? e.message : e + "");
       console.error(e);
     }
   };
-  process(`"Hello, world!"`);
+  createEffect(() => process(`"Hello, world!"`));
   let textarea!: HTMLTextAreaElement;
   return (
     <div class="sticky top-10 flex flex-col gap-2">
@@ -190,17 +200,10 @@ export function Repl() {
                     }}
                   >
                     <code>
-                      {result.tokens() ? (
+                      {result.tokens ? (
                         <Highlight
-                          tokens={result.tokens()!}
-                          bindings={
-                            new Map(
-                              [...visitor.bindings.entries()].map((z) => [
-                                z[0],
-                                z[1].kind === "function" ? z[1].arity : 0,
-                              ]),
-                            )
-                          }
+                          tokens={result.tokens!}
+                          bindings={bindings()}
                         />
                       ) : (
                         result.source
@@ -208,11 +211,11 @@ export function Repl() {
                     </code>
                   </pre>
                   <div class="min-h-7">
-                    <pre class="text-emerald-500">{result.output()}</pre>
+                    <pre class="text-emerald-500">{result.output}</pre>
                     <pre class="text-green-300">
-                      {result.result().map(display).join("\n")}
+                      {result.result.map(display).join("\n")}
                     </pre>
-                    <pre class="text-red-300">{result.error()}</pre>
+                    <pre class="text-red-300">{result.error}</pre>
                   </div>
                 </li>
               )}
@@ -262,46 +265,44 @@ export function Repl() {
                 }
               }
               const r = results()[historyIdx()];
-              const txt =
-                r
-                  .tokens()
-                  ?.map((z) => z.image)
-                  .join("") ?? r.source;
+              const txt = r.tokens?.map((z) => z.image).join("") ?? r.source;
               textarea.parentElement!.dataset.value = textarea.value = txt;
             }}
             onInput={() =>
               (textarea.parentElement!.dataset.value = textarea.value)
             }
-          ></textarea>
+          />
         </div>
       </div>
       <div class="flex flex-wrap text-3xl">
-        {Object.entries(glyphs).map(([alias, data], i) => (
-          <button
-            class="block cursor-pointer rounded-t-sm select-none focus:outline-0"
-            classList={{ "bg-emerald-800": selectedGlyph() === i }}
-            onClick={() => {
-              textarea.focus();
-              textarea.setRangeText(data.glyph);
-              textarea.selectionStart++;
-            }}
-            onFocus={() => setSelectedGlyph(i)}
-            onMouseEnter={() => setSelectedGlyph(i)}
-            onBlur={() => setSelectedGlyph(-1)}
-            onMouseLeave={() => setSelectedGlyph(-1)}
-          >
-            <span class={"-z-10 p-2 font-mono " + glyphColors[data.kind]}>
-              {data.glyph}
-            </span>
-            <Show when={selectedGlyph() === i}>
-              <p class="absolute z-10 w-max rounded-sm rounded-tl-none bg-emerald-800 px-2 py-1 text-base">
-                {data.name} <br /> alias:{" "}
-                <code class="bg-emerald-900 px-1">{alias}</code> <br />{" "}
-                {data.kind}
-              </p>
-            </Show>
-          </button>
-        ))}
+        <For each={Object.entries(glyphs)}>
+          {([alias, data], i) => (
+            <button
+              class="block cursor-pointer rounded-t-sm select-none focus:outline-0"
+              classList={{ "bg-emerald-800": selectedGlyph() === i() }}
+              onClick={() => {
+                textarea.focus();
+                textarea.setRangeText(data.glyph);
+                textarea.selectionStart++;
+              }}
+              onFocus={() => setSelectedGlyph(i())}
+              onMouseEnter={() => setSelectedGlyph(i())}
+              onBlur={() => setSelectedGlyph(-1)}
+              onMouseLeave={() => setSelectedGlyph(-1)}
+            >
+              <span class={"-z-10 p-2 font-mono " + glyphColors[data.kind]}>
+                {data.glyph}
+              </span>
+              <Show when={selectedGlyph() === i()}>
+                <p class="absolute z-10 w-max rounded-sm rounded-tl-none bg-emerald-800 px-2 py-1 text-base">
+                  {data.name} <br /> alias:{" "}
+                  <code class="bg-emerald-900 px-1">{alias}</code> <br />{" "}
+                  {data.kind}
+                </p>
+              </Show>
+            </button>
+          )}
+        </For>
       </div>
       <p class="mx-auto my-4 max-w-80 text-center text-sm text-green-500 selection:!bg-black/30">
         Hover over a glyph to see its name and alias. Click on it to enter the
