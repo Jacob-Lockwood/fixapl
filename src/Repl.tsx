@@ -222,16 +222,22 @@ export function Repl() {
                   </pre>
                   <div class="min-h-7">
                     <pre class="text-emerald-500">{result.output}</pre>
-                    <For each={result.images}>
-                      {(dat) => {
-                        const canv = (
-                          <canvas width={dat.width} height={dat.height} />
-                        ) as HTMLCanvasElement;
-                        const ctx = canv.getContext("2d")!;
-                        ctx.putImageData(dat, 0, 0);
-                        return canv;
-                      }}
-                    </For>
+                    <div class="flex flex-wrap gap-x-2">
+                      <For each={result.images}>
+                        {(dat) => {
+                          const canv = (
+                            <canvas
+                              width={dat.width}
+                              height={dat.height}
+                              class="my-2 object-contain"
+                            />
+                          ) as HTMLCanvasElement;
+                          const ctx = canv.getContext("2d")!;
+                          ctx.putImageData(dat, 0, 0);
+                          return canv;
+                        }}
+                      </For>
+                    </div>
                     <pre class="text-green-300">
                       {result.result.map(display).join("\n")}
                     </pre>

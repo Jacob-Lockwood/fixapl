@@ -129,4 +129,9 @@ export function pervasive(fn: (...xs: Atom[]) => Promise<Val>) {
 }
 
 export type Atom = Exclude<Val, { kind: "array" }>;
-export type Arr = Extract<Val, { kind: "array" }>;
+export type Arr<T extends Val = Val> = {
+  kind: "array";
+  shape: number[];
+  data: T[];
+};
+export type Num = Extract<Val, { kind: "number" }>;

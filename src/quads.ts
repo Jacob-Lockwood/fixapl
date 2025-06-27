@@ -1,6 +1,6 @@
 import { quad } from "./glyphs";
 import { ReplContext } from "./lang";
-import { A, C, F, list, N, Val } from "./util";
+import { A, Arr, C, cells, F, list, N, Num, Val } from "./util";
 
 export const quadsList = new Map<string, number>();
 const q = (
@@ -45,23 +45,28 @@ export default (ctx: ReplContext) =>
       await new Promise((res) => setTimeout(res, y.data * 1000));
       return N((Date.now() - t1) / 1000);
     }),
-    q("ShowImage", 1, (err) => async (y) => {
-      if (
-        y.kind !== "array" ||
-        y.shape.length !== 2 ||
-        !y.data.every((v) => v.kind === "number")
-      )
-        throw err("y must be a 2d array of numbers");
-      const colors = new Uint8ClampedArray(
-        y.data.flatMap((v) => {
-          const x = Math.round(v.data * 255);
-          // const x = Math.max(0, Math.min(255, 255 * v.data));
-          return [x, x, x, 255];
-        }),
-      );
-      console.log(y.shape);
-      const dat = new ImageData(colors, y.shape[0], y.shape[1]);
-      ctx.drawImage(dat);
+    q("Img", 1, (err) => async (y) => {
+      if (y.kind !== "array" || !y.data.every((v) => v.kind === "number"))
+        throw err("y must be an array of numbers");
+      let dat: number[];
+      if (y.shape.length === 2) {
+        dat = y.data.flatMap((v) => {
+          const b = Math.round(v.data * 255);
+          return [b, b, b, 255];
+        });
+      } else if (y.shape.length === 3) {
+        const col = cells(y, 1) as Arr<Arr<Num>>;
+        dat = col.data.flatMap((v) => {
+          const w = v.data.map((v) => Math.round(v.data * 255));
+          if (w.length === 2) return [w[0], w[0], w[0], w[1]];
+          if (w.length === 3) return [...w, 255];
+          if (w.length === 4) return w;
+          throw err("If y has rank 3, its last axis must be 2, 3, or 4");
+        });
+      } else throw err("y must have rank 2 or 3");
+      const colors = new Uint8ClampedArray(dat);
+      const img = new ImageData(colors, y.shape[1], y.shape[0]);
+      ctx.drawImage(img);
       return A([0], []);
     }),
   ]);
