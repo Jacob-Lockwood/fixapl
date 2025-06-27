@@ -252,6 +252,24 @@ export const max = df("↥", "maximum", () =>
 export const min = df("↧", "minimum", () =>
   pervasive(async (x, y) => ((await grt.def(y, x)).data ? x : y)),
 );
+// export const ecd = df("⊤", "encode", (err) =>
+//   recur(async (ecd, x, y) => {
+//     //! should support mixed-bases
+//     if (x.kind !== "number") throw err("x must be a number");
+//     //! should pad with zeroes
+//     if (y.kind === "array") return each(ecd, x, y);
+//     if (y.kind !== "number") throw err("y must be a number");
+//     const b = x.data;
+//     let v = y.data;
+//     const o: number[] = [];
+//     while (v) {
+//       o.push(v % b);
+//       v = Math.floor(v / b);
+//     }
+//     return list(o.map(N));
+//   }),
+// );
+// export const dcd = df("⊥", "decode", (err) => async (x, y) => {});
 
 export const rev = mf("⋈", "reverse", () => async (y) => {
   return y.kind === "array" ? A(y.shape, [...y.data].reverse()) : y;
@@ -370,7 +388,8 @@ export const cat = df("⍪", "catenate", (err) =>
       if (xsh.length + 1 === ysh.length) return cat(A([1, ...xsh], x.data), y);
       if (xsh.length !== ysh.length || !match(xsh.slice(1), ysh.slice(1)))
         throw err("x and y must have matching cells");
-      return A([xsh[0] + ysh[0], ...xsh.slice(1)], x.data.concat(y.data));
+      const sh = [(xsh[0] ?? 1) + (ysh[0] ?? 1), ...xsh.slice(1)];
+      return A(sh, x.data.concat(y.data));
     } else if (x.kind === "array") {
       const sh = [1, ...x.shape.slice(1)];
       const d = Array(sh.reduce((a, b) => a * b))
@@ -608,7 +627,7 @@ export const tab = mm("⊞", "table", (err) => async (X) => {
     const o: Val[] = [];
     for (const h of cv.data)
       for (const g of cw.data) o.push(await X.data(h, g));
-    return A(shape, o);
+    return mer.def(A(shape, o));
   });
 });
 export const win = mm("⊕", "windows", (err, { err1, err2 }) => async (X) => {
