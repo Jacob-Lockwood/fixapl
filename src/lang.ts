@@ -469,7 +469,7 @@ export class Visitor {
         this.dfns = arity === 1 ? [N(0), v[0]] : v;
         const e = await this.visit(node.def);
         this.dfns = temp;
-        return e;
+        return execnoad(e);
       });
     } else if (node.kind === "dfn arg") {
       if (!this.dfns)

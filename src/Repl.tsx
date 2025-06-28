@@ -80,6 +80,7 @@ type ReplEntry = {
   result: Val[];
   error: string;
   images: ImageData[];
+  time: number | null;
 };
 
 function setting(name: string, def: boolean) {
@@ -93,6 +94,10 @@ function setting(name: string, def: boolean) {
   };
   return [sig, toggle] as const;
 }
+function timeString(t: number) {
+  if (t > 1000) return (t / 1000).toFixed(3) + "s";
+  return t + "ms";
+}
 export function Repl() {
   const [results, setResults] = createSignal<ReplEntry[]>([]);
   const [settingsOpen, setSettingsOpen] = createSignal(false);
@@ -100,6 +105,7 @@ export function Repl() {
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
   const [clearPrompt, setClearPrompt] = setting("clearPrompt", true);
+  const [displayTimes, setDisplayTimes] = setting("displayTimes", false);
   const [bindings, setBindings] = createSignal(new Map<string, number>());
 
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
@@ -126,8 +132,10 @@ export function Repl() {
       result: [],
       error: "",
       images: [],
+      time: null,
     });
     setResults((res) => [data, ...res]);
+    const t1 = Date.now();
     try {
       const toks = lex(source);
       setData("tokens", toks);
@@ -149,6 +157,7 @@ export function Repl() {
       setData("error", e instanceof Error ? e.message : e + "");
       console.error(e);
     }
+    setData("time", Date.now() - t1);
   };
   createEffect(() => process(`"Hello, world!"`));
   let textarea!: HTMLTextAreaElement;
@@ -197,6 +206,16 @@ export function Repl() {
                 onInput={(e) => setClearPrompt(e.target.checked)}
               />
             </div>
+            <div class="flex gap-4">
+              <label for="clear">Display times</label>
+              <input
+                type="checkbox"
+                name="clear"
+                id="clear"
+                checked={displayTimes()}
+                onInput={(e) => setDisplayTimes(e.target.checked)}
+              />
+            </div>
           </div>
           <ul class="flex h-full flex-col-reverse overflow-scroll pb-5 font-mono text-lg">
             <For each={results()}>
@@ -242,6 +261,11 @@ export function Repl() {
                       {result.result.map(display).join("\n")}
                     </pre>
                     <pre class="text-red-300">{result.error}</pre>
+                    <Show when={displayTimes() && result.time}>
+                      <pre class="text-emerald-600">
+                        Finished in {timeString(result.time!)}
+                      </pre>
+                    </Show>
                   </div>
                 </li>
               )}
