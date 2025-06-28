@@ -385,16 +385,21 @@ export class Visitor {
       }
       for (let i = 0; ; i++) {
         let t = tines[i];
-        const n = tines[i + 1];
-        if (!n) {
+        const next = tines[i + 1];
+        if (!next) {
           t ??= F(1, async (y) => y);
           const s = t.kind === "function" ? t : F(0, async () => t);
-          return fns.reduceRight((r, fn) => fn(r), s);
+          const res = fns.reduceRight((r, fn) => fn(r), s);
+          if (res.arity === 0) {
+            const v = res.data();
+            return F(0, () => v);
+          }
+          return res;
         }
-        if (n.kind === "function" && n.arity === 2) {
+        if (next.kind === "function" && next.arity === 2) {
           i++;
-          fns.push(fork(t, n));
-        } else if (t.kind === "function") {
+          fns.push(fork(t, next));
+        } else if (t.kind === "function" && t.arity > 0) {
           fns.push(atop(t));
         } else throw new Error("Cannot have nilad outside of fork");
       }
@@ -474,7 +479,8 @@ export class Visitor {
     } else if (node.kind === "dfn arg") {
       if (!this.dfns)
         throw new Error("Cannot reference dfn argument outside dfn");
-      return node.left ? this.dfns[0] : this.dfns[1];
+      const v = node.left ? this.dfns[0] : this.dfns[1];
+      return F(0, async () => v);
     }
     throw new Error(
       "Interpreter error! Please report this as a bug!" +

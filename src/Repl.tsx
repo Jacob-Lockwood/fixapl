@@ -144,15 +144,15 @@ export function Repl() {
       for (const n of p) {
         const v = await execnoad(await visitor.visit(n));
         setData("result", (r) => [...r, v]);
+        setBindings(
+          new Map(
+            [...visitor.bindings.entries()].map((z) => [
+              z[0],
+              z[1].kind === "function" ? z[1].arity : 0,
+            ]),
+          ),
+        );
       }
-      setBindings(
-        new Map(
-          [...visitor.bindings.entries()].map((z) => [
-            z[0],
-            z[1].kind === "function" ? z[1].arity : 0,
-          ]),
-        ),
-      );
     } catch (e) {
       setData("error", e instanceof Error ? e.message : e + "");
       console.error(e);
@@ -190,7 +190,7 @@ export function Repl() {
             </span>
           </button>
         </div>
-        <div class="flex h-80 flex-col">
+        <div class="flex h-80 resize-y flex-col">
           <div
             class="w-full border-b-2 border-emerald-500 p-4"
             classList={{ hidden: !settingsOpen() }}
