@@ -96,11 +96,10 @@ export function lex(source: string) {
     }
     throw new Error(`Lexing error on line ${line} near ${cur}`);
   }
-  console.log(o);
   return o;
 }
 
-type AstNode =
+export type AstNode =
   | { kind: "number"; value: number }
   | { kind: "string"; value: string }
   | { kind: "character"; value: number }

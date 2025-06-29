@@ -2,13 +2,22 @@ import { quad } from "./glyphs";
 import { ReplContext } from "./lang";
 import { A, Arr, C, cells, F, list, N, Num, Val } from "./util";
 
-export const quadsList = new Map<string, number>();
+// export const quadsList = new Map<string, number>();
+// ?! WHY DOESN'T IT JUST WORK ARGHH
+// TODO figure out why it stopped working and stop hardcoding this
+export const quadsList = new Map([
+  ["Print", 1],
+  ["Prompt", 1],
+  ["Sleep", 1],
+  ["Img", 1],
+]);
+
 const q = (
   name: string,
   arity: number,
   def: (err: (m: string) => Error) => (...args: Val[]) => Promise<Val>,
 ) => {
-  quadsList.set(name, arity);
+  // quadsList.set(name, arity);
   const msg = (arity === 2 ? "x " : "") + quad + name + " y: ";
   const dat = def((m) => new Error(msg + m));
   return [name, F(arity, dat)] as const;

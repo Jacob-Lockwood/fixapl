@@ -1,11 +1,11 @@
-import { createEffect, createSignal, For, Show } from "solid-js";
-import { Visitor, Token, lex, Parser, ReplContext } from "./lang";
-import { display } from "./primitives";
+import { createSignal, For, Show } from "solid-js";
+import { Token } from "./lang";
 import { Component } from "solid-js";
 import { glyphs } from "./glyphs";
-import { quadsList } from "./quads";
-import { execnoad, Val } from "./util";
 import { createStore, SetStoreFunction } from "solid-js/store";
+import type { MessageIn, MessageOut } from "./worker";
+import ReplWorker from "./worker?worker";
+import { quadsList } from "./quads";
 
 const glyphColors = {
   "monadic function": "text-lime-400",
@@ -77,7 +77,7 @@ type ReplEntry = {
   source: string;
   tokens: Token[] | null;
   output: string;
-  result: Val[];
+  result: string[];
   error: string;
   images: ImageData[];
   time: number | null;
@@ -107,27 +107,47 @@ export function Repl() {
   const [clearPrompt, setClearPrompt] = setting("clearPrompt", true);
   const [displayTimes, setDisplayTimes] = setting("displayTimes", false);
   const [bindings, setBindings] = createSignal(new Map<string, number>());
+  const [disableEntry, setDisableEntry] = createSignal(false);
 
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
-  const ctx: ReplContext = {
-    write: (s) => {
-      setData("output", (v) => v + s);
-      if (s.includes("\b")) {
+  // const worker = new Worker(new URL("./worker.ts", import.meta.url));
+  const worker = new ReplWorker();
+  const msg = (s: MessageIn) => worker.postMessage(s);
+  worker.onmessage = (ev: MessageEvent<MessageOut>) => {
+    const [kind, d] = ev.data;
+    if (kind === "tokens") {
+      setData("tokens", d);
+    } else if (kind === "result") {
+      setData("result", (v) => [...v, d]);
+    } else if (kind === "bindings") {
+      setBindings(d);
+    } else if (kind === "error") {
+      setData("error", d instanceof Error ? d.message : d + "");
+      console.error(d);
+    } else if (kind === "time") {
+      setData("time", d);
+      setDisableEntry(false);
+    } else if (kind === "read") {
+      const inp = prompt();
+      msg(["input", inp]);
+    } else if (kind === "image") {
+      setData("images", (i) => [...i, d]);
+    } else if (kind === "write") {
+      setData("output", (v) => v + d);
+      if (d.includes("\b")) {
         const aud = new Audio("/minecraft_bell.wav");
         aud.volume = 0.5;
         aud.play();
       }
-    },
-    read: async () => prompt("input"),
-    drawImage: (d) => setData("images", (i) => [...i, d]),
+    }
   };
-  const visitor = new Visitor(ctx);
   const process = async (source: string) => {
+    setDisableEntry(true);
     // data is re-assigned so each entry gets its own store
     // eslint-disable-next-line solid/reactivity
     [data, setData] = createStore<ReplEntry>({
       source,
-      tokens: [],
+      tokens: null,
       output: "",
       result: [],
       error: "",
@@ -135,31 +155,9 @@ export function Repl() {
       time: null,
     });
     setResults((res) => [data, ...res]);
-    const t1 = Date.now();
-    try {
-      const toks = lex(source);
-      setData("tokens", toks);
-      const t = toks.filter((x) => !"whitespace,comment".includes(x.kind));
-      const p = new Parser(t).program();
-      for (const n of p) {
-        const v = await execnoad(await visitor.visit(n));
-        setData("result", (r) => [...r, v]);
-        setBindings(
-          new Map(
-            [...visitor.bindings.entries()].map((z) => [
-              z[0],
-              z[1].kind === "function" ? z[1].arity : 0,
-            ]),
-          ),
-        );
-      }
-    } catch (e) {
-      setData("error", e instanceof Error ? e.message : e + "");
-      console.error(e);
-    }
-    setData("time", Date.now() - t1);
+    msg(["eval", source]);
   };
-  createEffect(() => process(`"Hello, world!"`));
+  setTimeout(() => process(`"Hello, world!"`), 20);
   let textarea!: HTMLTextAreaElement;
   return (
     <div class="sticky top-10 flex flex-col gap-2">
@@ -221,24 +219,36 @@ export function Repl() {
             <For each={results()}>
               {(result) => (
                 <li>
-                  <pre
-                    class="min-w-max bg-teal-900/20 pl-[8ch] selection:!bg-black/50 hover:bg-teal-900/50"
-                    onClick={(e) => {
-                      textarea.parentElement!.dataset.value = textarea.value ||=
-                        e.currentTarget.textContent ?? "";
-                    }}
+                  <div
+                    class="flex min-w-max cursor-progress bg-teal-900/20 hover:bg-teal-900/50"
+                    classList={{ "cursor-progress": result.time === null }}
                   >
-                    <code>
-                      {result.tokens ? (
-                        <Highlight
-                          tokens={result.tokens!}
-                          bindings={bindings()}
-                        />
-                      ) : (
-                        result.source
-                      )}
-                    </code>
-                  </pre>
+                    <div class="w-[8ch]">
+                      <Show when={result.time === null}>
+                        <span class="material-symbols-outlined scale-90 animate-spin">
+                          progress_activity
+                        </span>
+                      </Show>
+                    </div>
+                    <pre
+                      class="selection:!bg-black/50"
+                      onClick={(e) => {
+                        textarea.parentElement!.dataset.value =
+                          textarea.value ||= e.currentTarget.textContent ?? "";
+                      }}
+                    >
+                      <code>
+                        {result.tokens ? (
+                          <Highlight
+                            tokens={result.tokens!}
+                            bindings={bindings()}
+                          />
+                        ) : (
+                          result.source
+                        )}
+                      </code>
+                    </pre>
+                  </div>
                   <div class="min-h-7">
                     <pre class="text-emerald-500">{result.output}</pre>
                     <div class="flex flex-wrap gap-x-2">
@@ -257,9 +267,7 @@ export function Repl() {
                         }}
                       </For>
                     </div>
-                    <pre class="text-green-300">
-                      {result.result.map(display).join("\n")}
-                    </pre>
+                    <pre class="text-green-300">{result.result.join("\n")}</pre>
                     <pre class="text-red-300">{result.error}</pre>
                     <Show when={displayTimes() && result.time}>
                       <pre class="text-emerald-600">
@@ -285,9 +293,11 @@ export function Repl() {
             onKeyDown={(ev) => {
               if (ev.key === "Enter" && !ev.shiftKey) {
                 ev.preventDefault();
-                process(textarea.value);
-                if (clearPrompt()) {
-                  textarea.parentElement!.dataset.value = textarea.value = "";
+                if (!disableEntry()) {
+                  process(textarea.value);
+                  if (clearPrompt()) {
+                    textarea.parentElement!.dataset.value = textarea.value = "";
+                  }
                 }
                 return;
               }
