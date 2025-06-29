@@ -81,6 +81,7 @@ type ReplEntry = {
   error: string;
   images: ImageData[];
   time: number | null;
+  requestingInput: boolean;
 };
 
 function setting(name: string, def: boolean) {
@@ -128,8 +129,7 @@ export function Repl() {
       setData("time", d);
       setDisableEntry(false);
     } else if (kind === "read") {
-      const inp = prompt();
-      msg(["input", inp]);
+      setData("requestingInput", true);
     } else if (kind === "image") {
       setData("images", (i) => [...i, d]);
     } else if (kind === "write") {
@@ -153,11 +153,12 @@ export function Repl() {
       error: "",
       images: [],
       time: null,
+      requestingInput: false,
     });
     setResults((res) => [data, ...res]);
     msg(["eval", source]);
   };
-  setTimeout(() => process(`"Hello, world!"`), 20);
+  process(`"Hello, world!"`);
   let textarea!: HTMLTextAreaElement;
   return (
     <div class="sticky top-10 flex flex-col gap-2">
@@ -250,7 +251,23 @@ export function Repl() {
                     </pre>
                   </div>
                   <div class="min-h-7">
-                    <pre class="text-emerald-500">{result.output}</pre>
+                    <pre class="text-emerald-500">
+                      {result.output}
+                      <Show when={result.requestingInput}>
+                        <textarea
+                          name="prmt"
+                          id="prmt"
+                          rows={1}
+                          class="inline-block min-w-2 bg-green-300 px-1 text-green-900"
+                          onKeyDown={(ev) => {
+                            if (ev.key !== "Enter") return;
+                            ev.preventDefault();
+                            setData("requestingInput", false);
+                            msg(["input", ev.currentTarget.value]);
+                          }}
+                        />
+                      </Show>
+                    </pre>
                     <div class="flex flex-wrap gap-x-2">
                       <For each={result.images}>
                         {(dat) => {
@@ -269,7 +286,7 @@ export function Repl() {
                     </div>
                     <pre class="text-green-300">{result.result.join("\n")}</pre>
                     <pre class="text-red-300">{result.error}</pre>
-                    <Show when={displayTimes() && result.time}>
+                    <Show when={displayTimes() && result.time !== null}>
                       <pre class="text-emerald-600">
                         Finished in {timeString(result.time!)}
                       </pre>
