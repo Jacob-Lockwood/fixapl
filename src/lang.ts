@@ -72,7 +72,8 @@ export function lex(source: string) {
             o.push({ kind: "number", line, image: glyph + n });
             continue other;
           }
-        } else if (kind === "syntax") {
+        }
+        if (kind === "syntax") {
           let image = glyph;
           if (name === "quad") {
             const ident = source.match(basic.identifier);
@@ -95,6 +96,7 @@ export function lex(source: string) {
     }
     throw new Error(`Lexing error on line ${line} near ${cur}`);
   }
+  console.log(o);
   return o;
 }
 
