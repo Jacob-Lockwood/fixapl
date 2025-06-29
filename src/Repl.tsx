@@ -130,6 +130,9 @@ export function Repl() {
       setDisableEntry(false);
     } else if (kind === "read") {
       setData("requestingInput", true);
+      setTimeout(() => {
+        inp.focus();
+      }, 20);
     } else if (kind === "image") {
       setData("images", (i) => [...i, d]);
     } else if (kind === "write") {
@@ -160,6 +163,7 @@ export function Repl() {
   };
   process(`"Hello, world!"`);
   let textarea!: HTMLTextAreaElement;
+  let inp!: HTMLTextAreaElement;
   return (
     <div class="sticky top-10 flex flex-col gap-2">
       <div class="flex flex-col rounded-md bg-black/20 p-4 pt-1">
@@ -257,8 +261,10 @@ export function Repl() {
                         <textarea
                           name="prmt"
                           id="prmt"
+                          ref={inp}
+                          placeholder="input"
                           rows={1}
-                          class="inline-block min-w-2 bg-green-300 px-1 text-green-900"
+                          class="mx-0.5 inline-block min-w-2 rounded-xs bg-green-300 px-1 align-top text-green-900 outline-2 outline-green-500"
                           onKeyDown={(ev) => {
                             if (ev.key !== "Enter") return;
                             ev.preventDefault();
