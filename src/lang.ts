@@ -344,7 +344,7 @@ export class Visitor {
       };
     } else if (node.kind === "quad") {
       if (this.q.has(node.name)) return this.q.get(node.name)!;
-      throw new Error("Unrecognized quad");
+      throw new Error(`Unrecognized quad ${node.name}`);
     } else if (node.kind === "glyph reference") {
       if (node.arity === 0) return await primitiveByGlyph(node.glyph)();
       return F(
