@@ -127,6 +127,7 @@ export function Repl() {
       console.error(d);
     } else if (kind === "time") {
       setData("time", d);
+      setData("requestingInput", false);
       setDisableEntry(false);
     } else if (kind === "read") {
       setData("requestingInput", true);
