@@ -174,6 +174,7 @@ export function Repl() {
           </h2>
           <button
             class="cursor-pointer text-2xl"
+            classList={{ "!cursor-not-allowed": disableEntry() }}
             title="Clear REPL"
             onClick={() => !disableEntry() && setResults([])}
           >
