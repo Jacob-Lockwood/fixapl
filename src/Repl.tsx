@@ -174,8 +174,8 @@ export function Repl() {
           </h2>
           <button
             class="cursor-pointer text-2xl"
-            title="Configuration options"
-            onClick={() => setResults([])}
+            title="Clear REPL"
+            onClick={() => !disableEntry() && setResults([])}
           >
             <span class="material-symbols-outlined" title="clear repl">
               backspace
