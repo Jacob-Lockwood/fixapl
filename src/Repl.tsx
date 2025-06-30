@@ -380,9 +380,9 @@ export function Repl() {
               const txt = r.tokens?.map((z) => z.image).join("") ?? r.source;
               textarea.parentElement!.dataset.value = textarea.value = txt;
             }}
-            onInput={() =>
-              (textarea.parentElement!.dataset.value = textarea.value)
-            }
+            onInput={() => {
+              textarea.parentElement!.dataset.value = textarea.value;
+            }}
           />
         </div>
       </div>
