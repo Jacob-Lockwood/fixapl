@@ -110,6 +110,9 @@ export function Repl() {
   const [autoImg, setAutoImg] = setting("autoImg", false);
   const [bindings, setBindings] = createSignal(new Map<string, number>());
   const [disableEntry, setDisableEntry] = createSignal(false);
+  // const [shifting, setShifting] = createSignal(false);
+  // document.addEventListener("keydown", (ev) => setShifting(ev.shiftKey));
+  // document.addEventListener("keyup", (ev) => setShifting(ev.shiftKey));
 
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
   // const worker = new Worker(new URL("./worker.ts", import.meta.url));
@@ -298,7 +301,21 @@ export function Repl() {
                           ) as HTMLCanvasElement;
                           const ctx = canv.getContext("2d")!;
                           ctx.putImageData(dat, 0, 0);
-                          return canv;
+                          const imgUrl = canv.toDataURL("image/png");
+                          return (
+                            <div class="group relative">
+                              {canv}
+                              <a
+                                class="absolute right-0 bottom-0 hidden cursor-pointer bg-green-950/80 p-1 group-hover:block"
+                                href={imgUrl}
+                                download="fixapl_output.png"
+                              >
+                                <span class="material-symbols-outlined">
+                                  arrow_circle_down
+                                </span>
+                              </a>
+                            </div>
+                          );
                         }}
                       </For>
                     </div>
