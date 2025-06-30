@@ -393,7 +393,7 @@ export function Repl() {
               class="block cursor-pointer rounded-t-sm select-none focus:outline-0"
               classList={{ "bg-emerald-800": selectedGlyph() === i() }}
               onClick={() => {
-                textarea.focus();
+                // textarea.focus();
                 textarea.setRangeText(data.glyph);
                 textarea.selectionStart++;
               }}
