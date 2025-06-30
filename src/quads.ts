@@ -1,6 +1,6 @@
 import { quad } from "./glyphs";
 import { ReplContext } from "./lang";
-import { A, Arr, C, cells, F, list, N, Num, Val } from "./util";
+import { A, C, F, list, N, Val, vToImg } from "./util";
 
 // export const quadsList = new Map<string, number>();
 // ?! WHY DOESN'T IT JUST WORK ARGHH
@@ -57,25 +57,11 @@ export default (ctx: ReplContext) =>
     q("Img", 1, (err) => async (y) => {
       if (y.kind !== "array" || !y.data.every((v) => v.kind === "number"))
         throw err("y must be an array of numbers");
-      let dat: number[];
-      if (y.shape.length === 2) {
-        dat = y.data.flatMap((v) => {
-          const b = Math.round(v.data * 255);
-          return [b, b, b, 255];
-        });
-      } else if (y.shape.length === 3) {
-        const col = cells(y, 1) as Arr<Arr<Num>>;
-        dat = col.data.flatMap((v) => {
-          const w = v.data.map((v) => Math.round(v.data * 255));
-          if (w.length === 2) return [w[0], w[0], w[0], w[1]];
-          if (w.length === 3) return [...w, 255];
-          if (w.length === 4) return w;
-          throw err("If y has rank 3, its last axis must be 2, 3, or 4");
-        });
-      } else throw err("y must have rank 2 or 3");
-      const colors = new Uint8ClampedArray(dat);
-      const img = new ImageData(colors, y.shape[1], y.shape[0]);
-      ctx.drawImage(img);
+      if (y.shape.length < 2 || y.shape.length > 3)
+        throw err("y must have rank 2 or 3");
+      if ((y.shape.length === 3 && y.shape[2] > 4) || y.shape[2] < 2)
+        throw err("If y has rank 3, its last axis must be 2, 3, or 4");
+      ctx.drawImage(vToImg(y) as ImageData);
       return A([0], []);
     }),
   ]);

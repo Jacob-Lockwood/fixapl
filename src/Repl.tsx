@@ -107,6 +107,7 @@ export function Repl() {
   const [historyIdx, setHistoryIdx] = createSignal(-1);
   const [clearPrompt, setClearPrompt] = setting("clearPrompt", true);
   const [displayTimes, setDisplayTimes] = setting("displayTimes", false);
+  const [autoImg, setAutoImg] = setting("autoImg", false);
   const [bindings, setBindings] = createSignal(new Map<string, number>());
   const [disableEntry, setDisableEntry] = createSignal(false);
 
@@ -160,7 +161,7 @@ export function Repl() {
       requestingInput: false,
     });
     setResults((res) => [data, ...res]);
-    msg(["eval", source]);
+    msg(["eval", source, { autoImg: autoImg() }]);
   };
   process(`"Hello, world!"`);
   let textarea!: HTMLTextAreaElement;
@@ -205,8 +206,8 @@ export function Repl() {
               <label for="clear">Clear prompt on enter</label>
               <input
                 type="checkbox"
-                name="clear"
-                id="clear"
+                name="clearprompt"
+                id="clearprompt"
                 checked={clearPrompt()}
                 onInput={(e) => setClearPrompt(e.target.checked)}
               />
@@ -215,10 +216,20 @@ export function Repl() {
               <label for="clear">Display times</label>
               <input
                 type="checkbox"
-                name="clear"
-                id="clear"
+                name="displaytimes"
+                id="displaytimes"
                 checked={displayTimes()}
                 onInput={(e) => setDisplayTimes(e.target.checked)}
+              />
+            </div>
+            <div class="flex gap-4">
+              <label for="clear">Auto-show images</label>
+              <input
+                type="checkbox"
+                name="autoimg"
+                id="autoimg"
+                checked={autoImg()}
+                onInput={(e) => setAutoImg(e.target.checked)}
               />
             </div>
           </div>
@@ -261,8 +272,7 @@ export function Repl() {
                       {result.output}
                       <Show when={result.requestingInput}>
                         <textarea
-                          name="prmt"
-                          id="prmt"
+                          name="prompt"
                           ref={inp}
                           placeholder="input"
                           rows={1}

@@ -128,6 +128,30 @@ export function pervasive(fn: (...xs: Atom[]) => Promise<Val>) {
   );
 }
 
+export function vToImg(y: Val) {
+  let dat: number[];
+  if (y.kind !== "array" || !y.data.every((v) => v.kind === "number"))
+    return false;
+  if (y.shape.length === 2) {
+    dat = y.data.flatMap((v) => {
+      const b = Math.round(v.data * 255);
+      return [b, b, b, 255];
+    });
+  } else if (y.shape.length === 3) {
+    const lastAxis = y.shape[2];
+    if (lastAxis < 2 || lastAxis > 4) return false;
+    const col = cells(y, 1) as Arr<Arr<Num>>;
+    dat = col.data.flatMap((v) => {
+      const w = v.data.map((v) => Math.round(v.data * 255));
+      if (lastAxis === 2) return [w[0], w[0], w[0], w[1]];
+      if (lastAxis === 3) return [...w, 255];
+      return w;
+    });
+  } else return false;
+  const colors = new Uint8ClampedArray(dat);
+  return new ImageData(colors, y.shape[1], y.shape[0]);
+}
+
 export type Atom = Exclude<Val, { kind: "array" }>;
 export type Arr<T extends Val = Val> = {
   kind: "array";

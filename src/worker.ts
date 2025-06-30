@@ -1,7 +1,9 @@
 import { lex, Parser, Token, Visitor } from "./lang";
-import { display, execnoad } from "./util";
+import { Arr, display, execnoad, Num, vToImg } from "./util";
 
-export type MessageIn = ["eval", string] | ["input", string | null];
+export type MessageIn =
+  | ["eval", string, { autoImg: boolean }]
+  | ["input", string | null];
 export type MessageOut =
   | ["tokens", Token[]]
   | ["result", string]
@@ -25,7 +27,9 @@ const visitor = new Visitor({
 });
 let inputSubscriber: (v: string | null) => void;
 
-onmessage = async ({ data: [kind, source] }: MessageEvent<MessageIn>) => {
+onmessage = async ({
+  data: [kind, source, settings],
+}: MessageEvent<MessageIn>) => {
   if (kind === "input") return inputSubscriber(source);
   const t = Date.now();
   try {
@@ -35,7 +39,10 @@ onmessage = async ({ data: [kind, source] }: MessageEvent<MessageIn>) => {
     const p = new Parser(t).program();
     for (const n of p) {
       const v = await execnoad(await visitor.visit(n));
-      msg(["result", display(v)]);
+      const img = settings.autoImg && vToImg(v);
+      if (img && bigEnough(v as Arr<Num>)) {
+        msg(["image", img]);
+      } else msg(["result", display(v)]);
       msg([
         "bindings",
         new Map(
@@ -51,3 +58,7 @@ onmessage = async ({ data: [kind, source] }: MessageEvent<MessageIn>) => {
   }
   msg(["time", Date.now() - t]);
 };
+
+function bigEnough(v: Arr<Num>) {
+  return v.shape[0] >= 100 && v.shape[1] >= 100;
+}
