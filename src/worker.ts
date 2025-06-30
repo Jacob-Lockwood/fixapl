@@ -60,5 +60,5 @@ onmessage = async ({
 };
 
 function bigEnough(v: Arr<Num>) {
-  return v.shape[0] >= 100 && v.shape[1] >= 100;
+  return v.shape[0] >= 30 && v.shape[1] >= 30;
 }
