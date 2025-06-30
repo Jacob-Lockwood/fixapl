@@ -216,7 +216,7 @@ export function Repl() {
               />
             </div>
             <div class="flex gap-4">
-              <label for="clear">Display times</label>
+              <label for="displaytimes">Display times</label>
               <input
                 type="checkbox"
                 name="displaytimes"
@@ -226,7 +226,7 @@ export function Repl() {
               />
             </div>
             <div class="flex gap-4">
-              <label for="clear">Auto-show images</label>
+              <label for="autoimg">Auto-show images</label>
               <input
                 type="checkbox"
                 name="autoimg"
@@ -393,7 +393,7 @@ export function Repl() {
               class="block cursor-pointer rounded-t-sm select-none focus:outline-0"
               classList={{ "bg-emerald-800": selectedGlyph() === i() }}
               onClick={() => {
-                // textarea.focus();
+                textarea.focus();
                 textarea.setRangeText(data.glyph);
                 textarea.selectionStart++;
               }}
