@@ -46,8 +46,8 @@ export async function display(val: Val): Promise<string> {
     return `⟨${(await asyncMap(val.data, display)).join(", ")}⟩`;
   }
   if (val.shape.includes(0)) return `[shape ${val.shape.join("×")}]`;
-  const c = cells(val).data;
-  return `[${c.map(display).join(", ")}]`;
+  const cel = cells(val).data;
+  return `[${(await asyncMap(cel, display)).join(", ")}]`;
 }
 
 function disclose(y: Val) {
@@ -294,23 +294,38 @@ export const tra = mf("⍉", "transpose", () => async (y) => {
       })
       .reverse();
     idx.unshift(idx.pop()!);
-    const d = idx.reduce((tot, ax, i) => tot * y.shape[i] + ax, 0);
-    return a[d];
+    return a[idx.reduce((tot, ax, i) => tot * y.shape[i] + ax, 0)];
   });
   return A(sh, o);
 });
-export const int = mf("⍳", "integers", (err) => async (y) => {
-  if (
-    y.kind === "array" &&
-    y.shape.length === 1 &&
-    y.data.every(
-      (v) => v.kind === "number" && Number.isInteger(v.data) && v.data >= 0,
-    )
-  )
-    return range(y.data.map((v) => v.data as number));
-  if (y.kind !== "number") throw err("invalid y");
-  if (!Number.isInteger(y.data) || y.data < 0)
-    throw err("y must be an integer");
+export const iot = mf("⍳", "index generator", (err) => async (y) => {
+  if (y.kind === "array" && y.shape.length === 1) {
+    const sh = y.data.map((v) => {
+      if (v.kind !== "number" || !Number.isInteger(v.data) || v.data < 0)
+        throw err("If y is a list it must only contain nonnegative integers");
+      return v.data;
+    });
+    const len = sh.reduce((a, b) => a * b, 1);
+    const o: Val[] = [];
+    for (let ind = 0; ind < len; ind++) {
+      let i = ind;
+      o.push(
+        list(
+          [...sh]
+            .reverse()
+            .map((ax) => {
+              const j = i % ax;
+              i = Math.floor(i / ax);
+              return N(j);
+            })
+            .reverse(),
+        ),
+      );
+    }
+    return A(sh, o);
+  }
+  if (y.kind !== "number" || !Number.isInteger(y.data) || y.data < 0)
+    throw err("y must be a nonnegative integer or a list thereof");
   return range([y.data]);
 });
 export const len = mf("⧻", "length", () => async (y) => {
@@ -726,7 +741,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
   return F(arity, async (...v) => {
     const arr = v[arity - 1];
     if (arr.kind !== "array") throw e("y must be an array");
-    const indices = await int.def(shape(arr));
+    const indices = range(arr.shape);
     const [t, ti] = await asyncMap([arr, indices], async (z) =>
       execnilad(Y.arity === 1 ? await Y.data(z) : await Y.data(v[0], z)),
     );

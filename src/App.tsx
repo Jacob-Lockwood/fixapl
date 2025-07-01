@@ -46,6 +46,25 @@ export default function App() {
               Why fixed arity
             </summary>
             <p class="mt-1">
+              Arity, also known as{" "}
+              <a
+                class="text-green-500 underline"
+                target="_blank"
+                href="https://aplwiki.com/wiki/Function#Function_valence"
+              >
+                valence
+              </a>
+              , is the number of arguments that a function takes. In APL syntax,
+              all functions can be called with either one argument or two
+              arguments (known as monadic and dyadic calls), though some
+              functions are only defined to have meaning for one or the other.
+            </p>
+            <p class="mt-2">
+              In FIXAPL, this is not the case; every function has only a single
+              way to be called, and this is ingrained into the syntax. This is
+              referred to as <i>fixed-arity</i>.
+            </p>
+            <p class="mt-2">
               I've written about the motivations for fixed-arity to a greater
               extent{" "}
               <a
@@ -57,7 +76,7 @@ export default function App() {
               </a>
               , but to summarize the main points:
             </p>
-            <ol class="flex list-decimal flex-col gap-2 pl-8">
+            <ol class="flex list-decimal flex-col gap-2 pt-2 pl-8">
               <li>
                 <p>
                   The overloading of glyphs to have different meanings when
@@ -114,8 +133,15 @@ export default function App() {
                 </p>
                 <p class="mt-2">
                   This element of using fixed-arity functions to write more
-                  compact trains is largely inspired by the language Jelly,
-                  which implements a variation of the same idea.
+                  compact trains is largely inspired by the language{" "}
+                  <a
+                    href="https://github.com/DennisMitchell/jellylanguage"
+                    class="text-green-500 underline"
+                    target="_blank"
+                  >
+                    Jelly
+                  </a>
+                  , which implements a variation of the same idea.
                 </p>
               </li>
             </ol>
