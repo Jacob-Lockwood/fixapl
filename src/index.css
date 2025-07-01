@@ -26,7 +26,7 @@ body {
   src: url("/Uiua386.ttf") format("truetype");
 }
 @font-face {
-  font-family: TinyAPL386;
+  font-family: "TinyAPL386 Unicode";
   src: url("/TinyAPL386.ttf") format("truetype");
 }
 @font-face {
@@ -35,6 +35,6 @@ body {
 }
 @theme {
   --font-sans: APL333, sans-serif;
-  --font-mono: TinyAPL386, Uiua386, monospace;
+  --font-mono: "TinyAPL386 Unicode", Uiua386, monospace;
 }
 @custom-variant hocus (&:hover, &:focus);

@@ -309,18 +309,15 @@ export const iot = mf("⍳", "index generator", (err) => async (y) => {
     const o: Val[] = [];
     for (let ind = 0; ind < len; ind++) {
       let i = ind;
-      o.push(
-        list(
-          [...sh]
-            .reverse()
-            .map((ax) => {
-              const j = i % ax;
-              i = Math.floor(i / ax);
-              return N(j);
-            })
-            .reverse(),
-        ),
-      );
+      const x = [...sh]
+        .reverse()
+        .map((ax) => {
+          const j = i % ax;
+          i = Math.floor(i / ax);
+          return N(j);
+        })
+        .reverse();
+      o.push(list(x));
     }
     return A(sh, o);
   }

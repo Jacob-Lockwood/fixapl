@@ -88,16 +88,14 @@ type ReplEntry = {
   requestingInput: boolean;
 };
 
-function setting(name: string, def: boolean) {
+function setting(name: string, def: string) {
   const initial = localStorage.getItem(name);
-  const [sig, setSig] = createSignal<boolean>(
-    initial ? initial === "true" : def,
-  );
-  const toggle = (val: boolean) => {
+  const [sig, setSig] = createSignal(initial ?? def);
+  const setter = (val: string) => {
     setSig(val);
     localStorage.setItem(name, "" + val);
   };
-  return [sig, toggle] as const;
+  return [sig, setter] as const;
 }
 function timeString(t: number) {
   if (t > 1000) return (t / 1000).toFixed(3) + "s";
@@ -109,9 +107,9 @@ export function Repl() {
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
-  const [clearPrompt, setClearPrompt] = setting("clearPrompt", true);
-  const [displayTimes, setDisplayTimes] = setting("displayTimes", false);
-  const [autoImg, setAutoImg] = setting("autoImg", false);
+  const [clearPrompt, setClearPrompt] = setting("clearPrompt", "true");
+  const [displayTimes, setDisplayTimes] = setting("displayTimes", "false");
+  const [autoImg, setAutoImg] = setting("autoImg", "false");
   const [bindings, setBindings] = createSignal(new Map<string, number>());
   const [disableEntry, setDisableEntry] = createSignal(false);
   // const [shifting, setShifting] = createSignal(false);
@@ -120,6 +118,13 @@ export function Repl() {
 
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
   // const worker = new Worker(new URL("./worker.ts", import.meta.url));
+
+  const cToRgb = (c: number[]) =>
+    `rgb(${c
+      .slice(0, 3)
+      .map((n) => n * 255)
+      .join(" ")} / ${c[3] ?? 1})`;
+
   const worker = new ReplWorker();
   const msg = (s: MessageIn) => worker.postMessage(s);
   worker.onmessage = (ev: MessageEvent<MessageOut>) => {
@@ -151,6 +156,22 @@ export function Repl() {
         aud.volume = 0.5;
         aud.play();
       }
+    } else if (kind === "text") {
+      const cnv = (<canvas />) as HTMLCanvasElement;
+      const ctx = cnv.getContext("2d")!;
+      const font = `${d.fontSize}px ${d.fontFamily || `"TinyAPL386 Unicode"`}`;
+      ctx.font = font;
+      const { width, fontBoundingBoxDescent } = ctx.measureText(d.text);
+      cnv.width = width;
+      cnv.height = d.fontSize;
+      if (d.bg) {
+        ctx.fillStyle = cToRgb(d.bg);
+        ctx.fillRect(0, 0, width, d.fontSize);
+      }
+      ctx.fillStyle = d.color ? cToRgb(d.color) : "white";
+      ctx.font = font;
+      ctx.fillText(d.text, 0, d.fontSize - fontBoundingBoxDescent);
+      msg(["text", ctx.getImageData(0, 0, width, d.fontSize)]);
     }
   };
   const process = async (source: string) => {
@@ -168,7 +189,7 @@ export function Repl() {
       requestingInput: false,
     });
     setResults((res) => [data, ...res]);
-    msg(["eval", source, { autoImg: autoImg() }]);
+    msg(["eval", source, { autoImg: autoImg() === "true" }]);
   };
   process(`"Hello, world!"`);
   let textarea!: HTMLTextAreaElement;
@@ -215,8 +236,8 @@ export function Repl() {
                 type="checkbox"
                 name="clearprompt"
                 id="clearprompt"
-                checked={clearPrompt()}
-                onInput={(e) => setClearPrompt(e.target.checked)}
+                checked={clearPrompt() === "true"}
+                onInput={(e) => setClearPrompt(e.target.checked + "")}
               />
             </div>
             <div class="flex gap-4">
@@ -225,8 +246,8 @@ export function Repl() {
                 type="checkbox"
                 name="displaytimes"
                 id="displaytimes"
-                checked={displayTimes()}
-                onInput={(e) => setDisplayTimes(e.target.checked)}
+                checked={displayTimes() === "true"}
+                onInput={(e) => setDisplayTimes(e.target.checked + "")}
               />
             </div>
             <div class="flex gap-4">
@@ -235,8 +256,8 @@ export function Repl() {
                 type="checkbox"
                 name="autoimg"
                 id="autoimg"
-                checked={autoImg()}
-                onInput={(e) => setAutoImg(e.target.checked)}
+                checked={autoImg() === "true"}
+                onInput={(e) => setAutoImg(e.target.checked + "")}
               />
             </div>
           </div>
@@ -325,7 +346,9 @@ export function Repl() {
                     </div>
                     <pre class="text-green-300">{result.result.join("\n")}</pre>
                     <pre class="text-red-300">{result.error}</pre>
-                    <Show when={displayTimes() && result.time !== null}>
+                    <Show
+                      when={displayTimes() === "true" && result.time !== null}
+                    >
                       <pre class="text-emerald-600">
                         Finished in {timeString(result.time!)}
                       </pre>
@@ -351,7 +374,7 @@ export function Repl() {
                 ev.preventDefault();
                 if (!disableEntry()) {
                   process(textarea.value);
-                  if (clearPrompt()) {
+                  if (clearPrompt() === "true") {
                     textarea.parentElement!.dataset.value = textarea.value = "";
                   }
                 }

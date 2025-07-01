@@ -327,10 +327,18 @@ export class Parser {
     return statements;
   }
 }
+export type TextOptions = {
+  text: string;
+  fontSize: number;
+  color?: number[];
+  bg?: number[];
+  fontFamily?: string;
+};
 export type ReplContext = {
   drawImage: (d: ImageData) => void;
   write: (s: string) => void;
   read: () => Promise<string | null>;
+  drawText: (opts: TextOptions) => Promise<ImageData>;
 };
 export class Visitor {
   public bindings = new Map<string, Val>([]);

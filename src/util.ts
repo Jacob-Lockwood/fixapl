@@ -154,6 +154,16 @@ export function vToImg(y: Val) {
   return new ImageData(colors, y.shape[1], y.shape[0]);
 }
 
+export function isString(
+  y: Val,
+): y is Arr<Extract<Val, { kind: "character" }>> {
+  return (
+    y.kind === "array" &&
+    y.data.every((v) => v.kind === "character") &&
+    y.shape.length === 1
+  );
+}
+
 export type Atom = Exclude<Val, { kind: "array" }>;
 export type Arr<T extends Val = Val> = {
   kind: "array";

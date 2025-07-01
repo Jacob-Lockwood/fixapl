@@ -1,6 +1,6 @@
 import { quad } from "./glyphs";
 import { ReplContext } from "./lang";
-import { A, C, F, list, N, Val, vToImg } from "./util";
+import { A, Arr, C, F, isString, list, N, Num, Val, vToImg } from "./util";
 
 // export const quadsList = new Map<string, number>();
 // ?! WHY DOESN'T IT JUST WORK ARGHH
@@ -10,6 +10,7 @@ export const quadsList = new Map([
   ["Prompt", 1],
   ["Sleep", 1],
   ["Img", 1],
+  ["Text", 2],
 ]);
 
 const q = (
@@ -25,23 +26,13 @@ const q = (
 export default (ctx: ReplContext) =>
   new Map([
     q("Print", 1, (err) => async (y) => {
-      if (
-        y.kind !== "array" ||
-        y.shape.length !== 1 ||
-        !y.data.every((v) => v.kind === "character")
-      )
-        throw err("y must be a string");
+      if (!isString(y)) throw err("y must be a string");
       const s = y.data.map((x) => String.fromCodePoint(x.data)).join("");
       return ctx.write(s + "\n"), A([0], []);
     }),
     q("Prompt", 1, (err) => async (y) => {
-      if (
-        y.kind !== "array" ||
-        y.shape.length !== 1 ||
-        !y.data.every((v) => v.kind === "character")
-      )
-        throw err("y must be a string");
-      const s = y.data.map((x) => String.fromCodePoint(x.data)).join("");
+      if (!isString(y)) throw err("y must be a string");
+      const s = String.fromCodePoint(...y.data.map((x) => x.data));
       ctx.write(s);
       const o = await ctx.read();
       if (o === null) throw err("no input was provided");
@@ -63,5 +54,55 @@ export default (ctx: ReplContext) =>
         throw err("If y has rank 3, its last axis must be 2, 3, or 4");
       ctx.drawImage(vToImg(y) as ImageData);
       return A([0], []);
+    }),
+    q("Text", 2, (err) => async (x, y) => {
+      if (!isString(y)) throw err("y must be a string");
+      const s = String.fromCodePoint(...y.data.map((v) => v.data));
+      let fontSize: number;
+      let fontFamily: string | undefined;
+      let bg: number[] | undefined;
+      let color: number[] | undefined;
+      if (x.kind === "number" && x.data > 0) {
+        fontSize = x.data;
+      } else if (x.kind === "array" && x.shape.length === 1) {
+        let features = 1;
+
+        const fs = x.data.find((v) => v.kind === "number");
+        if (!fs) throw err("x must specify a font size");
+        if (fs.data < 0) throw err("Font size must be positive");
+        fontSize = fs.data;
+
+        const ff = x.data.find(isString);
+        if (ff) {
+          features++;
+          fontFamily = String.fromCodePoint(...ff.data.map((x) => x.data));
+        }
+        const colors = x.data.filter(
+          (v): v is Arr<Num> =>
+            v.kind === "array" &&
+            v.shape.length === 1 &&
+            v.shape[0] < 5 &&
+            v.shape[0] > 2 &&
+            v.data.every((v) => v.kind === "number"),
+        );
+        if (colors[0]) color = colors[0].data.map((v) => v.data);
+        if (colors[1]) bg = colors[1].data.map((v) => v.data);
+        features += colors[0] ? (colors[1] ? 2 : 1) : 0;
+
+        if (x.shape[0] !== features)
+          throw err(`x contains ${x.shape[0] - features} invalid member(s)`);
+      } else throw err("x must be a positive number or a list");
+
+      const { width, height, data } = await ctx.drawText({
+        fontSize,
+        fontFamily,
+        color,
+        bg,
+        text: s,
+      });
+      return A(
+        [height, width, 4],
+        [...data].map((v) => N(v / 255)),
+      );
     }),
   ]);

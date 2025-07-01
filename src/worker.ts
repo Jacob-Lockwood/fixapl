@@ -1,9 +1,10 @@
-import { lex, Parser, Token, Visitor } from "./lang";
+import { lex, Parser, TextOptions, Token, Visitor } from "./lang";
 import { Arr, display, execnilad, Num, vToImg } from "./util";
 
 export type MessageIn =
   | ["eval", string, { autoImg: boolean }]
-  | ["input", string | null];
+  | ["input", string | null]
+  | ["text", ImageData];
 export type MessageOut =
   | ["tokens", Token[]]
   | ["result", string]
@@ -12,28 +13,37 @@ export type MessageOut =
   | ["time", number]
   | ["write", string]
   | ["image", ImageData]
+  | ["text", TextOptions]
   | ["read"];
 const msg = (d: MessageOut) => postMessage(d);
 
 const visitor = new Visitor({
   write: (s) => postMessage(["write", s]),
   read: () => {
-    postMessage(["read"]);
+    msg(["read"]);
     return new Promise<string | null>((resolve) => {
       inputSubscriber = resolve;
     });
   },
   drawImage: (d) => postMessage(["image", d]),
+  drawText: (opts) => {
+    msg(["text", opts]);
+    return new Promise<ImageData>((resolve) => {
+      textSubscriber = resolve;
+    });
+  },
 });
 let inputSubscriber: (v: string | null) => void;
+let textSubscriber: (v: ImageData) => void;
 
 onmessage = async ({
-  data: [kind, source, settings],
+  data: [kind, data, settings],
 }: MessageEvent<MessageIn>) => {
-  if (kind === "input") return inputSubscriber(source);
+  if (kind === "input") return inputSubscriber(data);
+  if (kind === "text") return textSubscriber(data);
   const t = Date.now();
   try {
-    const toks = lex(source);
+    const toks = lex(data);
     msg(["tokens", toks]);
     const t = toks.filter((x) => !"whitespace,comment".includes(x.kind));
     const p = new Parser(t).program();
