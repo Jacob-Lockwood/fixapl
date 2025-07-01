@@ -27,7 +27,9 @@ export function display(val: Val): string {
     const j = JSON.stringify(String.fromCodePoint(val.data));
     return `'${j.slice(1, -1).replace(/'/g, "\\'")}'`;
   }
-  if (val.kind === "function") return `<${val.arity === 1 ? "monad" : "dyad"}>`;
+  if (val.kind === "function") {
+    return val.repr ? val.repr : `<${val.arity === 1 ? "monad" : "dyad"}>`;
+  }
   if (val.shape.length === 0) {
     return enc.glyph + display(val.data[0]);
   }

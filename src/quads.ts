@@ -20,7 +20,7 @@ const q = (
   // quadsList.set(name, arity);
   const msg = (arity === 2 ? "x " : "") + quad + name + " y: ";
   const dat = def((m) => new Error(msg + m));
-  return [name, F(arity, dat)] as const;
+  return [name, F(arity, dat, quad + name)] as const;
 };
 export default (ctx: ReplContext) =>
   new Map([

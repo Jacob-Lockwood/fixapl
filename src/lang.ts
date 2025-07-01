@@ -1,4 +1,4 @@
-import { Val, F, A, match, N, execnoad, asyncMap, list } from "./util";
+import { Val, F, A, match, N, execnoad, asyncMap, list, display } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
 import quads from "./quads";
 function primitiveByGlyph(s: string) {
@@ -350,13 +350,20 @@ export class Visitor {
       return F(
         node.arity,
         primitiveByGlyph(node.glyph) as (...args: Val[]) => Promise<Val>,
+        node.glyph,
       );
     } else if (node.kind === "monadic modifier") {
-      return primitiveByGlyph(node.glyph)(await this.visit(node.fn));
+      const arg = await this.visit(node.fn);
+      const v = await primitiveByGlyph(node.glyph)(arg);
+      if (v.kind === "function") v.repr = display(arg) + node.glyph;
+      return v;
     } else if (node.kind === "dyadic modifier") {
-      return primitiveByGlyph(node.glyph)(
-        ...(await asyncMap(node.fns, (f) => this.visit(f))),
-      );
+      const lft = await this.visit(node.fns[0]);
+      const rgt = await this.visit(node.fns[1]);
+      const v = await primitiveByGlyph(node.glyph)(lft, rgt);
+      if (v.kind === "function")
+        v.repr = display(lft) + node.glyph + display(rgt);
+      return v;
     } else if (node.kind === "expression") {
       const tines = await asyncMap(node.values, (n) => this.visit(n));
       if (tines.length === 1) return tines[0];
@@ -391,6 +398,7 @@ export class Visitor {
           t ??= F(1, async (y) => y);
           const s = t.kind === "function" ? t : F(0, async () => t);
           const res = fns.reduceRight((r, fn) => fn(r), s);
+          res.repr = `(${tines.map(display).join(" ")})`;
           if (res.arity === 0) {
             const v = res.data();
             return F(0, () => v);
@@ -470,13 +478,17 @@ export class Visitor {
         return 1;
       }
       const arity = getArity(node.def);
-      return F(arity, async (...v) => {
-        const temp = this.dfns?.slice();
-        this.dfns = arity === 1 ? [N(0), v[0]] : v;
-        const e = await this.visit(node.def);
-        this.dfns = temp;
-        return execnoad(e);
-      });
+      return F(
+        arity,
+        async (...v) => {
+          const temp = this.dfns?.slice();
+          this.dfns = arity === 1 ? [N(0), v[0]] : v;
+          const e = await this.visit(node.def);
+          this.dfns = temp;
+          return execnoad(e);
+        },
+        `{${arity === 1 ? "monad" : "dyad"}}`,
+      );
     } else if (node.kind === "dfn arg") {
       if (!this.dfns)
         throw new Error("Cannot reference dfn argument outside dfn");

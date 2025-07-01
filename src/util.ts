@@ -9,13 +9,15 @@ export type Val =
       kind: "function";
       arity: number;
       data: Fn;
+      repr?: string;
     };
 type Fn = (...x: Val[]) => Promise<Val>;
-export const F = (arity: number, data: Fn) =>
+export const F = (arity: number, data: Fn, repr?: string) =>
   ({
     kind: "function",
     arity,
     data,
+    repr,
   }) satisfies Val;
 export const N = (data: number): Val => ({ kind: "number", data });
 export const C = (data: string): Val => ({
