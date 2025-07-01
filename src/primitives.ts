@@ -21,17 +21,21 @@ import {
 } from "./util";
 import type { PrimitiveKind } from "./glyphs";
 
-export function display(val: Val): string {
+export async function display(val: Val): Promise<string> {
   if (val.kind === "number") return val.data.toString().replace("-", ng.glyph);
   if (val.kind === "character") {
     const j = JSON.stringify(String.fromCodePoint(val.data));
     return `'${j.slice(1, -1).replace(/'/g, "\\'")}'`;
   }
   if (val.kind === "function") {
-    return val.repr ? val.repr : `<${val.arity === 1 ? "monad" : "dyad"}>`;
+    if (val.repr) return val.repr;
+    if (val.arity === 0) {
+      const v = await execnoad(val);
+      return v.kind === "function" ? (await display(v)) + sb.glyph : display(v);
+    } else return `<${val.arity === 1 ? "monad" : "dyad"}>`;
   }
   if (val.shape.length === 0) {
-    return enc.glyph + display(val.data[0]);
+    return enc.glyph + (await display(val.data[0]));
   }
   if (val.shape.length === 1) {
     if (val.shape[0] !== 0 && val.data.every((v) => v.kind === "character")) {
@@ -39,7 +43,7 @@ export function display(val: Val): string {
         String.fromCodePoint(...val.data.map((v) => v.data)),
       );
     }
-    return `⟨${val.data.map(display).join(", ")}⟩`;
+    return `⟨${(await asyncMap(val.data, display)).join(", ")}⟩`;
   }
   if (val.shape.includes(0)) return `[shape ${val.shape.join("×")}]`;
   const c = cells(val).data;
@@ -689,14 +693,14 @@ export const unt = dm("⍣", "until", (err, r) => async (X, Y) => {
     if (r.kind === "number" && (r.data === 0 || r.data === 1)) return r.data;
     throw e("Condition function must return a boolean");
   };
-  const iterr = (v: Val) =>
-    e(`Maximum iteration count reached; last value:\n${display(v)}`);
+  const iterr = async (v: Val) =>
+    e(`Maximum iteration count reached; last value:\n${await display(v)}`);
   const maxIter = 10000;
   if (cond.arity === 1)
     return F(X.arity, async (v, w) => {
       let g = X.arity === 1 ? v : w;
       for (let i = 0; !(await end(g)); i++) {
-        if (i > maxIter) throw iterr(g);
+        if (i > maxIter) throw await iterr(g);
         g = await iter(v, g);
       }
       return g;
@@ -711,7 +715,7 @@ export const unt = dm("⍣", "until", (err, r) => async (X, Y) => {
       g = await iter(v, h);
       if (await end(h, g)) return g;
     }
-    throw iterr(g);
+    throw await iterr(g);
   });
 });
 export const und = dm("⍢", "under", (err, r) => async (X, Y) => {

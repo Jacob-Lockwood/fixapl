@@ -355,14 +355,14 @@ export class Visitor {
     } else if (node.kind === "monadic modifier") {
       const arg = await this.visit(node.fn);
       const v = await primitiveByGlyph(node.glyph)(arg);
-      if (v.kind === "function") v.repr = display(arg) + node.glyph;
+      if (v.kind === "function") v.repr = (await display(arg)) + node.glyph;
       return v;
     } else if (node.kind === "dyadic modifier") {
       const lft = await this.visit(node.fns[0]);
       const rgt = await this.visit(node.fns[1]);
       const v = await primitiveByGlyph(node.glyph)(lft, rgt);
       if (v.kind === "function")
-        v.repr = display(lft) + node.glyph + display(rgt);
+        v.repr = (await display(lft)) + node.glyph + (await display(rgt));
       return v;
     } else if (node.kind === "expression") {
       const tines = await asyncMap(node.values, (n) => this.visit(n));
@@ -398,7 +398,7 @@ export class Visitor {
           t ??= F(1, async (y) => y);
           const s = t.kind === "function" ? t : F(0, async () => t);
           const res = fns.reduceRight((r, fn) => fn(r), s);
-          res.repr = `(${tines.map(display).join(" ")})`;
+          res.repr = `(${(await asyncMap(tines, display)).join(" ")})`;
           if (res.arity === 0) {
             const v = res.data();
             return F(0, () => v);

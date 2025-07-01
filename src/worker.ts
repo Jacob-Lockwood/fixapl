@@ -42,7 +42,7 @@ onmessage = async ({
       const img = settings.autoImg && vToImg(v);
       if (img && bigEnough(v as Arr<Num>)) {
         msg(["image", img]);
-      } else msg(["result", display(v)]);
+      } else msg(["result", await display(v)]);
       msg([
         "bindings",
         new Map(

@@ -1,10 +1,9 @@
-import { createSignal, For, Show } from "solid-js";
-import { Token } from "./lang";
-import { Component } from "solid-js";
-import { glyphs } from "./glyphs";
+import { createSignal, For, Show, Component } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
-import type { MessageIn, MessageOut } from "./worker";
 import ReplWorker from "./worker?worker";
+import { MessageIn, MessageOut } from "./worker";
+import { Token } from "./lang";
+import { glyphs } from "./glyphs";
 import { quadsList } from "./quads";
 
 const glyphColors = {
