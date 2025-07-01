@@ -1,4 +1,14 @@
-import { Val, F, A, match, N, execnoad, asyncMap, list, display } from "./util";
+import {
+  Val,
+  F,
+  A,
+  match,
+  N,
+  execnilad,
+  asyncMap,
+  list,
+  display,
+} from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
 import quads from "./quads";
 function primitiveByGlyph(s: string) {
@@ -414,14 +424,16 @@ export class Visitor {
       }
     } else if (node.kind === "strand" || node.kind === "list") {
       return list(
-        await asyncMap(node.values, async (v) => execnoad(await this.visit(v))),
+        await asyncMap(node.values, async (v) =>
+          execnilad(await this.visit(v)),
+        ),
       );
     } else if (node.kind === "array") {
       if (node.values.length === 0) {
         throw new Error("Square brackets may not be empty");
       }
       const v = await asyncMap(node.values, async (n) =>
-        execnoad(await this.visit(n)),
+        execnilad(await this.visit(n)),
       );
       if (v.every((d) => d.kind === "array")) {
         if (v.every((x, i) => match(x.shape, v[++i % v.length].shape))) {
@@ -485,7 +497,7 @@ export class Visitor {
           this.dfns = arity === 1 ? [N(0), v[0]] : v;
           const e = await this.visit(node.def);
           this.dfns = temp;
-          return execnoad(e);
+          return execnilad(e);
         },
         `{${arity === 1 ? "monad" : "dyad"}}`,
       );

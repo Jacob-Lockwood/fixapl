@@ -6,7 +6,7 @@ import {
   N,
   match,
   range,
-  execnoad,
+  execnilad,
   list,
   fromCells,
   map,
@@ -30,7 +30,7 @@ export async function display(val: Val): Promise<string> {
   if (val.kind === "function") {
     if (val.repr) return val.repr;
     if (val.arity === 0) {
-      const v = await execnoad(val);
+      const v = await execnilad(val);
       return v.kind === "function" ? (await display(v)) + sb.glyph : display(v);
     } else return `<${val.arity === 1 ? "monad" : "dyad"}>`;
   }
@@ -675,7 +675,7 @@ export const rep = mm("↺", "repeat", (err, { err2 }) => async (X) => {
       throw err2("x must be a nonnegative integer");
     let cur = w;
     for (let i = 0; i < v.data; i++) {
-      cur = await execnoad(await fn(N(i), cur));
+      cur = await execnilad(await fn(N(i), cur));
     }
     return cur;
   });
@@ -689,7 +689,7 @@ export const unt = dm("⍣", "until", (err, r) => async (X, Y) => {
   const cond = Y.kind === "function" ? Y : F(1, async () => Y);
   const e = X.arity === 1 ? r.err1 : r.err2;
   const end = async (...v: Val[]) => {
-    const r = await execnoad(await cond.data(...v));
+    const r = await execnilad(await cond.data(...v));
     if (r.kind === "number" && (r.data === 0 || r.data === 1)) return r.data;
     throw e("Condition function must return a boolean");
   };
@@ -728,7 +728,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
     if (arr.kind !== "array") throw e("y must be an array");
     const indices = await int.def(shape(arr));
     const [t, ti] = await asyncMap([arr, indices], async (z) =>
-      execnoad(Y.arity === 1 ? await Y.data(z) : await Y.data(v[0], z)),
+      execnilad(Y.arity === 1 ? await Y.data(z) : await Y.data(v[0], z)),
     );
     const isOk = (x: Val) =>
       x.kind === "number" &&
@@ -737,7 +737,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
       Number.isInteger(x.data);
     if (isOk(ti)) {
       const i = ti.data as number;
-      const z = await execnoad(await X.data(t));
+      const z = await execnilad(await X.data(t));
       return A(
         arr.shape,
         arr.data.map((v, x) => (i === x ? z : v)),
@@ -750,7 +750,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
         new Set(ti.data.map((x) => x.data)).size !== ti.data.length
       )
         throw e("Invalid transformation");
-      const dat = await execnoad(await X.data(t));
+      const dat = await execnilad(await X.data(t));
       if (dat.kind !== "array" || !match(dat.shape, t.shape))
         throw e("Function cannot change shape");
       return each(async (v) => {
@@ -765,7 +765,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
   });
 });
 export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
-  Y = await execnoad(Y);
+  Y = await execnilad(Y);
   if (X.kind !== "function") throw err("X must be function");
   if (Y.kind === "number") Y = A([1], [Y]);
   if (Y.kind !== "array" || Y.shape.length !== 1 || Y.shape[0] === 0)
@@ -848,13 +848,13 @@ export const rgt = df("⊢", "right argument", () => async (_, y) => y);
 export const id = mf("⋅", "identity", () => async (y) => y);
 export const sb = mm("₀", "subject", () => async (X) => F(0, async () => X));
 export const mn = mm("₁", "monad", (err) => async (X) => {
-  X = await execnoad(X);
+  X = await execnilad(X);
   if (X.kind !== "function") return F(1, async () => X);
   if (X.arity === 2) throw err("Cannot coerce dyad to monad");
   return X;
 });
 export const dy = mm("₂", "dyad", () => async (X) => {
-  X = await execnoad(X);
+  X = await execnilad(X);
   if (X.kind !== "function") return F(2, async () => X);
   if (X.arity === 1) return F(2, (_, y) => X.data(y));
   return X;

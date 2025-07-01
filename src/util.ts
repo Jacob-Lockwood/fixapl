@@ -38,8 +38,8 @@ export const range = (shape: number[]): Val =>
       .fill(0)
       .map((_, i) => N(i)),
   );
-export const execnoad = async (v: Val): Promise<Val> =>
-  v.kind === "function" && v.arity === 0 ? execnoad(await v.data()) : v;
+export const execnilad = async (v: Val): Promise<Val> =>
+  v.kind === "function" && v.arity === 0 ? execnilad(await v.data()) : v;
 
 export const list = (arr: Val[]) => A([arr.length], arr);
 export function fromCells(arr: Val[]) {

@@ -1,5 +1,5 @@
 import { lex, Parser, Token, Visitor } from "./lang";
-import { Arr, display, execnoad, Num, vToImg } from "./util";
+import { Arr, display, execnilad, Num, vToImg } from "./util";
 
 export type MessageIn =
   | ["eval", string, { autoImg: boolean }]
@@ -38,7 +38,7 @@ onmessage = async ({
     const t = toks.filter((x) => !"whitespace,comment".includes(x.kind));
     const p = new Parser(t).program();
     for (const n of p) {
-      const v = await execnoad(await visitor.visit(n));
+      const v = await execnilad(await visitor.visit(n));
       const img = settings.autoImg && vToImg(v);
       if (img && bigEnough(v as Arr<Num>)) {
         msg(["image", img]);
