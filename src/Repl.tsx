@@ -3,7 +3,7 @@ import { createStore, SetStoreFunction } from "solid-js/store";
 import ReplWorker from "./worker?worker";
 import { MessageIn, MessageOut } from "./worker";
 import { Token } from "./lang";
-import { glyphs } from "./glyphs";
+import { glyphs, quad } from "./glyphs";
 import { quadsList } from "./quads";
 
 const glyphColors = {
@@ -93,7 +93,7 @@ function setting(name: string, def: string) {
   const [sig, setSig] = createSignal(initial ?? def);
   const setter = (val: string) => {
     setSig(val);
-    localStorage.setItem(name, "" + val);
+    localStorage.setItem(name, val);
   };
   return [sig, setter] as const;
 }
@@ -110,6 +110,10 @@ export function Repl() {
   const [clearPrompt, setClearPrompt] = setting("clearPrompt", "true");
   const [displayTimes, setDisplayTimes] = setting("displayTimes", "false");
   const [autoImg, setAutoImg] = setting("autoImg", "false");
+  const [defaultFont, setDefaultFont] = setting(
+    "defaultFont",
+    "TinyAPL386 Unicode",
+  );
   const [bindings, setBindings] = createSignal(new Map<string, number>());
   const [disableEntry, setDisableEntry] = createSignal(false);
   // const [shifting, setShifting] = createSignal(false);
@@ -159,7 +163,7 @@ export function Repl() {
     } else if (kind === "text") {
       const cnv = (<canvas />) as HTMLCanvasElement;
       const ctx = cnv.getContext("2d")!;
-      const font = `${d.fontSize}px ${d.fontFamily || `"TinyAPL386 Unicode"`}`;
+      const font = `${d.fontSize}px ${d.fontFamily || `"${defaultFont()}"`}`;
       ctx.font = font;
       const { width, fontBoundingBoxDescent } = ctx.measureText(d.text);
       cnv.width = width;
@@ -258,6 +262,19 @@ export function Repl() {
                 id="autoimg"
                 checked={autoImg() === "true"}
                 onInput={(e) => setAutoImg(e.target.checked + "")}
+              />
+            </div>
+            <div class="flex gap-4">
+              <label for="defaultfont">
+                Default font for <code>{quad}Text</code>
+              </label>
+              <input
+                type="text"
+                name="defaultfont"
+                id="defaultfont"
+                class="bg-green-300 px-1 text-green-800 focus:ring-4 focus:ring-green-800 focus:outline-0"
+                value={defaultFont()}
+                onInput={(e) => setDefaultFont(e.target.value)}
               />
             </div>
           </div>
