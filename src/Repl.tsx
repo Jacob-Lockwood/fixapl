@@ -386,6 +386,8 @@ export function Repl() {
             aria-labelledby="repl"
             class="resize-none overflow-hidden rounded-sm whitespace-pre ring-1 ring-green-500 focus:ring-2 focus:outline-0"
             rows="1"
+            // https://github.com/solidjs/vite-plugin-solid/issues/203
+            spellcheck={"false" as unknown as boolean}
             onKeyDown={(ev) => {
               if (ev.key === "Enter" && !ev.shiftKey) {
                 ev.preventDefault();
