@@ -517,7 +517,6 @@ export const fil = df("⬚", "fill-merge", () => async (x, y) => {
     });
     d.push(...o);
   }
-  console.log(d.length);
   return A(y.shape.concat(sh), d);
 });
 
@@ -753,6 +752,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
   const e = arity === 1 ? r.err1 : r.err2;
   return F(arity, async (...v) => {
     const arr = v[arity - 1];
+    const fn = X.arity === 1 ? X.data : (z: Val) => X.data(v[0], z);
     if (arr.kind !== "array") throw e("y must be an array");
     const indices = range(arr.shape);
     const [t, ti] = await asyncMap([arr, indices], async (z) =>
@@ -765,7 +765,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
       Number.isInteger(x.data);
     if (isOk(ti)) {
       const i = ti.data as number;
-      const z = await execnilad(await X.data(t));
+      const z = await execnilad(await fn(t));
       return A(
         arr.shape,
         arr.data.map((v, x) => (i === x ? z : v)),
@@ -778,7 +778,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
         new Set(ti.data.map((x) => x.data)).size !== ti.data.length
       )
         throw e("Invalid transformation");
-      const dat = await execnilad(await X.data(t));
+      const dat = await execnilad(await fn(t));
       if (dat.kind !== "array" || !match(dat.shape, t.shape))
         throw e("Function cannot change shape");
       return each(async (v) => {
