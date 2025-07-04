@@ -46,7 +46,7 @@ export async function display(val: Val): Promise<string> {
     }
     return `⟨${(await asyncMap(val.data, display)).join(", ")}⟩`;
   }
-  if (val.shape.includes(0)) return `[shape ${val.shape.join("×")}]`;
+  // if (val.shape.includes(0)) return `[shape ${val.shape.join("×")}]`;
   const cel = cells(val).data;
   return `[${(await asyncMap(cel, display)).join(", ")}]`;
 }
@@ -594,7 +594,7 @@ export const gro = df("⊔", "group", (err) => async (x, y) => {
     if (gi > len || !Number.isInteger(gi))
       throw err("Group indices must be integers less than the array length");
     if (gi < 0) continue;
-    if (gi >= buckets.length) while (buckets.length <= gi) buckets.push([]);
+    while (buckets.length <= gi) buckets.push([]);
     buckets[gi].push(cel.data[i]);
   }
   return list(buckets.map(fromCells));

@@ -60,6 +60,7 @@ export const execnilad = async (v: Val): Promise<Val> =>
 
 export const list = (arr: Val[]) => A([arr.length], arr);
 export function fromCells(arr: Val[]) {
+  if (arr.length === 0) return A([0], []);
   const isA = arr[0].kind === "array";
   const sh = isA ? (arr[0] as Val & { kind: "array" }).shape : [];
   const d = arr.flatMap((v) => {
@@ -128,6 +129,10 @@ export function cells(arr: Val, r = -1) {
   const frame = arr.shape.slice(0, -r);
   const cell = arr.shape.slice(-r);
   const delta = cell.reduce((a, b) => a * b, 1);
+  if (delta === 0) {
+    const d = [...Array(4)].map(() => A(cell, []));
+    return A(frame, d);
+  }
   const data: Val[] = [];
   for (let i = 0; i < arr.data.length; i += delta) {
     const chunk = arr.data.slice(i, i + delta);

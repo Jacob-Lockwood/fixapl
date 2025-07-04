@@ -1,18 +1,6 @@
 import { quad } from "./glyphs";
 import { ReplContext } from "./lang";
-import {
-  A,
-  Arr,
-  C,
-  F,
-  isString,
-  list,
-  N,
-  Num,
-  recur,
-  Val,
-  vToImg,
-} from "./util";
+import { A, Arr, C, F, isString, list, N, Num, Val, vToImg } from "./util";
 
 // export const quadsList = new Map<string, number>();
 // ?! WHY DOESN'T IT JUST WORK ARGHH
@@ -37,17 +25,12 @@ const q = (
 };
 export default (ctx: ReplContext) =>
   new Map([
-    q("Print", 1, (err) =>
-      recur(async (print, y) => {
-        if (y.kind !== "array" || y.shape.length !== 1)
-          throw err("y must be a rank-1 array");
-        if (isString(y)) {
-          const s = y.data.map((x) => String.fromCodePoint(x.data)).join("");
-          ctx.write(s + "\n");
-        } else for (const g of y.data) await print(g);
-        return A([0], []);
-      }),
-    ),
+    q("Print", 1, (err) => async (y) => {
+      if (!isString(y)) throw err("y must be a string");
+      const s = y.data.map((x) => String.fromCodePoint(x.data)).join("");
+      ctx.write(s + "\n");
+      return y;
+    }),
     q("Prompt", 1, (err) => async (y) => {
       if (!isString(y)) throw err("y must be a string");
       const s = String.fromCodePoint(...y.data.map((x) => x.data));
