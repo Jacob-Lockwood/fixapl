@@ -39,7 +39,7 @@ export default (ctx: ReplContext) =>
   new Map([
     q("Print", 1, (err) =>
       recur(async (print, y) => {
-        if (y.kind !== "array" || y.shape.length === 1)
+        if (y.kind !== "array" || y.shape.length !== 1)
           throw err("y must be a rank-1 array");
         if (isString(y)) {
           const s = y.data.map((x) => String.fromCodePoint(x.data)).join("");
