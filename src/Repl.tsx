@@ -234,7 +234,7 @@ export function Repl() {
             classList={{ hidden: !settingsOpen() }}
           >
             <p class="mb-1 text-sm italic">Settings</p>
-            <div class="flex gap-4">
+            <div class="grid grid-cols-2 place-items-start items-center gap-2">
               <label for="clear">Clear prompt on enter</label>
               <input
                 type="checkbox"
@@ -243,8 +243,6 @@ export function Repl() {
                 checked={clearPrompt() === "true"}
                 onInput={(e) => setClearPrompt(e.target.checked + "")}
               />
-            </div>
-            <div class="flex gap-4">
               <label for="displaytimes">Display times</label>
               <input
                 type="checkbox"
@@ -253,8 +251,6 @@ export function Repl() {
                 checked={displayTimes() === "true"}
                 onInput={(e) => setDisplayTimes(e.target.checked + "")}
               />
-            </div>
-            <div class="flex gap-4">
               <label for="autoimg">Auto-show images</label>
               <input
                 type="checkbox"
@@ -263,8 +259,6 @@ export function Repl() {
                 checked={autoImg() === "true"}
                 onInput={(e) => setAutoImg(e.target.checked + "")}
               />
-            </div>
-            <div class="flex gap-4">
               <label for="defaultfont">
                 Default font for <code>{quad}Text</code>
               </label>

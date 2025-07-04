@@ -18,6 +18,7 @@ import {
   Atom,
   Arr,
   asyncMap,
+  indices,
 } from "./util";
 import type { PrimitiveKind } from "./glyphs";
 
@@ -305,20 +306,7 @@ export const iot = mf("⍳", "index generator", (err) => async (y) => {
         throw err("If y is a list it must only contain nonnegative integers");
       return v.data;
     });
-    const len = sh.reduce((a, b) => a * b, 1);
-    const o: Val[] = [];
-    for (let ind = 0; ind < len; ind++) {
-      let i = ind;
-      const x = [...sh]
-        .reverse()
-        .map((ax) => {
-          const j = i % ax;
-          i = Math.floor(i / ax);
-          return N(j);
-        })
-        .reverse();
-      o.push(list(x));
-    }
+    const o = indices(sh).map((v) => list(v.map(N)));
     return A(sh, o);
   }
   if (y.kind !== "number" || !Number.isInteger(y.data) || y.data < 0)
@@ -505,6 +493,34 @@ export const pic = df("⊃", "pick", (err) =>
     } else throw err("Invalid indices to pick");
   }),
 );
+export const fil = df("⬚", "fill-merge", () => async (x, y) => {
+  if (y.kind !== "array") return y;
+  const sh: number[] = [];
+  for (const v of y.data) {
+    if (v.kind === "array") {
+      if (v.shape.length > sh.length)
+        for (let i = sh.length; i < v.shape.length; i++)
+          sh.unshift(v.shape.at(-i)!);
+      for (let i = 0; i < v.shape.length; i++)
+        sh[i] = Math.max(sh[i], v.shape.at(-i) ?? 0);
+    }
+  }
+  const idcs = indices(sh);
+  const d: Val[] = [];
+  for (let v of y.data) {
+    if (v.kind !== "array") v = A([], [v]);
+    const vsh = [...v.shape];
+    while (vsh.length < sh.length) vsh.unshift(1);
+    const o = idcs.map((idx) => {
+      if (idx.some((i, j) => i >= vsh[j])) return x;
+      return v.data[idx.reduce((tot, ax, i) => tot * vsh[i] + ax, 0)];
+    });
+    d.push(...o);
+  }
+  console.log(d.length);
+  return A(y.shape.concat(sh), d);
+});
+
 const eachAxis = (
   err: (m: string) => Error,
   fn: (x: Extract<Val, { kind: "number" }>, y: Arr) => Promise<Val>,
@@ -795,7 +811,6 @@ export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
     return mer.def(await each(X.data, ...cs));
   });
 });
-export const dbg = dm("⬚", "debug", () => pai.def);
 export const cho = dm("◶", "choose", (err, r) => async (X, Y) => {
   if (X.kind !== "array" || X.shape.length !== 1) throw err("X must be a list");
   if (Y.kind !== "function") throw err("Y must be a function");

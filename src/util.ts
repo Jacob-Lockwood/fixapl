@@ -38,6 +38,23 @@ export const range = (shape: number[]): Val =>
       .fill(0)
       .map((_, i) => N(i)),
   );
+export function indices(sh: number[]) {
+  const len = sh.reduce((a, b) => a * b, 1);
+  const o: number[][] = [];
+  for (let ind = 0; ind < len; ind++) {
+    let i = ind;
+    const x = [...sh]
+      .reverse()
+      .map((ax) => {
+        const j = i % ax;
+        i = Math.floor(i / ax);
+        return j;
+      })
+      .reverse();
+    o.push(x);
+  }
+  return o;
+}
 export const execnilad = async (v: Val): Promise<Val> =>
   v.kind === "function" && v.arity === 0 ? execnilad(await v.data()) : v;
 
