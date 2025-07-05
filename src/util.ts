@@ -55,6 +55,7 @@ export function indices(sh: number[]) {
   }
   return o;
 }
+export const nilad = (v: Val) => F(0, async () => v);
 export const execnilad = async (v: Val): Promise<Val> =>
   v.kind === "function" && v.arity === 0 ? execnilad(await v.data()) : v;
 
@@ -156,6 +157,7 @@ export function vToImg(y: Val) {
   let dat: number[];
   if (y.kind !== "array" || !y.data.every((v) => v.kind === "number"))
     return false;
+  if (y.shape.includes(0)) return false;
   if (y.shape.length === 2) {
     dat = y.data.flatMap((v) => {
       const b = Math.round(v.data * 255);

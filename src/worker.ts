@@ -50,18 +50,15 @@ onmessage = async ({
     for (const n of p) {
       const v = await execnilad(await visitor.visit(n));
       const img = settings.autoImg && vToImg(v);
-      if (img && bigEnough(v as Arr<Num>)) {
-        msg(["image", img]);
-      } else msg(["result", await display(v)]);
-      msg([
-        "bindings",
-        new Map(
-          [...visitor.bindings.entries()].map((z) => [
-            z[0],
-            z[1].kind === "function" ? z[1].arity : 0,
-          ]),
-        ),
-      ]);
+      if (img && bigEnough(v as Arr<Num>)) msg(["image", img]);
+      else msg(["result", await display(v)]);
+      const bindings = new Map(
+        [...visitor.bindings.entries()].map((z) => [
+          z[0],
+          z[1].kind === "function" ? z[1].arity : 0,
+        ]),
+      );
+      msg(["bindings", bindings]);
     }
   } catch (e) {
     msg(["error", e]);

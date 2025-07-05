@@ -20,6 +20,7 @@ import {
   asyncMap,
   indices,
   prod,
+  nilad,
 } from "./util";
 import type { PrimitiveKind } from "./glyphs";
 
@@ -698,6 +699,15 @@ export const rep = mm("↺", "repeat", (err, { err2 }) => async (X) => {
   });
 });
 
+export const ctc = dm("⎊", "catch", () => async (X, Y) => {
+  if (X.kind !== "function") X = nilad(X);
+  if (Y.kind !== "function") Y = nilad(Y);
+  const arity = Math.max(X.arity, Y.arity);
+  const [fX, fY] = [X, Y].map((v) =>
+    arity === 2 && v.arity === 1 ? (_: Val, y: Val) => v.data(y) : v.data,
+  );
+  return F(arity, (...v) => fX(...v).catch(() => fY(...v)));
+});
 export const unt = dm("⍣", "until", (err, r) => async (X, Y) => {
   if (X.kind !== "function") throw err("X must be a function");
   if (Y.kind !== "function" && Y.kind !== "number")
