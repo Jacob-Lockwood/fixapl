@@ -19,6 +19,7 @@ import {
   Arr,
   asyncMap,
   indices,
+  prod,
 } from "./util";
 import type { PrimitiveKind } from "./glyphs";
 
@@ -318,15 +319,12 @@ export const iot = mf("⍳", "index generator", (err) => async (y) => {
   return range([y.data]);
 });
 export const len = mf("⧻", "length", () => async (y) => {
-  return N(y.kind === "array" ? (y.shape[0] ?? 0) : 0);
+  return N(y.kind === "array" && y.shape.length > 0 ? y.shape[0] : 1);
 });
 export const sha = mf("△", "shape", () => async (y) => shape(y));
-export const fla = mf(
-  "▽",
-  "flat",
-  () => async (y) =>
-    y.kind === "array" ? A([y.shape.reduce((x, y) => x * y, 1)], y.data) : y,
-);
+export const fla = mf("▽", "flat", () => async (y) => {
+  return y.kind === "array" ? list(y.data) : y;
+});
 export const enc = mf("□", "enclose", () => async (y) => A([], [y]));
 export const enl = mf("⋄", "enlist", () => async (y) => A([1], [y]));
 export const mer = mf("⊡", "merge", (err) => async (y) => {
@@ -389,7 +387,7 @@ export const mat = df("≡", "match", () => async (x, y) => {
 export const nmt = df("≢", "nomatch", () => async (x, y) => {
   return N(vMatch(x, y) ? 0 : 1);
 });
-export const pai = df("⍮", "pair", () => async (x, y) => A([2], [x, y]));
+export const par = df("⍮", "pair", () => async (x, y) => list([x, y]));
 export const cat = df("⍪", "catenate", (err) =>
   recur(async (cat, x, y) => {
     if (x.kind === "array" && y.kind === "array") {
@@ -402,19 +400,13 @@ export const cat = df("⍪", "catenate", (err) =>
       return A(sh, x.data.concat(y.data));
     } else if (x.kind === "array") {
       const sh = [1, ...x.shape.slice(1)];
-      const d = Array(sh.reduce((a, b) => a * b))
-        .fill(0)
-        .map(() => y);
+      const d = Array.from({ length: prod(sh) }, () => y);
       return cat(x, A(sh, d));
     } else if (y.kind === "array") {
       const sh = [1, ...y.shape.slice(1)];
-      const d = Array(sh.reduce((a, b) => a * b))
-        .fill(0)
-        .map(() => x);
+      const d = Array.from({ length: prod(sh) }, () => x);
       return cat(A(sh, d), y);
-    } else {
-      return A([2], [x, y]);
-    }
+    } else return list([x, y]);
   }),
 );
 export const res = df("⍴", "reshape", (err) => async (x, y) => {
@@ -432,11 +424,9 @@ export const res = df("⍴", "reshape", (err) => async (x, y) => {
   } else throw err("x must be a valid shape");
   const data = y.kind === "array" ? y.data : [y];
   if (data.length === 0) throw err("Cannot reshape empty array");
-  const len = sh.reduce((x, y) => x * y, 1);
+  const len = prod(sh);
   const o = [];
-  for (let i = 0; i < len; i++) {
-    o.push(data[i % data.length]);
-  }
+  for (let i = 0; i < len; i++) o.push(data[i % data.length]);
   return A(sh, o);
 });
 export const rpl = df("⌿", "replicate", (err) => async (x, y) => {
@@ -480,20 +470,19 @@ export const pic = df("⊃", "pick", (err) =>
     if (y.kind !== "array") throw err("y must be an array");
     if (x.kind === "number") return pick(A([1], [x]), y);
     else if (x.kind === "array") {
-      if (x.shape.length === 1 && x.data.every((v) => v.kind === "number")) {
-        const idx = x.data.map((v) => v.data);
-        if (idx.length !== y.shape.length)
-          throw err("Index must have same length as source's rank");
-        const d = idx.reduce((tot, ax, i) => {
-          const yax = y.shape[i];
-          if (ax < 0) ax += yax;
-          if (ax >= yax || ax < 0)
-            throw err(`Index ${ax} out of bounds for length ${yax}`);
-          return tot * yax + ax;
-        }, 0);
-        return y.data[d];
-      }
-      return each((i) => pick(i, y), x);
+      if (x.shape.length !== 1 || !x.data.every((v) => v.kind === "number"))
+        return each((i) => pick(i, y), x);
+      const idx = x.data.map((v) => v.data);
+      if (idx.length !== y.shape.length)
+        throw err("Index must have same length as source's rank");
+      const d = idx.reduce((tot, ax, i) => {
+        const yax = y.shape[i];
+        if (ax < 0) ax += yax;
+        if (ax >= yax || ax < 0)
+          throw err(`Index ${ax} out of bounds for length ${yax}`);
+        return tot * yax + ax;
+      }, 0);
+      return y.data[d];
     } else throw err("Invalid indices to pick");
   }),
 );
@@ -602,6 +591,7 @@ export const slf = mm("⍨", "self/const1", () => async (X) => {
   return F(1, X.kind === "function" ? (v) => X.data(v, v) : async () => X);
 });
 export const bac = mm("˜", "backward/const2", () => async (X) => {
+  if (X.kind === "function" && X.arity === 1) return F(2, X.data);
   return F(2, X.kind === "function" ? (g, h) => X.data(h, g) : async () => X);
 });
 export const cel = mm("◡", "cells", () => (X) => rnk.def(X, N(-1)));
@@ -629,12 +619,12 @@ export const sca = mm("\\", "scan", (err, { err1 }) => async (X) => {
   if (X.kind !== "function" || X.arity !== 2)
     throw err("X must be a dyadic function");
   return F(1, async (y) => {
-    if (y.kind !== "array") throw err1(`y must be an array`);
-    const cel = cells(y);
-    const o = [cel.data[0]];
-    for (let i = 1, acc = cel.data[0]; i < cel.shape[0]; i++) {
-      o.push((acc = await X.data(acc, cel.data[i])));
-    }
+    if (y.kind !== "array" || y.shape.length < 1)
+      throw err1(`y's rank must be at least 1'`);
+    const cel = cells(y).data;
+    const o = [cel[0]];
+    for (let i = 1, acc = cel[0]; i < cel.length; i++)
+      o.push((acc = await each(X.data, acc, cel[i])));
     return fromCells(o);
   });
 });
@@ -777,19 +767,17 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
         !ti.data.every(isOk) ||
         new Set(ti.data.map((x) => x.data)).size !== ti.data.length
       )
-        throw e("Invalid transformation");
+        throw e("Y must be a valid structural transformation");
       const dat = await execnilad(await fn(t));
       if (dat.kind !== "array" || !match(dat.shape, t.shape))
-        throw e("Function cannot change shape");
+        throw e("X may not change the shape of its argument");
       return each(async (v) => {
         const i = v.data as number;
         const g = ti.data.findIndex((z) => z.data === i);
         if (g === -1) return arr.data[i];
         return dat.data[g];
       }, indices);
-    } else {
-      throw e("Under transformation must return a number or number array");
-    }
+    } else throw e("Y must return a number or number array");
   });
 });
 export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
