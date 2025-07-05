@@ -194,7 +194,7 @@ export class Parser {
   parenthesized() {
     this.i++;
     const expr = this.expression();
-    if (!expr) throw this.error("Parentheses may not be empty");
+    if (!expr) throw this.expected("expression in parentheses", this.tok());
     const tok = this.tok();
     if (tok?.kind !== "close parenthesis")
       throw this.expected("closing parenthesis", tok);

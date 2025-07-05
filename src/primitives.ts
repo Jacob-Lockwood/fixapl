@@ -21,8 +21,10 @@ import {
   indices,
   prod,
   nilad,
+  isString,
 } from "./util";
 import type { PrimitiveKind } from "./glyphs";
+import { lex, Parser, Visitor } from "./lang";
 
 export async function display(val: Val): Promise<string> {
   if (val.kind === "number")
@@ -373,6 +375,35 @@ export const sru = mf("⊴", "sort up", () => async (y) => {
 export const srd = mf("⊵", "sort down", () => async (y) => {
   return sel.def(await grd.def(y), y);
 });
+export const fmt = mf("⍕", "format", () => async (y) => {
+  return list([...(await display(y))].map(C));
+});
+export const exc = mf("⍎", "execute", (err) =>
+  recur(async (exec, y) => {
+    if (!isString(y)) {
+      if (y.kind !== "array")
+        throw err("y must be a string or array of strings");
+      const v = y.data.every((v) => v.kind === "character") ? cells(y, 1) : y;
+      return each(exec, v);
+    }
+    const src = String.fromCodePoint(...y.data.map((v) => v.data));
+    try {
+      const toks = lex(src).filter(
+        (t) => !"whitespace,comment".includes(t.kind),
+      );
+      const p = new Parser(toks);
+      const e = p.expression()!;
+      if (p.tok()) throw "y must contain a single expression";
+      const f = () => {
+        throw "system functions are not available in execute";
+      };
+      const v = new Visitor({ drawImage: f, drawText: f, write: f, read: f });
+      return v.visit(e);
+    } catch (e) {
+      throw err(e instanceof Error ? e.message : e + "");
+    }
+  }),
+);
 
 export const mem = df("∊", "member of", (err) => (x, y) => {
   if (y.kind !== "array" || y.shape.length < 1)
@@ -766,10 +797,8 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
     if (isOk(ti)) {
       const i = ti.data as number;
       const z = await execnilad(await fn(t));
-      return A(
-        arr.shape,
-        arr.data.map((v, x) => (i === x ? z : v)),
-      );
+      const d = arr.data.map((v, x) => (i === x ? z : v));
+      return A(arr.shape, d);
     } else if (ti.kind === "array") {
       if (
         t.kind !== "array" ||
@@ -887,5 +916,5 @@ export const dy = mm("₂", "dyad", () => async (X) => {
 
 export const inf = ct("∞", "infinity", () => N(Infinity));
 export const pi = ct("π", "pi", () => N(Math.PI));
-export const tau = ct("τ", "pi", () => N(Math.PI * 2));
+export const tau = ct("τ", "tau", () => N(Math.PI * 2));
 export const emp = ct("⍬", "empty vector", () => A([0], []));
