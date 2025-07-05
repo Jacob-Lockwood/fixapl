@@ -23,7 +23,11 @@ import {
 import type { PrimitiveKind } from "./glyphs";
 
 export async function display(val: Val): Promise<string> {
-  if (val.kind === "number") return val.data.toString().replace("-", ng.glyph);
+  if (val.kind === "number")
+    return val.data
+      .toString()
+      .replace("-", ng.glyph)
+      .replace("Infinity", inf.glyph);
   if (val.kind === "character") {
     const j = JSON.stringify(String.fromCodePoint(val.data));
     return `'${j.slice(1, -1).replace(/'/g, "\\'")}'`;
@@ -46,7 +50,7 @@ export async function display(val: Val): Promise<string> {
     }
     return `⟨${(await asyncMap(val.data, display)).join(", ")}⟩`;
   }
-  // if (val.shape.includes(0)) return `[shape ${val.shape.join("×")}]`;
+  if (val.shape[0] === 0) return `[empty ${val.shape.join("×")}]`;
   const cel = cells(val).data;
   return `[${(await asyncMap(cel, display)).join(", ")}]`;
 }
@@ -328,7 +332,7 @@ export const enl = mf("⋄", "enlist", () => async (y) => A([1], [y]));
 export const mer = mf("⊡", "merge", (err) => async (y) => {
   if (y.kind !== "array") return y;
   const [sh, ...shs] = y.data.map(shape);
-  if (!asyncEvery(shs, async (v) => (await mat.def(v, sh)).data))
+  if (!(await asyncEvery(shs, async (v) => (await mat.def(v, sh)).data)))
     throw err("Cannot merge elements whose shapes do not match");
   const newsh = y.shape.concat(sh.data.map((x) => x.data as number));
   const dat = y.data.flatMap((x) => (x.kind === "array" ? x.data : x));
@@ -498,11 +502,9 @@ export const fil = df("⬚", "fill-merge", () => async (x, y) => {
   const sh: number[] = [];
   for (const v of y.data) {
     if (v.kind === "array") {
-      if (v.shape.length > sh.length)
-        for (let i = sh.length; i < v.shape.length; i++)
-          sh.unshift(v.shape.at(-i)!);
-      for (let i = 0; i < v.shape.length; i++)
-        sh[i] = Math.max(sh[i], v.shape.at(-i) ?? 0);
+      const r = v.shape.length;
+      for (let i = sh.length; i < r; i++) sh.unshift(v.shape[i]);
+      for (let i = 0; i < r; i++) sh[i] = Math.max(sh[i], v.shape.at(-i) ?? 0);
     }
   }
   const idcs = indices(sh);
@@ -511,15 +513,13 @@ export const fil = df("⬚", "fill-merge", () => async (x, y) => {
     if (v.kind !== "array") v = A([], [v]);
     const vsh = [...v.shape];
     while (vsh.length < sh.length) vsh.unshift(1);
-    const o = idcs.map((idx) => {
-      if (idx.some((i, j) => i >= vsh[j])) return x;
-      return v.data[idx.reduce((tot, ax, i) => tot * vsh[i] + ax, 0)];
-    });
-    d.push(...o);
+    for (const idx of idcs) {
+      if (idx.some((i, j) => i >= vsh[j])) d.push(x);
+      else d.push(v.data[idx.reduce((tot, ax, i) => tot * vsh[i] + ax, 0)]);
+    }
   }
   return A(y.shape.concat(sh), d);
 });
-
 const eachAxis = (
   err: (m: string) => Error,
   fn: (x: Extract<Val, { kind: "number" }>, y: Arr) => Promise<Val>,
