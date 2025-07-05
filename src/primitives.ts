@@ -21,10 +21,8 @@ import {
   indices,
   prod,
   nilad,
-  isString,
 } from "./util";
 import type { PrimitiveKind } from "./glyphs";
-import { lex, Parser, Visitor } from "./lang";
 
 export async function display(val: Val): Promise<string> {
   if (val.kind === "number")
@@ -378,32 +376,9 @@ export const srd = mf("⊵", "sort down", () => async (y) => {
 export const fmt = mf("⍕", "format", () => async (y) => {
   return list([...(await display(y))].map(C));
 });
-export const exc = mf("⍎", "execute", (err) =>
-  recur(async (exec, y) => {
-    if (!isString(y)) {
-      if (y.kind !== "array")
-        throw err("y must be a string or array of strings");
-      const v = y.data.every((v) => v.kind === "character") ? cells(y, 1) : y;
-      return each(exec, v);
-    }
-    const src = String.fromCodePoint(...y.data.map((v) => v.data));
-    try {
-      const toks = lex(src).filter(
-        (t) => !"whitespace,comment".includes(t.kind),
-      );
-      const p = new Parser(toks);
-      const e = p.expression()!;
-      if (p.tok()) throw "y must contain a single expression";
-      const f = () => {
-        throw "system functions are not available in execute";
-      };
-      const v = new Visitor({ drawImage: f, drawText: f, write: f, read: f });
-      return v.visit(e);
-    } catch (e) {
-      throw err(e instanceof Error ? e.message : e + "");
-    }
-  }),
-);
+export const exc = mf("⍎", "execute", (err) => () => {
+  throw err("unreachable");
+});
 
 export const mem = df("∊", "member of", (err) => (x, y) => {
   if (y.kind !== "array" || y.shape.length < 1)

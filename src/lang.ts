@@ -8,6 +8,10 @@ import {
   asyncMap,
   list,
   display,
+  recur,
+  isString,
+  each,
+  cells,
 } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
 import quads from "./quads";
@@ -348,6 +352,31 @@ export class Visitor {
   constructor(ctx: ReplContext) {
     this.q = quads(ctx);
   }
+  private exec = F(
+    1,
+    recur(async (exec, y) => {
+      const err = (m: string) => new Error(`${glyphs.exc}y: ${m}`);
+      if (!isString(y)) {
+        if (y.kind !== "array")
+          throw err("y must be a string or array of strings");
+        const v = y.data.every((v) => v.kind === "character") ? cells(y, 1) : y;
+        return each(exec, v);
+      }
+      const src = String.fromCodePoint(...y.data.map((v) => v.data));
+      try {
+        const toks = lex(src).filter(
+          (t) => !"whitespace,comment".includes(t.kind),
+        );
+        const p = new Parser(toks);
+        const e = p.expression()!;
+        if (p.tok()) throw "y must contain a single expression";
+        return this.visit(e);
+      } catch (e) {
+        throw err(e instanceof Error ? e.message : e + "");
+      }
+    }),
+    glyphs.exc.glyph,
+  );
   async visit(node: AstNode): Promise<Val> {
     if (node.kind === "number" || node.kind === "character") {
       return { kind: node.kind, data: node.value };
@@ -364,6 +393,7 @@ export class Visitor {
       if (this.q.has(node.name)) return this.q.get(node.name)!;
       throw new Error(`Unrecognized quad ${node.name}`);
     } else if (node.kind === "glyph reference") {
+      if (node.glyph === glyphs.exc.glyph) return this.exec;
       if (node.arity === 0) return await primitiveByGlyph(node.glyph)();
       return F(
         node.arity,
