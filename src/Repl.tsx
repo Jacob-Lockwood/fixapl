@@ -266,10 +266,19 @@ export function Repl() {
                 type="text"
                 name="defaultfont"
                 id="defaultfont"
+                list="font-families"
                 class="bg-green-300 px-1 text-green-800 focus:ring-4 focus:ring-green-800 focus:outline-0"
                 value={defaultFont()}
                 onInput={(e) => setDefaultFont(e.target.value)}
               />
+              <datalist id="font-families">
+                <option value="TinyAPL386 Unicode" />
+                <option value="APL333" />
+                <option value="Uiua386" />
+                <option value="Times New Roman" />
+                <option value="Helvetica" />
+                <option value="Wingdings" />
+              </datalist>
             </div>
           </div>
           <ul class="flex h-full flex-col-reverse overflow-scroll pb-5 font-mono text-lg">
