@@ -37,4 +37,3 @@ body {
   --font-sans: APL333, sans-serif;
   --font-mono: "TinyAPL386 Unicode", Uiua386, monospace;
 }
-@custom-variant hocus (&:hover, &:focus);
