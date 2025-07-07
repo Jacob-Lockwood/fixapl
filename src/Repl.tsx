@@ -148,9 +148,7 @@ export function Repl() {
       setDisableEntry(false);
     } else if (kind === "read") {
       setData("requestingInput", true);
-      setTimeout(() => {
-        inp.focus();
-      }, 20);
+      setTimeout(() => inp.focus(), 20);
     } else if (kind === "image") {
       setData("images", (i) => [...i, d]);
     } else if (kind === "write") {
@@ -444,7 +442,7 @@ export function Repl() {
               onClick={() => {
                 textarea.focus();
                 textarea.setRangeText(data.glyph);
-                textarea.selectionStart++;
+                textarea.selectionStart += data.glyph.length;
               }}
               onFocus={() => setSelectedGlyph(i())}
               onMouseEnter={() => setSelectedGlyph(i())}

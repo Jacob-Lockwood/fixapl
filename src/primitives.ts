@@ -1,5 +1,5 @@
 import {
-  type Val,
+  Val,
   A,
   F,
   C,
@@ -106,17 +106,21 @@ const metaEntry =
   ): Entry => {
     order.push(glyph);
     const e = err(glyph);
-    const e1 = `(${e})y`;
-    const e2 = `x${e1}`;
+    const e1 = `(${e})${omega}`;
+    const e2 = `${alpha}${e1}`;
     const [f, err1, err2] = [e, e1, e2].map(
       (s) => (m: string) => new Error(s + ": " + m),
     );
     return { kind, glyph, name, def: fn(f, { err1, err2 }) };
   };
-const df = metaEntry("dyadic function", (g) => `x${g}y`);
-const mf = metaEntry("monadic function", (g) => `${g}y`);
-const dm = metaEntry("dyadic modifier", (g) => `X${g}Y`);
-const mm = metaEntry("monadic modifier", (g) => `X${g}`);
+const alpha = "⍺";
+const omega = "⍵";
+const ualpha = "⍶";
+const uomega = "⍹";
+const df = metaEntry("dyadic function", (g) => alpha + g + omega);
+const mf = metaEntry("monadic function", (g) => g + omega);
+const dm = metaEntry("dyadic modifier", (g) => ualpha + g + uomega);
+const mm = metaEntry("monadic modifier", (g) => ualpha + g);
 
 const ct = (glyph: string, name: string, def: () => Val) => {
   order.push(glyph);
@@ -152,7 +156,7 @@ export const ng = mf("¯", "negate", (err) =>
       const lw = str.toLowerCase();
       return C(str === up ? lw : up);
     }
-    throw err(`y can only be numbers or characters`);
+    throw err(`${omega} can only be numbers or characters`);
   }),
 );
 export const sig = mf("±", "sign", (err) =>
@@ -164,7 +168,7 @@ export const sig = mf("±", "sign", (err) =>
       const lw = str.toLowerCase();
       return N(up === lw ? 0 : str === up ? 1 : -1);
     }
-    throw err(`y can only be numbers or characters`);
+    throw err(`${omega} can only be numbers or characters`);
   }),
 );
 export const abs = mf("⌵", "absolute value", (err) =>
@@ -172,7 +176,7 @@ export const abs = mf("⌵", "absolute value", (err) =>
     if (y.kind === "character")
       return C(String.fromCodePoint(y.data).toUpperCase());
     if (y.kind === "number") return N(Math.abs(y.data));
-    throw err(`y can only be numbers or characters`);
+    throw err(`${omega} can only be numbers or characters`);
   }),
 );
 export const sqr = mf("√", "square root", (err) =>
@@ -184,25 +188,25 @@ export const sqr = mf("√", "square root", (err) =>
 export const flo = mf("⌊", "floor", (err) =>
   pervasive(async (y) => {
     if (y.kind === "number") return N(Math.floor(y.data));
-    throw err(`y must be numbers`);
+    throw err(`${omega} must be numbers`);
   }),
 );
 export const rou = mf("⁅", "round", (err) =>
   pervasive(async (y) => {
     if (y.kind === "number") return N(Math.round(y.data));
-    throw err(`y must be numbers`);
+    throw err(`${omega} must be numbers`);
   }),
 );
 export const cei = mf("⌈", "ceiling", (err) =>
   pervasive(async (y) => {
     if (y.kind === "number") return N(Math.ceil(y.data));
-    throw err(`y must be numbers`);
+    throw err(`${omega} must be numbers`);
   }),
 );
 export const rol = mf("?", "roll", (err) =>
   pervasive(async (y) => {
     if (y.kind !== "number" || !Number.isInteger(y.data) || y.data < 0)
-      throw err("y must be nonnegative integers");
+      throw err(`${omega} must be nonnegative integers`);
     return N(y.data === 0 ? Math.random() : Math.floor(Math.random() * y.data));
   }),
 );
@@ -230,33 +234,33 @@ export const sub = df("-", "subtract", (err) =>
 export const mul = df("×", "multiply", (err) =>
   pervasive(async (x, y) => {
     if (x.kind === "number" && y.kind === "number") return N(x.data * y.data);
-    throw err(`x and y must be numbers`);
+    throw err(`${alpha} and ${omega} must be numbers`);
   }),
 );
 export const div = df("÷", "divide", (err) =>
   pervasive(async (x, y) => {
     if (x.kind === "number" && y.kind === "number") return N(x.data / y.data);
-    throw err(`x and y must be numbers`);
+    throw err(`${alpha} and ${omega} must be numbers`);
   }),
 );
 export const mod = df("|", "modulo", (err) =>
   pervasive(async (x, y) => {
     if (x.kind !== "number" || y.kind !== "number")
-      throw err(`x and y must be numbers`);
+      throw err(`${alpha} and ${omega} must be numbers`);
     return N(y.data >= 0 ? y.data % x.data : x.data + (y.data % x.data));
   }),
 );
 export const pow = df("*", "power", (err) =>
   pervasive(async (x, y) => {
     if (x.kind === "number" && y.kind === "number") return N(x.data ** y.data);
-    throw err(`x and y must be numbers`);
+    throw err(`${alpha} and ${omega} must be numbers`);
   }),
 );
 export const log = df("⍟", "logarithm", (err) =>
   pervasive(async (x, y) => {
     if (x.kind === "number" && y.kind === "number")
       return N(Math.log(y.data) / Math.log(x.data));
-    throw err(`x and y must be numbers`);
+    throw err(`${alpha} and ${omega} must be numbers`);
   }),
 );
 export const max = df("↥", "maximum", () =>
@@ -309,14 +313,16 @@ export const iot = mf("⍳", "index generator", (err) => async (y) => {
   if (y.kind === "array" && y.shape.length === 1) {
     const sh = y.data.map((v) => {
       if (v.kind !== "number" || !Number.isInteger(v.data) || v.data < 0)
-        throw err("If y is a list it must only contain nonnegative integers");
+        throw err(
+          `If ${omega} is a list it must only contain nonnegative integers`,
+        );
       return v.data;
     });
     const o = indices(sh).map((v) => list(v.map(N)));
     return A(sh, o);
   }
   if (y.kind !== "number" || !Number.isInteger(y.data) || y.data < 0)
-    throw err("y must be a nonnegative integer or a list thereof");
+    throw err(`${omega} must be a nonnegative integer or a list thereof`);
   return range([y.data]);
 });
 export const len = mf("⧻", "length", () => async (y) => {
@@ -339,10 +345,11 @@ export const mer = mf("⊡", "merge", (err) => async (y) => {
 });
 export const whe = mf("⊚", "where", (err) => async (y) => {
   if (y.kind === "number") y = A([1], [y]);
-  if (y.kind !== "array" || y.shape.length !== 1) throw err("y must be a list");
+  if (y.kind !== "array" || y.shape.length !== 1)
+    throw err(`${omega} must be a list`);
   return list(
     y.data.flatMap((v, i) => {
-      if (v.kind !== "number") throw err("y can only contain numbers");
+      if (v.kind !== "number") throw err(`${omega} can only contain numbers`);
       return Array(v.data).fill(N(i)) as Val[];
     }),
   );
@@ -382,7 +389,7 @@ export const exc = mf("⍎", "execute", (err) => () => {
 
 export const mem = df("∊", "member of", (err) => (x, y) => {
   if (y.kind !== "array" || y.shape.length < 1)
-    throw err("y must have rank at least 1");
+    throw err(`${omega} must have rank at least 1`);
   return map(
     async (e) => N(y.data.some((v) => vMatch(e, v)) ? 1 : 0),
     x.kind === "array" ? x : A([], [x]),
@@ -402,7 +409,7 @@ export const cat = df("⍪", "catenate", (err) =>
       if (xsh.length === ysh.length + 1) return cat(x, A([1, ...ysh], y.data));
       if (xsh.length + 1 === ysh.length) return cat(A([1, ...xsh], x.data), y);
       if (xsh.length !== ysh.length || !match(xsh.slice(1), ysh.slice(1)))
-        throw err("x and y must have matching cells");
+        throw err(`${alpha} and ${omega} must have matching cells"`);
       const sh = [(xsh[0] ?? 1) + (ysh[0] ?? 1), ...xsh.slice(1)];
       return A(sh, x.data.concat(y.data));
     } else if (x.kind === "array") {
@@ -428,16 +435,17 @@ export const res = df("⍴", "reshape", (err) => async (x, y) => {
     )
   ) {
     sh.push(...x.data.map((v) => v.data as number));
-  } else throw err("x must be a valid shape");
+  } else throw err(`${alpha} must be a valid shape`);
   const data = y.kind === "array" ? y.data : [y];
-  if (data.length === 0) throw err("Cannot reshape empty array");
   const len = prod(sh);
+  if (data.length === 0 && len !== 0)
+    throw err("Cannot reshape empty array to non-empty array");
   const o = [];
   for (let i = 0; i < len; i++) o.push(data[i % data.length]);
   return A(sh, o);
 });
 export const rpl = df("⌿", "replicate", (err) => async (x, y) => {
-  if (y.kind !== "array") throw err("y must be an array");
+  if (y.kind !== "array") throw err(`${omega} must be an array`);
   const cel = cells(y);
   const isOk = (v: Val) =>
     v.kind === "number" && v.data >= 0 && Number.isInteger(v.data);
@@ -445,7 +453,9 @@ export const rpl = df("⌿", "replicate", (err) => async (x, y) => {
     !isOk(x) &&
     (x.kind !== "array" || (x.shape.length !== 1 && !x.data.every(isOk)))
   )
-    throw err("x must be a nonnegative integer or nonnegative integer list");
+    throw err(
+      `${alpha} must be a nonnegative integer or nonnegative integer list`,
+    );
   const amounts = (x.kind === "array" ? x.data : [x]).map(
     (v) => v.data as number,
   );
@@ -458,7 +468,7 @@ export const rpl = df("⌿", "replicate", (err) => async (x, y) => {
   return fromCells(d);
 });
 export const sel = df("⊇", "select", (err) => async (x, y) => {
-  if (y.kind !== "array") throw err("y must be an array");
+  if (y.kind !== "array") throw err(`${omega} must be an array`);
   const c = cells(y);
   const len = y.shape[0];
   return mer.def(
@@ -474,7 +484,7 @@ export const sel = df("⊇", "select", (err) => async (x, y) => {
 });
 export const pic = df("⊃", "pick", (err) =>
   recur(async (pick, x, y) => {
-    if (y.kind !== "array") throw err("y must be an array");
+    if (y.kind !== "array") throw err(`${omega} must be an array`);
     if (x.kind === "number") return pick(A([1], [x]), y);
     else if (x.kind === "array") {
       if (x.shape.length !== 1 || !x.data.every((v) => v.kind === "number"))
@@ -521,7 +531,7 @@ const eachAxis = (
   fn: (x: Extract<Val, { kind: "number" }>, y: Arr) => Promise<Val>,
 ) =>
   recur(async (g, x, y) => {
-    if (y.kind !== "array") throw err("y must be an array");
+    if (y.kind !== "array") throw err(`${omega} must be an array`);
     if (x.kind === "number") {
       return fn(x, y);
     } else if (x.kind === "array" && x.data.every((v) => v.kind === "number")) {
@@ -533,7 +543,7 @@ const eachAxis = (
           cells(arr),
         ),
       );
-    } else throw err("Invalid x");
+    } else throw err(`Invalid ${alpha}`);
   });
 export const tak = df("↑", "take", (err) =>
   eachAxis(err, async (x, y) => {
@@ -553,7 +563,7 @@ export const dro = df("↓", "drop", (err) =>
     const cel = cells(y);
     const len = y.shape[0];
     if (x.data > len || x.data < -len)
-      throw err(`Take amount outside of bounds for length ${len}`);
+      throw err(`Drop amount outside of bounds for length ${len}`);
     const d = x.data < 0 ? cel.data.slice(0, x.data) : cel.data.slice(x.data);
     return A(
       [d.length, ...y.shape.slice(1)],
@@ -581,7 +591,7 @@ export const gro = df("⊔", "group", (err) => async (x, y) => {
     x.shape.length !== 1 ||
     !x.data.every((v) => v.kind === "number")
   )
-    throw err("x must be a list of numbers");
+    throw err(`${alpha} must be a list of numbers`);
   if (x.shape[0] !== len) throw err("Group arguments must have equal length");
   const buckets: Val[][] = [];
   for (let i = 0; i < len; i++) {
@@ -603,19 +613,19 @@ export const bac = mm("˜", "backward/const2", () => async (X) => {
 });
 export const cel = mm("◡", "cells", () => (X) => rnk.def(X, N(-1)));
 export const con = mm("⊙", "contents", (err) => async (X) => {
-  if (X.kind !== "function") throw err("X must be a function");
+  if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   return F(X.arity, (...v) => X.data(...v.map((z) => z && disclose(z))));
 });
 export const eac = mm("¨", "each", (err) => async (X) => {
-  if (X.kind !== "function") throw err("X must be a function");
+  if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   return F(X.arity, (...x) => each(X.data, ...x));
 });
 export const red = mm("/", "reduce", (err, { err1 }) => async (X) => {
   if (X.kind !== "function" || X.arity !== 2)
-    throw err("X must be a dyadic function");
+    throw err(`${ualpha} must be a dyadic function`);
   return F(1, async (y) => {
     if (y.kind !== "array") return y;
-    if (y.data.length === 0) throw err1("y may not be empty");
+    if (y.data.length === 0) throw err1(`${omega} may not be empty`);
     const cel = cells(y);
     let acc = cel.data[0];
     for (let i = 1; i < cel.shape[0]; i++) acc = await X.data(acc, cel.data[i]);
@@ -624,10 +634,10 @@ export const red = mm("/", "reduce", (err, { err1 }) => async (X) => {
 });
 export const sca = mm("\\", "scan", (err, { err1 }) => async (X) => {
   if (X.kind !== "function" || X.arity !== 2)
-    throw err("X must be a dyadic function");
+    throw err(`${ualpha} must be a dyadic function`);
   return F(1, async (y) => {
     if (y.kind !== "array" || y.shape.length < 1)
-      throw err1(`y's rank must be at least 1'`);
+      throw err1(`${omega}'s rank must be at least 1'`);
     const cel = cells(y).data;
     const o = [cel[0]];
     for (let i = 1, acc = cel[0]; i < cel.length; i++)
@@ -637,9 +647,9 @@ export const sca = mm("\\", "scan", (err, { err1 }) => async (X) => {
 });
 export const fol = mm("⫽", "fold", (err, { err2 }) => async (X) => {
   if (X.kind !== "function" || X.arity !== 2)
-    throw err("X must be a dyadic function");
+    throw err(`${ualpha} must be a dyadic function`);
   return F(2, async (v, w) => {
-    if (w.kind !== "array") throw err2(`y must be an array`);
+    if (w.kind !== "array") throw err2(`${omega} must be an array`);
     const cel = cells(w);
     for (let i = 0; i < cel.shape[0]; i++) v = await X.data(v, cel.data[i]);
     return v;
@@ -647,7 +657,7 @@ export const fol = mm("⫽", "fold", (err, { err2 }) => async (X) => {
 });
 export const tab = mm("⊞", "table", (err) => async (X) => {
   if (X.kind !== "function" || X.arity !== 2)
-    throw err("X must be a dyadic function");
+    throw err(`${ualpha} must be a dyadic function`);
   return F(2, async (v, w) => {
     const sv = v.kind === "array" ? v.shape.slice(0, 1) : [];
     const sw = w.kind === "array" ? w.shape.slice(0, 1) : [];
@@ -661,7 +671,7 @@ export const tab = mm("⊞", "table", (err) => async (X) => {
   });
 });
 export const win = mm("⊕", "windows", (err, { err1, err2 }) => async (X) => {
-  if (X.kind !== "function") throw err("X must be a function");
+  if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   if (X.arity === 2)
     return F(1, async (w) => {
       if (w.kind !== "array") throw err1("y must be an array");
@@ -692,7 +702,7 @@ export const win = mm("⊕", "windows", (err, { err1, err2 }) => async (X) => {
     });
 });
 export const rep = mm("↺", "repeat", (err, { err2 }) => async (X) => {
-  if (X.kind !== "function") throw err("X must be a function");
+  if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   const fn = X.arity === 2 ? X.data : (_: Val, v: Val) => X.data(v);
   return F(2, async (v, w) => {
     if (v.kind !== "number" || !Number.isInteger(v.data) || v.data < 0)
@@ -715,9 +725,9 @@ export const ctc = dm("⎊", "catch", () => async (X, Y) => {
   return F(arity, (...v) => fX(...v).catch(() => fY(...v)));
 });
 export const unt = dm("⍣", "until", (err, r) => async (X, Y) => {
-  if (X.kind !== "function") throw err("X must be a function");
+  if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   if (Y.kind !== "function" && Y.kind !== "number")
-    throw err("Y must be a function or number");
+    throw err(`${uomega} must be a function or number`);
   const iter = X.arity === 2 ? X.data : (_: Val, v: Val) => X.data(v);
   const cond = Y.kind === "function" ? Y : F(1, async () => Y);
   const e = X.arity === 1 ? r.err1 : r.err2;
@@ -753,7 +763,7 @@ export const unt = dm("⍣", "until", (err, r) => async (X, Y) => {
 });
 export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
   if (X.kind !== "function" || Y.kind !== "function")
-    throw err("X and Y must both be functions");
+    throw err(`${ualpha} and ${uomega} must both be functions`);
   const arity = Math.max(X.arity, Y.arity);
   const e = arity === 1 ? r.err1 : r.err2;
   return F(arity, async (...v) => {
@@ -796,16 +806,16 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
 });
 export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
   Y = await execnilad(Y);
-  if (X.kind !== "function") throw err("X must be function");
+  if (X.kind !== "function") throw err(`${ualpha} must be function`);
   if (Y.kind === "number") Y = A([1], [Y]);
   if (Y.kind !== "array" || Y.shape.length !== 1 || Y.shape[0] === 0)
-    throw err("Y must be a number or non-empty list");
+    throw err(`${uomega} must be a number or non-empty list`);
   const r = Y.data.map((v) => {
     if (
       v.kind !== "number" ||
       (!Number.isInteger(v.data) && Number.isFinite(v.data))
     )
-      throw err("Y may only contain integers or infinity");
+      throw err(`${uomega} may only contain integers or infinity`);
     return v.data;
   });
   return F(X.arity, async (...xs: Val[]) => {
@@ -814,8 +824,9 @@ export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
   });
 });
 export const cho = dm("◶", "choose", (err, r) => async (X, Y) => {
-  if (X.kind !== "array" || X.shape.length !== 1) throw err("X must be a list");
-  if (Y.kind !== "function") throw err("Y must be a function");
+  if (X.kind !== "array" || X.shape.length !== 1)
+    throw err(`${ualpha} must be a list`);
+  if (Y.kind !== "function") throw err(`${uomega} must be a function`);
   const fs = [Y, ...X.data];
   const arity = Math.max(
     1,
@@ -842,7 +853,7 @@ export const cho = dm("◶", "choose", (err, r) => async (X, Y) => {
   });
 });
 export const bef = dm("⊸", "before", (err) => async (X, Y) => {
-  if (Y.kind !== "function") throw err("Y must be a function");
+  if (Y.kind !== "function") throw err(`${uomega} must be a function`);
   if (Y.arity === 1) return aft.def(Y, X);
   const l = X.kind === "function" ? X : F(1, async () => X);
   return F(l.arity, async (v, w) =>
@@ -850,7 +861,7 @@ export const bef = dm("⊸", "before", (err) => async (X, Y) => {
   );
 });
 export const aft = dm("⟜", "after", (err) => async (X, Y) => {
-  if (X.kind !== "function") throw err("X must be a function");
+  if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   if (Y.kind !== "function") {
     if (X.arity === 1) return X.data(Y);
     return F(1, (v) => X.data(v, Y));
@@ -863,8 +874,8 @@ export const aft = dm("⟜", "after", (err) => async (X, Y) => {
 });
 export const ov = dm("○", "over", (err) => async (X, Y) => {
   if (X.kind !== "function" || Y.kind !== "function")
-    throw err("X and Y must both be functions");
-  if (X.arity !== 2) throw err("X must be dyadic");
+    throw err(`${ualpha} and ${uomega} must both be functions`);
+  if (X.arity !== 2) throw err(`${ualpha} must be dyadic`);
   return F(2, async (v, w) =>
     Y.arity === 1
       ? X.data(await Y.data(v), await Y.data(w))

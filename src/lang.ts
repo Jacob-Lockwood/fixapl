@@ -1,9 +1,10 @@
 import {
   Val,
-  F,
   A,
-  match,
+  F,
   N,
+  C,
+  match,
   execnilad,
   asyncMap,
   list,
@@ -12,6 +13,7 @@ import {
   isString,
   each,
   cells,
+  graphemes,
 } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
 import quads from "./quads";
@@ -154,11 +156,14 @@ export class Parser {
       return { kind: "number", value: Number(tok.image.replace("¯", "-")) };
     } else if (tok.kind === "string") {
       this.i++;
-      return { kind: "string", value: eval(tok.image.replaceAll("\n", "\\n")) };
+      return {
+        kind: "string",
+        value: eval(tok.image.replaceAll("\\\n", "").replaceAll("\n", "\\n")),
+      };
     } else if (tok.kind === "character") {
       this.i++;
       const str: string = eval(tok.image.replaceAll("\n", "\\n"));
-      if (str.length !== 1)
+      if (graphemes(str).length !== 1)
         throw this.error(
           `character literal must be one character: ${tok.image}`,
         );
@@ -168,7 +173,7 @@ export class Parser {
       };
     } else if (tok.kind.includes("dfn argument")) {
       this.i++;
-      return { kind: "dfn arg", left: tok.image === "x" };
+      return { kind: "dfn arg", left: tok.kind.startsWith("left") };
     } else if (tok.kind === "identifier") {
       this.i++;
       return { kind: "reference", name: tok.image };
@@ -381,14 +386,7 @@ export class Visitor {
     if (node.kind === "number" || node.kind === "character") {
       return { kind: node.kind, data: node.value };
     } else if (node.kind === "string") {
-      return {
-        kind: "array",
-        shape: [node.value.length],
-        data: [...node.value].map<Val>((c) => ({
-          kind: "character",
-          data: c.codePointAt(0)!,
-        })),
-      };
+      return list(graphemes(node.value).map(C));
     } else if (node.kind === "quad") {
       if (this.q.has(node.name)) return this.q.get(node.name)!;
       throw new Error(`Unrecognized quad ${node.name}`);
@@ -458,7 +456,7 @@ export class Visitor {
           fns.push(fork(t, next));
         } else if (t.kind === "function" && t.arity > 0) {
           fns.push(atop(t));
-        } else throw new Error("Cannot have nilad outside of fork");
+        } else throw new Error("Cannot have double nilads in expression");
       }
     } else if (node.kind === "strand" || node.kind === "list") {
       return list(

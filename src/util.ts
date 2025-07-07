@@ -187,6 +187,9 @@ export function isString(
     y.shape.length === 1
   );
 }
+export function graphemes(s: string) {
+  return [...new Intl.Segmenter().segment(s)].map((x) => x.segment);
+}
 
 export type Atom = Exclude<Val, { kind: "array" }>;
 export type Arr<T extends Val = Val> = {
