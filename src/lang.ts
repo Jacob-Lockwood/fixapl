@@ -25,11 +25,10 @@ const basic = {
   character: /^'(\\.|[^'\\])*'/,
   identifier: /^[A-Z][A-Za-z0-9]*/,
   number: /^\d+(\.\d+)?/,
-  semi: /^;/,
   comment: /^⍝.*/m,
   space: /^ +/,
   newline: /^\n/,
-  other: /^[^'"A-Z# \n;]+/,
+  other: /^;*[^\d'"A-Z# \n;][^'"A-Z# \n;]*/,
 };
 type SyntaxName = {
   [K in keyof typeof glyphs as (typeof glyphs)[K]["kind"] extends "syntax"
@@ -52,13 +51,12 @@ export function lex(source: string) {
       if (!mat) continue;
       let [m] = mat;
       source = source.slice(m.length);
-      if (bkind === "semi") continue lex;
       if (bkind !== "other") {
         o.push({ kind: bkind as TokenKind, line, image: m });
         line += m.split("\n").length - 1;
         continue lex;
       }
-      m = m.replaceAll("`", glyphs.ng.glyph);
+      m = m.replaceAll("`", glyphs.ng.glyph).replaceAll(";", "");
       other: while (m.length) {
         const num = m.match(basic.number);
         if (num) {
@@ -90,7 +88,7 @@ export function lex(source: string) {
           }
         }
         if (kind === "syntax") {
-          let image = glyph;
+          let image: string = glyph;
           if (name === "quad") {
             const ident = source.match(basic.identifier);
             if (m === "" && ident) {
@@ -99,9 +97,14 @@ export function lex(source: string) {
               continue other;
             }
           } else if (name === "binding") {
-            const a = subscripts[subscripts.indexOf(m[0]) % 3] ?? "";
-            m = m.slice(a.length);
-            image += a;
+            let sub = subscripts[subscripts.indexOf(m[0]) % 3] ?? "";
+            if (sub) {
+              m = m.slice(1);
+            } else if ("sb mn dy".includes(m.slice(0, 2))) {
+              sub = subscripts[["sb", "mn", "dy"].indexOf(m.slice(0, 2))];
+              m = m.slice(2);
+            }
+            image += sub;
           }
           o.push({ kind: name, line, image });
         } else {
@@ -110,7 +113,7 @@ export function lex(source: string) {
       }
       continue lex;
     }
-    throw new Error(`Lexing error on line ${line} near ${cur}`);
+    throw new Error(`Unrecognized token on line ${line} near ${cur}`);
   }
   return o;
 }
