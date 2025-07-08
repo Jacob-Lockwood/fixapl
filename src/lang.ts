@@ -23,7 +23,7 @@ function primitiveByGlyph(s: string) {
 const basic = {
   string: /^"(\\.|[^"])*"/,
   character: /^'(\\.|[^'\\])*'/,
-  identifier: /^[A-Z][A-Za-z]*/,
+  identifier: /^[A-Z][A-Za-z0-9]*/,
   number: /^\d+(\.\d+)?/,
   semi: /^;/,
   comment: /^⍝.*/m,
