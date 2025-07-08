@@ -1,12 +1,18 @@
 @import "tailwindcss";
 
 body {
-  background-size: 40px 40px;
+  background-size: 4vw 4vw;
   background-image: radial-gradient(
     circle,
-    var(--color-green-800) 2px,
+    var(--color-green-700) 2px,
     transparent 2px
   );
+  @media (width <= 40rem) {
+    background-size: 10vw 10vw;
+  }
+  @media (width <= 46rem) {
+    background-size: 8vw 8vw;
+  }
 }
 #wrapper::after {
   content: attr(data-value) " ";
@@ -36,4 +42,5 @@ body {
 @theme {
   --font-sans: APL333, sans-serif;
   --font-mono: "TinyAPL386 Unicode", Uiua386, monospace;
+  --color-emerald-1000: oklch(22% 0.051 172.552);
 }

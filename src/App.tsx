@@ -9,7 +9,7 @@ const Kbd: ParentComponent = (props) => (
 
 export default function App() {
   return (
-    <div class="mx-auto flex min-h-screen flex-col bg-emerald-950/70 p-5 text-emerald-300 selection:bg-green-800 sm:p-10 md:w-3/4 lg:py-20">
+    <div class="bg-emerald-1000/70 mx-auto flex min-h-screen flex-col p-5 text-emerald-300 selection:bg-green-800 sm:p-10 md:w-3/4 lg:py-20">
       <div class="lg:flex">
         <div class="mx-auto mb-10 max-w-prose lg:w-2/5">
           <img class="mx-auto h-30 w-30" src="/FIXAPL.svg" alt="FIXAPL logo." />

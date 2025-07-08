@@ -116,12 +116,7 @@ export function Repl() {
   );
   const [bindings, setBindings] = createSignal(new Map<string, number>());
   const [disableEntry, setDisableEntry] = createSignal(false);
-  // const [shifting, setShifting] = createSignal(false);
-  // document.addEventListener("keydown", (ev) => setShifting(ev.shiftKey));
-  // document.addEventListener("keyup", (ev) => setShifting(ev.shiftKey));
-
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
-  // const worker = new Worker(new URL("./worker.ts", import.meta.url));
 
   const cToRgb = (c: number[]) =>
     `rgb(${c
@@ -228,7 +223,7 @@ export function Repl() {
         </div>
         <div class="flex h-80 resize-y flex-col">
           <div
-            class="w-full border-b-2 border-emerald-500 p-4"
+            class="max-h-full w-full shrink-0 overflow-scroll border-b-2 border-emerald-600 p-4"
             classList={{ hidden: !settingsOpen() }}
           >
             <p class="mb-1 text-sm italic">Settings</p>
@@ -295,7 +290,7 @@ export function Repl() {
                       </Show>
                     </div>
                     <pre
-                      class="selection:!bg-black/50"
+                      class="selection:!bg-white/50"
                       onClick={(e) => {
                         textarea.parentElement!.dataset.value =
                           textarea.value ||= e.currentTarget.textContent ?? "";
@@ -437,8 +432,8 @@ export function Repl() {
         <For each={Object.entries(glyphs)}>
           {([alias, data], i) => (
             <button
-              class="block cursor-pointer rounded-t-sm select-none focus:outline-0"
-              classList={{ "bg-emerald-800": selectedGlyph() === i() }}
+              class="block cursor-pointer rounded-t-lg select-none focus:outline-0"
+              classList={{ "bg-emerald-900": selectedGlyph() === i() }}
               onClick={() => {
                 textarea.focus();
                 textarea.setRangeText(data.glyph);
@@ -456,7 +451,7 @@ export function Repl() {
                 {data.glyph}
               </span>
               <Show when={selectedGlyph() === i()}>
-                <p class="absolute z-10 w-max rounded-sm rounded-tl-none bg-emerald-800 px-2 py-1 text-base">
+                <p class="absolute z-10 w-max rounded-lg rounded-tl-none bg-emerald-900 px-2 py-1 text-base">
                   {data.name} <br /> alias:{" "}
                   <code class="bg-emerald-900 px-1">{alias}</code> <br />{" "}
                   {data.kind}
