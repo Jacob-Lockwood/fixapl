@@ -331,20 +331,16 @@ export function Repl() {
                       <For each={result.images}>
                         {(dat) => {
                           const canv = (
-                            <canvas
-                              width={dat.width}
-                              height={dat.height}
-                              class="my-2 object-contain"
-                            />
+                            <canvas width={dat.width} height={dat.height} />
                           ) as HTMLCanvasElement;
                           const ctx = canv.getContext("2d")!;
                           ctx.putImageData(dat, 0, 0);
                           const imgUrl = canv.toDataURL("image/png");
                           return (
-                            <div class="group relative">
+                            <div class="group relative my-2 h-max">
                               {canv}
                               <a
-                                class="absolute right-0 bottom-0 hidden cursor-pointer bg-green-950/80 p-1 group-hover:block"
+                                class="absolute right-0 bottom-0 hidden cursor-pointer bg-green-950/80 p-1 leading-0 group-hover:block"
                                 href={imgUrl}
                                 download="fixapl_output.png"
                               >
