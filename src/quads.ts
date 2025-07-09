@@ -53,6 +53,7 @@ export default (ctx: ReplContext) =>
         throw err("y must have rank 2 or 3");
       if ((y.shape.length === 3 && y.shape[2] > 4) || y.shape[2] < 2)
         throw err("If y has rank 3, its last axis must be 2, 3, or 4");
+      if (y.shape.includes(0)) throw err("No axis of y may be 0");
       ctx.drawImage(vToImg(y) as ImageData);
       return A([0], []);
     }),
