@@ -53,7 +53,7 @@ onmessage = async ({
       if (img && bigEnough(v as Arr<Num>)) msg(["image", img]);
       else msg(["result", await display(v)]);
       const bindings = new Map(
-        [...visitor.bindings.entries()].map((z) => [
+        [...visitor.bindings.entries(), ...visitor.scope.entries()].map((z) => [
           z[0],
           z[1].kind === "function" ? z[1].arity : 0,
         ]),

@@ -28,6 +28,7 @@ export const glyphs = {
   ">>": { name: "close list", glyph: "⟩", kind: "syntax" },
   ",": { name: "separator", glyph: ",", kind: "syntax" },
   _: { name: "ligature", glyph: "‿", kind: "syntax" },
+  "::": { name: "inline assignment", glyph: "↤", kind: "syntax" },
   ":": { name: "binding", glyph: "←", kind: "syntax" },
   "#": { name: "comment", glyph: "⍝", kind: "syntax" },
   "!": { name: "quad", glyph: "⎕", kind: "syntax" },
