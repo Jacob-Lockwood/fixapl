@@ -22,7 +22,7 @@ import {
   prod,
   nilad,
 } from "./util";
-import type { PrimitiveKind } from "./glyphs";
+import { PrimitiveKind } from "./glyphs";
 
 export async function display(val: Val): Promise<string> {
   if (val.kind === "number")
