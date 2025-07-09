@@ -27,10 +27,10 @@ const basic = {
   character: /^'(\\.|[^'\\])*'/,
   identifier: /^[A-Z][A-Za-z0-9]*/,
   number: /^\d+(\.\d+)?/,
-  comment: /^⍝.*/m,
+  comment: /^⍝.*(?=\n|$)/,
   space: /^ +/,
   newline: /^\n/,
-  other: /^;*[^\d'"A-Z# \n;][^'"A-Z# \n;]*/,
+  other: /^;*[^\d'"A-Z#⍝ \n;][^'"A-Z#⍝ \n;]*/,
 };
 type SyntaxName = {
   [K in keyof typeof glyphs as (typeof glyphs)[K]["kind"] extends "syntax"
