@@ -31,11 +31,11 @@ export const glyphs = {
   "::": { name: "inline assignment", glyph: "↤", kind: "syntax" },
   ":": { name: "binding", glyph: "←", kind: "syntax" },
   "#": { name: "comment", glyph: "⍝", kind: "syntax" },
-  "!": { name: "quad", glyph: "⎕", kind: "syntax" },
+  "&": { name: "quad", glyph: "⎕", kind: "syntax" },
 } as const satisfies Record<
   string,
   { glyph: string; name: string; kind: GlyphKind }
 >;
 
 export const subscripts = "₀₁₂012";
-export const quad = glyphs["!"].glyph;
+export const quad = glyphs["&"].glyph;
