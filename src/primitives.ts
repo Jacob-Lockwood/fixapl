@@ -674,7 +674,7 @@ export const win = mm("⊕", "windows", (err, { err1, err2 }) => async (X) => {
   if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   if (X.arity === 2)
     return F(1, async (w) => {
-      if (w.kind !== "array") throw err1("y must be an array");
+      if (w.kind !== "array") throw err1(`${omega} must be an array`);
       const { data } = cells(w);
       const l = data.length - 1;
       const o = A([l], []);
@@ -684,13 +684,13 @@ export const win = mm("⊕", "windows", (err, { err1, err2 }) => async (X) => {
     });
   else
     return F(2, async (v, w) => {
-      if (w.kind !== "array") throw err2("y must be an array");
+      if (w.kind !== "array") throw err2(`${omega} must be an array`);
       if (v.kind === "number") {
         const wn = v.data;
         const { data } = cells(w);
         const l = data.length;
         if (wn < 1 || !Number.isInteger(wn))
-          throw err2("x must be a positive integer");
+          throw err2(`${alpha} must be a positive integer`);
         if (wn > l) return A([0], []);
         const len = 1 + l - wn;
         const o = [];
@@ -698,7 +698,7 @@ export const win = mm("⊕", "windows", (err, { err1, err2 }) => async (X) => {
           o.push(await X.data(fromCells(data.slice(i, i + wn))));
         return fromCells(o);
       }
-      throw err2("x can only be a number for now");
+      throw err2(`${alpha} can only be a number for now`);
     });
 });
 export const rep = mm("↺", "repeat", (err, { err2 }) => async (X) => {
@@ -706,7 +706,7 @@ export const rep = mm("↺", "repeat", (err, { err2 }) => async (X) => {
   const fn = X.arity === 2 ? X.data : (_: Val, v: Val) => X.data(v);
   return F(2, async (v, w) => {
     if (v.kind !== "number" || !Number.isInteger(v.data) || v.data < 0)
-      throw err2("x must be a nonnegative integer");
+      throw err2(`${alpha} must be a nonnegative integer`);
     let cur = w;
     for (let i = 0; i < v.data; i++) {
       cur = await execnilad(await fn(N(i), cur));
@@ -769,7 +769,7 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
   return F(arity, async (...v) => {
     const arr = v[arity - 1];
     const fn = X.arity === 1 ? X.data : (z: Val) => X.data(v[0], z);
-    if (arr.kind !== "array") throw e("y must be an array");
+    if (arr.kind !== "array") throw e(`${omega} must be an array`);
     const indices = range(arr.shape);
     const [t, ti] = await asyncMap([arr, indices], async (z) =>
       execnilad(Y.arity === 1 ? await Y.data(z) : await Y.data(v[0], z)),
@@ -791,17 +791,17 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
         !ti.data.every(isOk) ||
         new Set(ti.data.map((x) => x.data)).size !== ti.data.length
       )
-        throw e("Y must be a valid structural transformation");
+        throw e(`${uomega} must be a valid structural transformation`);
       const dat = await execnilad(await fn(t));
       if (dat.kind !== "array" || !match(dat.shape, t.shape))
-        throw e("X may not change the shape of its argument");
+        throw e(`${ualpha} may not change the shape of its argument`);
       return each(async (v) => {
         const i = v.data as number;
         const g = ti.data.findIndex((z) => z.data === i);
         if (g === -1) return arr.data[i];
         return dat.data[g];
       }, indices);
-    } else throw e("Y must return a number or number array");
+    } else throw e(`${uomega} must return a number or number array`);
   });
 });
 export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
