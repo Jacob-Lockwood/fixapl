@@ -430,31 +430,32 @@ export class Visitor {
         v.repr = (await display(lft)) + node.glyph + (await display(rgt));
       return v;
     } else if (node.kind === "expression") {
-      let i = node.values.length - 1;
-      const l = await this.visit(node.values[i]);
+      let i = node.values.length;
+      const tines: Val[] = [];
+      const get = async () => {
+        const v = await this.visit(node.values[--i]);
+        return tines.unshift(v), v;
+      };
+      const l = await get();
       if (i === 0) return l;
       let rgt: Fun;
       if (l.kind === "function" && l.arity === 2) {
-        const m = await this.visit(node.values[--i]);
+        const m = await get();
         const arity = m.kind === "function" && m.arity === 2 ? 2 : 1;
-        const repr = (await display(m)) + " " + (await display(l));
         const fn = m.kind === "function" ? m.data : async () => m;
-        rgt = F(
-          arity,
-          async (...v) => l.data(await fn(m), arity === 1 ? v[0] : v[1]),
-          repr,
+        rgt = F(arity, async (...v) =>
+          l.data(await fn(m), arity === 1 ? v[0] : v[1]),
         );
       } else {
         rgt = l.kind === "function" ? l : nilad(l);
       }
       while (i > 0) {
         const rfn = rgt.data;
-        const cur = await this.visit(node.values[--i]);
+        const cur = await get();
         if (cur.kind !== "function" || cur.arity === 0)
           throw new Error("Unexpected nilad");
         if (cur.arity === 1) {
-          const repr = `${await display(cur)} ${await display(rgt)}`;
-          rgt = F(rgt.arity, (...v) => rfn(...v).then(cur.data), repr);
+          rgt = F(rgt.arity, (...v) => rfn(...v).then(cur.data));
         } else if (i > 0) {
           const lft = await this.visit(node.values[--i]);
           const arity = Math.max(
@@ -469,20 +470,16 @@ export class Visitor {
               : async () => lft;
           const r =
             arity === 2 && rgt.arity === 1 ? (_: Val, y: Val) => rfn(y) : rfn;
-          rgt = F(
-            arity,
-            (...v) => r(...v).then(async (r) => cur.data(await l(...v), r)),
-            `${await display(lft)} ${await display(rgt)}`,
+          rgt = F(arity, (...v) =>
+            r(...v).then(async (r) => cur.data(await l(...v), r)),
           );
         } else {
           const arity = Math.max(rgt.arity, 1);
-          const repr = `${await display(cur)} ${await display(rgt)}`;
-          if (arity === 1)
-            rgt = F(1, async (v) => cur.data(v, await rfn(v)), repr);
-          else rgt = F(2, async (x, y) => cur.data(y, await rfn(x, y)), repr);
+          if (arity === 1) rgt = F(1, async (v) => cur.data(v, await rfn(v)));
+          else rgt = F(2, async (x, y) => cur.data(y, await rfn(x, y)));
         }
       }
-      rgt.repr = `(${await display(rgt)})`;
+      rgt.repr = `(${(await asyncMap(tines, display)).join(" ")})`;
       return rgt;
     } else if (node.kind === "strand" || node.kind === "list") {
       return list(
