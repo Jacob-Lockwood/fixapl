@@ -14,8 +14,14 @@ const glyphColors = {
   syntax: "text-gray-300",
   constant: "text-orange-400",
 };
-const trans =
-  "background-clip: text; color: transparent; background-image: linear-gradient(180deg, #5BCEFA 34%, #F5A9B8 34%, #F5A9B8 45%, #FFFFFF 45%, #FFFFFF 56%, #F5A9B8 56%, #F5A9B8 67%, #5BCEFA 67%)";
+const special = new Map([
+  [
+    "transpose",
+    "background-clip: text; color: transparent; background-image: linear-gradient(180deg, #5BCEFA 34%, #F5A9B8 34%, #F5A9B8 45%, #FFFFFF 45%, #FFFFFF 56%, #F5A9B8 56%, #F5A9B8 67%, #5BCEFA 67%)",
+  ],
+  ["left dfn argument", "color: var(--color-red-400)"],
+  ["right dfn argument", "color: var(--color-red-400)"],
+]);
 export const Highlight: Component<{
   tokens: readonly Token[];
   bindings: Map<string, number>;
@@ -33,12 +39,8 @@ export const Highlight: Component<{
             const { name } = Object.values(glyphs).find(
               (d) => d.glyph === image,
             )!;
-            let style: string | undefined;
-            if (name === "transpose") {
-              style = trans;
-            }
             return (
-              <span title={name} class={color} style={style}>
+              <span title={name} class={color} style={special.get(name)}>
                 {image}
               </span>
             );
@@ -457,7 +459,7 @@ export function Repl() {
             >
               <span
                 class={"-z-10 p-2 font-mono " + glyphColors[data.kind]}
-                style={data.name === "transpose" ? trans : undefined}
+                style={special.get(data.name)}
               >
                 {data.glyph}
               </span>
