@@ -131,7 +131,8 @@ export function cells(arr: Val, r = -1) {
   const cell = arr.shape.slice(-r);
   const delta = cell.reduce((a, b) => a * b, 1);
   if (delta === 0) {
-    const d = [...Array(4)].map(() => A(cell, []));
+    const l = frame.reduce((a, b) => a * b, 1);
+    const d = [...Array(l)].map(() => A(cell, []));
     return A(frame, d);
   }
   const data: Val[] = [];
