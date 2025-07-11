@@ -441,11 +441,26 @@ export class Visitor {
       let rgt: Fun;
       if (l.kind === "function" && l.arity === 2) {
         const m = await get();
-        const arity = m.kind === "function" && m.arity === 2 ? 2 : 1;
-        const fn = m.kind === "function" ? m.data : async () => m;
-        rgt = F(arity, async (...v) =>
-          l.data(await fn(m), arity === 1 ? v[0] : v[1]),
-        );
+        if (m.kind === "function" && m.arity === 2) {
+          if (i === 0) {
+            rgt = F(2, async (x, y) => l.data(await m.data(x, y), y));
+          } else {
+            const lft = await get();
+            const lf =
+              lft.kind === "function"
+                ? lft.arity === 1
+                  ? (_: Val, y: Val) => lft.data(y)
+                  : lft.data
+                : async () => lft;
+            const r = l.data;
+            rgt = F(2, (x, y) =>
+              r(x, y).then(async (r) => m.data(await lf(x, y), r)),
+            );
+          }
+        } else {
+          const fn = m.kind === "function" ? m.data : async () => m;
+          rgt = F(1, async (v) => l.data(await fn(m), v));
+        }
       } else {
         rgt = l.kind === "function" ? l : nilad(l);
       }
@@ -457,7 +472,7 @@ export class Visitor {
         if (cur.arity === 1) {
           rgt = F(rgt.arity, (...v) => rfn(...v).then(cur.data));
         } else if (i > 0) {
-          const lft = await this.visit(node.values[--i]);
+          const lft = await get();
           const arity = Math.max(
             rgt.arity,
             lft.kind === "function" ? lft.arity : 0,
