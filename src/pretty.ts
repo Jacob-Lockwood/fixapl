@@ -113,5 +113,5 @@ export default async function pretty(v: Val, c = light): Promise<string[]> {
       m.push(i === v.shape[0] - 1 ? b : inb);
     }
     return m;
-  } else return pretty(cells(v, v.shape.length % 2 === 0 ? 2 : 1), bold);
+  } else return pretty(cells(v, v.shape.length % 2 === 0 ? -2 : -1), bold);
 }
