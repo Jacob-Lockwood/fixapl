@@ -1,8 +1,9 @@
 import { lex, Parser, TextOptions, Token, Visitor } from "./lang";
+import pretty from "./pretty";
 import { Arr, display, execnilad, Num, vToImg } from "./util";
 
 export type MessageIn =
-  | ["eval", string, { autoImg: boolean }]
+  | ["eval", string, { autoImg: boolean; pretty: boolean }]
   | ["input", string | null]
   | ["text", ImageData];
 export type MessageOut =
@@ -51,7 +52,12 @@ onmessage = async ({
       const v = await execnilad(await visitor.visit(n));
       const img = settings.autoImg && vToImg(v);
       if (img && bigEnough(v as Arr<Num>)) msg(["image", img]);
-      else msg(["result", await display(v)]);
+      else {
+        const r = settings.pretty
+          ? (await pretty(v)).join("\n")
+          : await display(v);
+        msg(["result", r]);
+      }
       const bindings = new Map(
         [...visitor.bindings.entries(), ...visitor.scope.entries()].map((z) => [
           z[0],

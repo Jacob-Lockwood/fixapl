@@ -110,6 +110,7 @@ export function Repl() {
   const [clearPrompt, setClearPrompt] = setting("clearPrompt", "true");
   const [displayTimes, setDisplayTimes] = setting("displayTimes", "false");
   const [autoImg, setAutoImg] = setting("autoImg", "false");
+  const [pretty, setPretty] = setting("pretty", "true");
   const [defaultFont, setDefaultFont] = setting(
     "defaultFont",
     "TinyAPL386 Unicode",
@@ -186,7 +187,11 @@ export function Repl() {
       requestingInput: false,
     });
     setResults((res) => [data, ...res]);
-    msg(["eval", source, { autoImg: autoImg() === "true" }]);
+    msg([
+      "eval",
+      source,
+      { autoImg: autoImg() === "true", pretty: pretty() === "true" },
+    ]);
   };
   process(`"Hello, world!"`);
   let textarea!: HTMLTextAreaElement;
@@ -251,6 +256,14 @@ export function Repl() {
                 id="autoimg"
                 checked={autoImg() === "true"}
                 onInput={(e) => setAutoImg(e.target.checked + "")}
+              />
+              <label for="pretty">Pretty-print arrays</label>
+              <input
+                type="checkbox"
+                name="pretty"
+                id="pretty"
+                checked={pretty() === "true"}
+                onInput={(e) => setPretty(e.target.checked + "")}
               />
               <label for="defaultfont">
                 Default font for <code>{quad}Text</code>
@@ -353,7 +366,9 @@ export function Repl() {
                         }}
                       </For>
                     </div>
-                    <pre class="text-green-300">{result.result.join("\n")}</pre>
+                    <pre class="leading-5 text-green-300">
+                      {result.result.join("\n")}
+                    </pre>
                     <pre class="text-red-300">{result.error}</pre>
                     <Show
                       when={displayTimes() === "true" && result.time !== null}
