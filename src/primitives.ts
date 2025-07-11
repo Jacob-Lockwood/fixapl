@@ -52,7 +52,7 @@ export async function display(val: Val): Promise<string> {
     }
     return `⟨${(await asyncMap(val.data, display)).join(", ")}⟩`;
   }
-  if (val.shape[0] === 0) return `[empty ${val.shape.join("×")}]`;
+  if (val.shape[0] === 0) return `⍳${val.shape.join("‿")}`;
   const cel = cells(val).data;
   return `[${(await asyncMap(cel, display)).join(", ")}]`;
 }
