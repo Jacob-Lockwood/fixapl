@@ -70,7 +70,7 @@ export default async function pretty(v: Val, c = light): Promise<string[]> {
       c.bl + hs.join(c.hu) + br,
     ];
   } else if (v.shape.length === 2) {
-    if (v.data.every((v) => v.kind === "character")) {
+    if (v.data.length > 0 && v.data.every((v) => v.kind === "character")) {
       const h = bold.h.repeat(v.shape[1] + 2);
       const o = [bold.tl + h + bold.tr];
       for (let i = 0; i < v.shape[0]; i++) {
