@@ -53,7 +53,7 @@ export default async function pretty(v: Val, c = light): Promise<string[]> {
     return [c.tl + h + c.tr, ...s.map((l) => c.v + l + c.v), c.bl + h + c.br];
   } else if (v.shape.length === 1) {
     if (v.data.every((x) => x.kind === "number")) {
-      if (v.shape[0] === 1) return [`⟨${v.data[0].data}⟩`];
+      if (v.shape[0] === 1) return [await display(v)];
       return [v.data.map((v) => v.data).join("‿")];
     }
     const p = await asyncMap(v.data, (v) => pretty(v));
@@ -113,5 +113,10 @@ export default async function pretty(v: Val, c = light): Promise<string[]> {
       m.push(i === v.shape[0] - 1 ? b : inb);
     }
     return m;
-  } else return pretty(cells(v, v.shape.length % 2 === 0 ? -2 : -1), bold);
+  } else {
+    return pretty(
+      cells(v, v.shape.length % 2 === 0 && v.shape[1] !== 0 ? -2 : -1),
+      bold,
+    );
+  }
 }
