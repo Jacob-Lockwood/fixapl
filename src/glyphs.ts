@@ -32,6 +32,8 @@ export const glyphs = {
   ":": { name: "binding", glyph: "←", kind: "syntax" },
   "#": { name: "comment", glyph: "⍝", kind: "syntax" },
   "&": { name: "quad", glyph: "⎕", kind: "syntax" },
+  "%": { name: "scope", glyph: "§", kind: "syntax" },
+  ".": { name: "namespace access", glyph: ".", kind: "syntax" },
 } as const satisfies Record<
   string,
   { glyph: string; name: string; kind: GlyphKind }

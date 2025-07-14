@@ -81,9 +81,16 @@ export function lex(source: string) {
         const x = m.startsWith(alias) ? alias : glyph;
         m = m.slice(x.length);
         if (name === "negate") {
-          const match = m.match(basic.number);
-          if (match) {
-            const n = match[0];
+          const minf = m[0] === glyphs.inf.glyph ? m[0] : m.match(/^inf|/)![0];
+          if (minf) {
+            m = m.slice(minf.length);
+            const image = glyph + minf.replace("inf", glyphs.inf.glyph);
+            o.push({ kind: "number", line, image });
+            continue other;
+          }
+          const mnum = m.match(basic.number);
+          if (mnum) {
+            const n = mnum[0];
             m = m.slice(n.length);
             o.push({ kind: "number", line, image: glyph + n });
             continue other;
@@ -107,6 +114,15 @@ export function lex(source: string) {
               if (sub) m = m.slice(2);
             }
             image += sub;
+          } else if (name === "scope") {
+            if (m[0] === glyphs.inf.glyph) {
+              image += m[0];
+              m = m.slice(1);
+            } else {
+              const [level] = m.match(/^inf|\d*/)!;
+              image += level.replace("inf", glyphs.inf.glyph);
+              m = m.slice(level.length);
+            }
           }
           o.push({ kind: name, line, image });
         } else {
@@ -127,8 +143,9 @@ export type AstNode =
   | { kind: "monadic modifier"; glyph: string; fn: AstNode }
   | { kind: "dyadic modifier"; glyph: string; fns: [AstNode, AstNode] }
   | { kind: "reference"; name: string }
-  | { kind: "quad"; name: string }
+  | { kind: "scope reference"; level: number }
   | { kind: "glyph reference"; arity: number; glyph: string }
+  | { kind: "quad"; name: string }
   | { kind: "binding"; name: string; declaredArity: number; value: AstNode }
   | { kind: "expression"; values: AstNode[] }
   | { kind: "strand"; values: AstNode[] }
@@ -136,7 +153,8 @@ export type AstNode =
   | { kind: "list"; values: AstNode[] }
   | { kind: "dfn"; def: AstNode }
   | { kind: "dfn arg"; left: boolean }
-  | { kind: "assignment"; name: string };
+  | { kind: "namespace access"; left: AstNode; name: string }
+  | { kind: "assignment"; left: AstNode };
 
 export class Parser {
   private i = 0;
@@ -159,7 +177,10 @@ export class Parser {
     if (!tok) return;
     if (tok.kind === "number") {
       this.i++;
-      return { kind: "number", value: Number(tok.image.replace("¯", "-")) };
+      const val = tok.image
+        .replace(glyphs.ng.glyph, "-")
+        .replace(glyphs.inf.glyph, "Infinity");
+      return { kind: "number", value: Number(val) };
     } else if (tok.kind === "string") {
       this.i++;
       return {
@@ -183,6 +204,10 @@ export class Parser {
     } else if (tok.kind === "identifier") {
       this.i++;
       return { kind: "reference", name: tok.image };
+    } else if (tok.kind === "scope") {
+      this.i++;
+      const level = +tok.image.slice(1).replace(glyphs.inf.glyph, "Infinity");
+      return { kind: "scope reference", level };
     } else if (tok.kind === "quad") {
       this.i++;
       return { kind: "quad", name: tok.image.slice(1) };
@@ -290,13 +315,13 @@ export class Parser {
   }
   strand(): AstNode | void {
     const values: AstNode[] = [];
-    let m = this.primary();
+    let m = this.namespaceAccess();
     while (m) {
       values.push(m);
       const t = this.tok();
       if (t?.kind !== "ligature") break;
       this.i++;
-      m = this.primary();
+      m = this.namespaceAccess();
       if (!m) {
         throw this.error("strand cannot end with a ligature");
       }
@@ -305,12 +330,27 @@ export class Parser {
     if (values.length === 1) return values[0];
     return { kind: "strand", values };
   }
+  namespaceAccess(): AstNode | void {
+    const p = this.primary();
+    if (!p) return;
+    if (this.tok()?.kind !== "namespace access") return p;
+    this.i++;
+    const name = this.tok();
+    if (name?.kind !== "identifier") throw this.expected("identifier", name);
+    this.i++;
+    return { kind: "namespace access", left: p, name: name.image };
+  }
   assignment(): AstNode | void {
-    const ident = this.tok();
-    if (ident?.kind !== "identifier") return;
-    if (this.tokens[this.i + 1]?.kind !== "inline assignment") return;
-    this.i += 2;
-    return { kind: "assignment", name: ident.image };
+    const l = this.modifierExpression();
+    if (!l) return;
+    if (this.tok()?.kind !== "inline assignment") return l;
+    this.i++;
+    return { kind: "assignment", left: l };
+    // const ident = this.tok();
+    // if (ident?.kind !== "identifier") return;
+    // if (this.tokens[this.i + 1]?.kind !== "inline assignment") return;
+    // this.i += 2;
+    // return { kind: "assignment", name: ident.image };
   }
   expression(): AstNode | void {
     const values: AstNode[] = [];
@@ -318,11 +358,11 @@ export class Parser {
       const assign = this.assignment();
       if (assign) {
         values.push(assign);
-      } else {
+      } else break; /* else {
         const m = this.modifierExpression();
         if (!m) break;
         values.push(m);
-      }
+      } */
     }
     if (values.length !== 0) return { kind: "expression", values };
   }
@@ -367,12 +407,14 @@ export type ReplContext = {
   read: () => Promise<string | null>;
   drawText: (opts: TextOptions) => Promise<ImageData>;
 };
+const newScope = () => new Map<string, Val>([]);
 export class Visitor {
-  public scope = new Map<string, Val>([]);
-  public bindings = new Map<string, Val>([]);
+  global = newScope();
+  scopes = [this.global];
+  bindings = new Map<string, Val>([]);
+  q: ReturnType<typeof quads>;
   private thisBinding?: [string, number];
   private dfns?: Val[];
-  public q: ReturnType<typeof quads>;
   constructor(ctx: ReplContext) {
     this.q = quads(ctx);
   }
@@ -427,7 +469,7 @@ export class Visitor {
       const rgt = await this.visit(node.fns[1]);
       const v = await primitiveByGlyph(node.glyph)(lft, rgt);
       if (v.kind === "function")
-        v.repr = (await display(lft)) + node.glyph + (await display(rgt));
+        v.repr = (await display(lft)) + node.glyph + `(${await display(rgt)})`;
       return v;
     } else if (node.kind === "expression") {
       let i = node.values.length;
@@ -497,18 +539,17 @@ export class Visitor {
       rgt.repr = `(${(await asyncMap(tines, display)).join(" ")})`;
       return rgt;
     } else if (node.kind === "strand" || node.kind === "list") {
-      return list(
-        await asyncMap(node.values, async (v) =>
-          execnilad(await this.visit(v)),
-        ),
-      );
+      const o: Val[] = [];
+      for (let i = node.values.length - 1; i >= 0; i--)
+        o.unshift(await execnilad(await this.visit(node.values[i])));
+      return list(o);
     } else if (node.kind === "array") {
       if (node.values.length === 0) {
         throw new Error("Square brackets may not be empty");
       }
-      const v = await asyncMap(node.values, async (n) =>
-        execnilad(await this.visit(n)),
-      );
+      const v: Val[] = [];
+      for (let i = node.values.length - 1; i >= 0; i--)
+        v.unshift(await execnilad(await this.visit(node.values[i])));
       if (v.every((d) => d.kind === "array")) {
         if (v.every((x, i) => match(x.shape, v[++i % v.length].shape))) {
           return A(
@@ -531,30 +572,25 @@ export class Visitor {
           const g = this.bindings.get(node.name) as Val & { kind: "function" };
           return g.data(...v);
         });
-      } else if (this.bindings.has(node.name)) {
-        return this.bindings.get(node.name)!;
-      } else
+      } else {
+        if (this.bindings.has(node.name)) return this.bindings.get(node.name)!;
+        const scopes = [...this.scopes];
         return F(
           0,
           async () => {
-            if (this.scope.has(node.name)) return this.scope.get(node.name)!;
+            for (const s of scopes)
+              if (s.has(node.name)) return s.get(node.name)!;
             throw new Error(`Unrecognized identifier '${node.name}'`);
           },
           node.name,
         );
-      /*
-      if (this.scope.has(node.name)) {
-        return this.scope.get(node.name)!;
-      } else throw new Error(`Unrecognized identifier '${node.name}'`);
-       */
+      }
     } else if (node.kind === "binding") {
       const { name, declaredArity, value } = node;
-      if (this.scope.has(name))
-        throw new Error(
-          `Cannot bind ${name} which is already assigned in scope`,
-        );
       this.thisBinding = [name, declaredArity];
-      const v = await this.visit(value);
+      this.scopes.unshift(newScope());
+      const v = await execnilad(await this.visit(value));
+      this.scopes.shift();
       if (
         (declaredArity > 0 &&
           (v.kind !== "function" || v.arity !== declaredArity)) ||
@@ -569,19 +605,29 @@ export class Visitor {
       this.bindings.set(node.name, v);
       return v;
     } else if (node.kind === "assignment") {
-      const { name } = node;
-      return F(
-        1,
-        async (v) => {
-          if (this.bindings.has(name))
-            throw new Error(
-              `Cannot make inline assignment to name ${name} which has already been bound`,
-            );
-          this.scope.set(name, v);
-          return v;
-        },
-        name + glyphs["::"].glyph,
-      );
+      const { left } = node;
+      if (left.kind === "namespace access") {
+        const from = await execnilad(await this.visit(left.left));
+        if (from.kind !== "namespace")
+          throw new Error(
+            "Left side of namespace assignment must be a namespace",
+          );
+        return F(
+          1,
+          async (v) => (from.data.set(left.name, v), v),
+          `${await display(from)}.${left.name}${glyphs["::"].glyph}`,
+        );
+      } else if (left.kind === "reference") {
+        const sc = this.scopes[0];
+        return F(
+          1,
+          async (v) => (sc.set(left.name, v), v),
+          left.name + glyphs["::"].glyph,
+        );
+      } else
+        throw new Error(
+          "Left side of assignment must be a reference or namespace access",
+        );
     } else if (node.kind === "dfn") {
       function getArity(node: AstNode): number {
         if (node.kind === "dfn arg") return node.left ? 2 : 1;
@@ -591,18 +637,26 @@ export class Visitor {
           node.kind === "list" ||
           node.kind === "strand"
         )
-          return node.values.map(getArity).reduce((x, y) => Math.max(x, y), 1);
-        return 1;
+          return node.values.map(getArity).reduce((x, y) => Math.max(x, y), 0);
+        return 0;
       }
       const arity = getArity(node.def);
+      if (arity === 0) {
+        this.scopes.unshift(newScope());
+        const e = await execnilad(await this.visit(node.def));
+        this.scopes.shift();
+        return e;
+      }
       return F(
         arity,
         async (...v) => {
           const temp = this.dfns?.slice();
           this.dfns = arity === 1 ? [N(0), v[0]] : v;
-          const e = await this.visit(node.def);
+          this.scopes.unshift(newScope());
+          const e = await execnilad(await this.visit(node.def));
+          this.scopes.shift();
           this.dfns = temp;
-          return execnilad(e);
+          return e;
         },
         `{${arity === 1 ? "monad" : "dyad"}}`,
       );
@@ -611,10 +665,39 @@ export class Visitor {
         throw new Error("Cannot reference dfn argument outside dfn");
       const v = node.left ? this.dfns[0] : this.dfns[1];
       return F(0, async () => v);
+    } else if (node.kind === "scope reference") {
+      return {
+        kind: "namespace",
+        data: this.scopes[Math.min(node.level, this.scopes.length - 1)],
+      };
+    } else if (node.kind === "namespace access") {
+      let from = await execnilad(await this.visit(node.left));
+      if (from.kind === "namespace") from = nilad(from);
+      if (from.kind === "function")
+        return F(
+          from.arity,
+          async (...v) => {
+            const ns = await from.data(...v);
+            if (ns.kind !== "namespace")
+              throw new Error(
+                "Namespace access function must return a namespace",
+              );
+            const p = ns.data.get(node.name);
+            if (!p)
+              throw new Error(
+                `Property '${node.name}' does not exist in namespace`,
+              );
+            return p;
+          },
+          `<ns>.${node.name}`,
+        );
+      throw new Error(
+        "Left side of namespace access must be a namespace or a function",
+      );
     }
+
     throw new Error(
-      "Interpreter error! Please report this as a bug!" +
-        "current node: \n" +
+      "could not handle node — this is an interpreter bug!\n" +
         JSON.stringify(node, null, 2),
     );
   }

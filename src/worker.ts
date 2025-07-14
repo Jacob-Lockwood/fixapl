@@ -58,12 +58,15 @@ onmessage = async ({
           : await display(v);
         msg(["result", r]);
       }
-      const bindings = new Map(
-        [...visitor.bindings.entries(), ...visitor.scope.entries()].map((z) => [
-          z[0],
-          z[1].kind === "function" ? z[1].arity : 0,
-        ]),
-      );
+      const bindings = new Map([
+        ...visitor.scopes.flatMap((scope) =>
+          [...scope.keys()].map((name) => [name, 0] as const),
+        ),
+        ...[...visitor.bindings.entries()].map(
+          ([name, val]) =>
+            [name, val.kind === "function" ? val.arity : 0] as const,
+        ),
+      ]);
       msg(["bindings", bindings]);
     }
   } catch (e) {
