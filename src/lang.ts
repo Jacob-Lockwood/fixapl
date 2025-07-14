@@ -637,7 +637,12 @@ export class Visitor {
           node.kind === "list" ||
           node.kind === "strand"
         )
-          return node.values.map(getArity).reduce((x, y) => Math.max(x, y), 0);
+          return node.values.reduce((x, y) => Math.max(x, getArity(y)), 0);
+        if (node.kind === "dyadic modifier")
+          return Math.max(...node.fns.map(getArity));
+        if (node.kind === "monadic modifier") return getArity(node.fn);
+        if (node.kind === "namespace access" || node.kind === "assignment")
+          return getArity(node.left);
         return 0;
       }
       const arity = getArity(node.def);
