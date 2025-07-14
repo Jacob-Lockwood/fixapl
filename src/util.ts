@@ -10,7 +10,8 @@ export type Val =
       arity: number;
       data: Fn;
       repr?: string;
-    };
+    }
+  | { kind: "namespace"; data: Map<string, Val> };
 type Fn = (...x: Val[]) => Promise<Val>;
 export const F = (arity: number, data: Fn, repr?: string) =>
   ({

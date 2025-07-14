@@ -41,6 +41,7 @@ export async function display(val: Val): Promise<string> {
       return v.kind === "function" ? (await display(v)) + sb.glyph : display(v);
     } else return `<${val.arity === 1 ? "monad" : "dyad"}>`;
   }
+  if (val.kind === "namespace") return "<namespace>";
   if (val.shape.length === 0) {
     return enc.glyph + (await display(val.data[0]));
   }
@@ -67,6 +68,8 @@ function shape(y: Val) {
 function greater(x: Atom, y: Atom) {
   if (x.kind === "function" || y.kind === "function")
     throw new Error("Cannot compare functions");
+  if (x.kind === "namespace" || y.kind === "namespace")
+    throw new Error("Cannot compare namespaces");
   if (x.kind === y.kind) return x.data > y.data;
   return x.kind === "character";
 }
@@ -215,6 +218,8 @@ export const add = df("+", "add", (err) =>
   pervasive(async (x, y) => {
     if (x.kind === "function" || y.kind === "function")
       throw err("Cannot add functions");
+    if (x.kind === "namespace" || y.kind === "namespace")
+      throw err("Cannot add namespaces");
     if (x.kind === "character" && y.kind === "character")
       throw err("Cannot add two characters");
     const kind = x.kind === "character" ? x.kind : y.kind;
@@ -228,6 +233,7 @@ export const sub = df("-", "subtract", (err) =>
     if (y.kind !== "number")
       throw err(`Cannot subtract ${y.kind} from ${x.kind}`);
     if (x.kind === "function") throw err(`Cannot subtract a function`);
+    if (x.kind === "namespace") throw err(`Cannot subtract a namespace`);
     return { kind: x.kind, data: x.data - y.data };
   }),
 );
@@ -264,10 +270,10 @@ export const log = df("⍟", "logarithm", (err) =>
   }),
 );
 export const max = df("↥", "maximum", () =>
-  pervasive(async (x, y) => ((await grt.def(x, y)).data ? x : y)),
+  pervasive(async (x, y) => (greater(x, y) ? x : y)),
 );
 export const min = df("↧", "minimum", () =>
-  pervasive(async (x, y) => ((await grt.def(y, x)).data ? x : y)),
+  pervasive(async (x, y) => (greater(y, x) ? x : y)),
 );
 // export const ecd = df("⊤", "encode", (err) =>
 //   recur(async (ecd, x, y) => {
@@ -409,7 +415,7 @@ export const cat = df("⍪", "catenate", (err) =>
       if (xsh.length === ysh.length + 1) return cat(x, A([1, ...ysh], y.data));
       if (xsh.length + 1 === ysh.length) return cat(A([1, ...xsh], x.data), y);
       if (xsh.length !== ysh.length || !match(xsh.slice(1), ysh.slice(1)))
-        throw err(`${alpha} and ${omega} must have matching cells"`);
+        throw err(`${alpha} and ${omega} must have matching cells`);
       const sh = [(xsh[0] ?? 1) + (ysh[0] ?? 1), ...xsh.slice(1)];
       return A(sh, x.data.concat(y.data));
     } else if (x.kind === "array") {
@@ -853,7 +859,9 @@ export const cho = dm("◶", "choose", (err, r) => async (X, Y) => {
   });
 });
 export const bef = dm("⊸", "before", (err) => async (X, Y) => {
-  if (Y.kind !== "function") throw err(`${uomega} must be a function`);
+  if (Y.kind !== "function" || Y.arity === 0)
+    throw err(`${uomega} must be a function`);
+  X = await execnilad(X);
   if (Y.arity === 1) return aft.def(Y, X);
   const l = X.kind === "function" ? X : F(1, async () => X);
   return F(l.arity, async (v, w) =>
@@ -861,7 +869,9 @@ export const bef = dm("⊸", "before", (err) => async (X, Y) => {
   );
 });
 export const aft = dm("⟜", "after", (err) => async (X, Y) => {
-  if (X.kind !== "function") throw err(`${ualpha} must be a function`);
+  if (X.kind !== "function" || X.arity === 0)
+    throw err(`${ualpha} must be a function`);
+  Y = await execnilad(Y);
   if (Y.kind !== "function") {
     if (X.arity === 1) return X.data(Y);
     return F(1, (v) => X.data(v, Y));
