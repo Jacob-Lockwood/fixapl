@@ -293,7 +293,7 @@ export class Parser {
   monadicModifierStack(p: AstNode | void) {
     if (!p) return;
     while (true) {
-      const tok = this.tokens[this.i];
+      const tok = this.tok();
       if (tok?.kind !== "monadic modifier") return p;
       this.i++;
       p = { kind: "monadic modifier", glyph: tok.image, fn: p };
@@ -322,9 +322,7 @@ export class Parser {
       if (t?.kind !== "ligature") break;
       this.i++;
       m = this.namespaceAccess();
-      if (!m) {
-        throw this.error("strand cannot end with a ligature");
-      }
+      if (!m) throw this.error("strand cannot end with a ligature");
     }
     if (values.length === 0) return;
     if (values.length === 1) return values[0];
@@ -346,23 +344,13 @@ export class Parser {
     if (this.tok()?.kind !== "inline assignment") return l;
     this.i++;
     return { kind: "assignment", left: l };
-    // const ident = this.tok();
-    // if (ident?.kind !== "identifier") return;
-    // if (this.tokens[this.i + 1]?.kind !== "inline assignment") return;
-    // this.i += 2;
-    // return { kind: "assignment", name: ident.image };
   }
   expression(): AstNode | void {
     const values: AstNode[] = [];
     while (true) {
       const assign = this.assignment();
-      if (assign) {
-        values.push(assign);
-      } else break; /* else {
-        const m = this.modifierExpression();
-        if (!m) break;
-        values.push(m);
-      } */
+      if (!assign) break;
+      values.push(assign);
     }
     if (values.length !== 0) return { kind: "expression", values };
   }
@@ -694,7 +682,7 @@ export class Visitor {
               );
             return p;
           },
-          `<ns>.${node.name}`,
+          `${await display(from)}.${node.name}`,
         );
       throw new Error(
         "Left side of namespace access must be a namespace or a function",
