@@ -341,7 +341,7 @@ export const len = mf("⧻", "length", () => async (y) => {
 });
 export const sha = mf("△", "shape", () => async (y) => shape(y));
 export const fla = mf("▽", "flat", () => async (y) => {
-  return y.kind === "array" ? list(y.data) : y;
+  return y.kind === "array" ? list(y.data) : list([y]);
 });
 export const enc = mf("□", "enclose", () => async (y) => A([], [y]));
 export const enl = mf("⋄", "enlist", () => async (y) => A([1], [y]));
@@ -631,18 +631,6 @@ export const eac = mm("¨", "each", (err) => async (X) => {
   if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   return F(X.arity, (...x) => each(X.data, ...x));
 });
-export const red = mm("/", "reduce", (err, { err1 }) => async (X) => {
-  if (X.kind !== "function" || X.arity !== 2)
-    throw err(`${ualpha} must be a dyadic function`);
-  return F(1, async (y) => {
-    if (y.kind !== "array") return y;
-    if (y.data.length === 0) throw err1(`${omega} may not be empty`);
-    const cel = cells(y);
-    let acc = cel.data[0];
-    for (let i = 1; i < cel.shape[0]; i++) acc = await X.data(acc, cel.data[i]);
-    return acc;
-  });
-});
 export const sca = mm("\\", "scan", (err, { err1 }) => async (X) => {
   if (X.kind !== "function" || X.arity !== 2)
     throw err(`${ualpha} must be a dyadic function`);
@@ -654,6 +642,18 @@ export const sca = mm("\\", "scan", (err, { err1 }) => async (X) => {
     for (let i = 1, acc = cel[0]; i < cel.length; i++)
       o.push((acc = await each(X.data, acc, cel[i])));
     return fromCells(o);
+  });
+});
+export const red = mm("/", "reduce", (err, { err1 }) => async (X) => {
+  if (X.kind !== "function" || X.arity !== 2)
+    throw err(`${ualpha} must be a dyadic function`);
+  return F(1, async (y) => {
+    if (y.kind !== "array") return y;
+    if (y.data.length === 0) throw err1(`${omega} may not be empty`);
+    const cel = cells(y);
+    let acc = cel.data[0];
+    for (let i = 1; i < cel.shape[0]; i++) acc = await X.data(acc, cel.data[i]);
+    return acc;
   });
 });
 export const fol = mm("⫽", "fold", (err, { err2 }) => async (X) => {
