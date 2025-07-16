@@ -54,7 +54,7 @@ export default async function pretty(v: Val, c = light): Promise<string[]> {
   } else if (v.shape.length === 1) {
     if (v.data.every((x) => x.kind === "number")) {
       if (v.shape[0] === 1) return [await display(v)];
-      return [v.data.map((v) => v.data).join("‿")];
+      return [(await asyncMap(v.data, display)).join("‿")];
     }
     const p = await asyncMap(v.data, (v) => pretty(v));
     const h = p.reduce((a, b) => Math.max(a, b.length), 1);
