@@ -815,10 +815,8 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
         throw e(`${ualpha} must not change the shape of its input`);
       const dat = arr.data.map((d, i) => vals.data[idcs.indexOf(i)] ?? d);
       return A(arr.shape, dat);
-    } else
-      throw e(
-        `${ualpha} must return an item or an array of items from ${omega}`,
-      );
+    }
+    throw e(`${ualpha} must return an item or an array of items from ${omega}`);
   });
 });
 export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
