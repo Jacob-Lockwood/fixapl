@@ -397,6 +397,12 @@ export const fmt = mf("⍕", "format", () => async (y) => {
 export const exc = mf("⍎", "execute", (err) => () => {
   throw err("unreachable");
 });
+export const ari = mf("⪫", "arity", () =>
+  recur(async (ari, y) => {
+    if (y.kind === "array" && y.shape.length > 0) return await each(ari, y);
+    return N(y.kind === "function" ? y.arity : 0);
+  }),
+);
 
 export const mem = df("∊", "member of", (err) => (x, y) => {
   if (y.kind !== "array" || y.shape.length < 1)
