@@ -407,7 +407,10 @@ export function Repl() {
                 }
                 return;
               }
-              if (!ev.altKey || !"ArrowUp,ArrowDown".includes(ev.key)) {
+              if (
+                !(ev.altKey || ev.ctrlKey) ||
+                !"ArrowUp,ArrowDown".includes(ev.key)
+              ) {
                 setHistoryIdx(-1);
                 setUnsubmitted(textarea.value);
                 return;
