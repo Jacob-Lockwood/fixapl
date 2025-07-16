@@ -779,7 +779,12 @@ export const unt = dm("⍣", "until", (err, r) => async (X, Y) => {
   });
 });
 export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
-  if (X.kind !== "function" || Y.kind !== "function")
+  if (
+    X.kind !== "function" ||
+    X.arity === 0 ||
+    Y.kind !== "function" ||
+    Y.arity === 0
+  )
     throw err(`${ualpha} and ${uomega} must both be functions`);
   const arity = Math.max(X.arity, Y.arity);
   const e = arity === 1 ? r.err1 : r.err2;
@@ -787,38 +792,33 @@ export const und = dm("⍢", "under", (err, r) => async (X, Y) => {
     const arr = v[arity - 1];
     const fn = X.arity === 1 ? X.data : (z: Val) => X.data(v[0], z);
     if (arr.kind !== "array") throw e(`${omega} must be an array`);
-    const indices = range(arr.shape);
-    const [t, ti] = await asyncMap([arr, indices], async (z) =>
-      execnilad(Y.arity === 1 ? await Y.data(z) : await Y.data(v[0], z)),
-    );
-    const isOk = (x: Val) =>
-      x.kind === "number" &&
-      x.data >= 0 &&
-      x.data < arr.data.length &&
-      Number.isInteger(x.data);
-    if (isOk(ti)) {
-      const i = ti.data as number;
-      const z = await execnilad(await fn(t));
-      const d = arr.data.map((v, x) => (i === x ? z : v));
-      return A(arr.shape, d);
-    } else if (ti.kind === "array") {
-      if (
-        t.kind !== "array" ||
-        !match(ti.shape, t.shape) ||
-        !ti.data.every(isOk) ||
-        new Set(ti.data.map((x) => x.data)).size !== ti.data.length
-      )
-        throw e(`${uomega} must be a valid structural transformation`);
-      const dat = await execnilad(await fn(t));
-      if (dat.kind !== "array" || !match(dat.shape, t.shape))
-        throw e(`${ualpha} may not change the shape of its argument`);
-      return each(async (v) => {
-        const i = v.data as number;
-        const g = ti.data.findIndex((z) => z.data === i);
-        if (g === -1) return arr.data[i];
-        return dat.data[g];
-      }, indices);
-    } else throw e(`${uomega} must return a number or number array`);
+    const td = arr.data.map((d, i) => ({ ...d, i }));
+    const tag = A(arr.shape, td);
+    const sel = Y.arity === 1 ? await Y.data(tag) : await Y.data(v[0], tag);
+    if ("i" in sel && typeof sel.i === "number") {
+      const ins = await fn(sel);
+      const dat = arr.data.map((d, i) => (i === sel.i ? ins : d));
+      return A(arr.shape, dat);
+    } else if (sel.kind === "array") {
+      const untag = A(sel.shape, []);
+      const idcs: number[] = [];
+      for (const d of sel.data) {
+        if ("i" in d && typeof d.i === "number") {
+          if (idcs.includes(d.i))
+            throw e(`${uomega} may not return duplicates`);
+          idcs.push(d.i);
+          untag.data.push(arr.data[d.i]);
+        } else throw e(`${uomega} must only return items of ${omega}`);
+      }
+      const vals = await fn(untag);
+      if (vals.kind !== "array" || !match(vals.shape, untag.shape))
+        throw e(`${ualpha} must not change the shape of its input`);
+      const dat = arr.data.map((d, i) => vals.data[idcs.indexOf(i)] ?? d);
+      return A(arr.shape, dat);
+    } else
+      throw e(
+        `${ualpha} must return an item or an array of items from ${omega}`,
+      );
   });
 });
 export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
