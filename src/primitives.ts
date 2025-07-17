@@ -905,7 +905,10 @@ export const ov = dm("○", "over", (err) => async (X, Y) => {
 export const lft = df("⊣", "left argument", () => async (x) => x);
 export const rgt = df("⊢", "right argument", () => async (_, y) => y);
 export const id = mf("⋅", "identity", () => async (y) => y);
-export const sb = mm("₀", "subject", () => async (X) => F(0, async () => X));
+export const sb = mm("₀", "subject", () => async (X) => {
+  const val = execnilad(X);
+  return F(0, () => val);
+});
 export const mn = mm("₁", "monad", (err) => async (X) => {
   X = await execnilad(X);
   if (X.kind !== "function") return F(1, async () => X);
