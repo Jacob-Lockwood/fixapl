@@ -631,7 +631,7 @@ export const con = mm("⊙", "contents", (err) => async (X) => {
   return F(X.arity, (...v) =>
     X.data(
       ...v.map((z) =>
-        z.kind === "array" && z.shape.length === 0 ? z.data[0] : z,
+        z?.kind === "array" && z.shape.length === 0 ? z.data[0] : z,
       ),
     ),
   );
