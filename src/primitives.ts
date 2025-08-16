@@ -63,9 +63,6 @@ export async function display(val: Val): Promise<string> {
   return `[${(await asyncMap(cel, display)).join(", ")}]`;
 }
 
-function disclose(y: Val) {
-  return y.kind === "array" ? y.data[0] : y;
-}
 function shape(y: Val) {
   if (y.kind !== "array") return A([0], []);
   return A([y.shape.length], y.shape.map(N));
@@ -370,7 +367,7 @@ export const gru = mf("⍋", "grade up", (err) => async (y) => {
   //   throw err("Grade argument must have at least rank 1");
   // const { shape, data: d } = cells(y);
   if (y.kind !== "array" || y.shape.length !== 1)
-    throw err("Grade argument must be a list");
+    throw err(`${omega} must be a list`);
   const d = y.data;
   const s = d.map((_, i) => i).sort((a, b) => compare(d[a], d[b]));
   return list(s.map(N));
@@ -380,7 +377,7 @@ export const grd = mf("⍒", "grade down", (err) => async (y) => {
   //   throw err("Grade argument must have at least rank 1");
   // const { shape, data: d } = cells(y);
   if (y.kind !== "array" || y.shape.length !== 1)
-    throw err("Grade argument must be a list");
+    throw err(`${omega} must be a list`);
   const d = y.data;
   const s = d.map((_, i) => i).sort((a, b) => -compare(d[a], d[b]));
   return list(s.map(N));
@@ -631,7 +628,13 @@ export const bac = mm("˜", "backward/const2", () => async (X) => {
 export const cel = mm("◡", "cells", () => (X) => rnk.def(X, N(-1)));
 export const con = mm("⊙", "contents", (err) => async (X) => {
   if (X.kind !== "function") throw err(`${ualpha} must be a function`);
-  return F(X.arity, (...v) => X.data(...v.map((z) => z && disclose(z))));
+  return F(X.arity, (...v) =>
+    X.data(
+      ...v.map((z) =>
+        z.kind === "array" && z.shape.length === 0 ? z.data[0] : z,
+      ),
+    ),
+  );
 });
 export const eac = mm("¨", "each", (err) => async (X) => {
   if (X.kind !== "function") throw err(`${ualpha} must be a function`);
