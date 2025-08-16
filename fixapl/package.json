@@ -1,0 +1,23 @@
+{
+  "name": "fixapl",
+  "version": "0.0.1",
+  "description": "API and CLI for FIXAPL programming language",
+  "main": "dist/src/index.js",
+  "bin": {
+    "fixapl": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts cli.ts --dts --tsconfig ../tsconfig.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1",
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "tsup": "^8.5.0"
+  },
+  "dependencies": {
+    "colors": "^1.4.0"
+  }
+}
