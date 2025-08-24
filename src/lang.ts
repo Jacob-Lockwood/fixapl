@@ -519,9 +519,7 @@ export class Visitor {
             r(...v).then(async (r) => cur.data(await l(...v), r)),
           );
         } else {
-          const arity = Math.max(rgt.arity, 1);
-          if (arity === 1) rgt = F(1, async (v) => cur.data(v, await rfn(v)));
-          else rgt = F(2, async (x, y) => cur.data(y, await rfn(x, y)));
+          rgt = F(2, async (x, y) => cur.data(x, await rfn(x, y)));
         }
       }
       rgt.repr = `(${(await asyncMap(tines, display)).join(" ")})`;
