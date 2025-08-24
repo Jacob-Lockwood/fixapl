@@ -471,25 +471,24 @@ export class Visitor {
       let rgt: Fun;
       if (l.kind === "function" && l.arity === 2) {
         const m = await get();
-        if (m.kind === "function" && m.arity === 2) {
-          if (i === 0) {
-            rgt = F(2, async (x, y) => l.data(await m.data(x, y), y));
-          } else {
-            const lft = await get();
-            const lf =
-              lft.kind === "function"
-                ? lft.arity === 1
-                  ? (_: Val, y: Val) => lft.data(y)
-                  : lft.data
-                : async () => lft;
-            const r = l.data;
-            rgt = F(2, (x, y) =>
-              r(x, y).then(async (r) => m.data(await lf(x, y), r)),
-            );
-          }
+        if (m.kind === "function" && m.arity === 2 && i > 0) {
+          const lft = await get();
+          const lf =
+            lft.kind === "function"
+              ? lft.arity === 1
+                ? (_: Val, y: Val) => lft.data(y)
+                : lft.data
+              : async () => lft;
+          const r = l.data;
+          rgt = F(2, (x, y) =>
+            r(x, y).then(async (r) => m.data(await lf(x, y), r)),
+          );
         } else {
-          const fn = m.kind === "function" ? m.data : async () => m;
-          rgt = F(1, async (v) => l.data(await fn(m), v));
+          if (m.kind !== "function" || m.arity === 0)
+            rgt = F(1, async (y) => l.data(await execnilad(m), y));
+          else if (m.arity === 1)
+            rgt = F(2, async (x, y) => m.data(await l.data(x, y)));
+          else rgt = F(2, async (x, y) => m.data(x, await l.data(x, y)));
         }
       } else {
         rgt = l.kind === "function" ? l : nilad(l);
