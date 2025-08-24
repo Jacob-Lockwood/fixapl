@@ -194,7 +194,14 @@ export function Repl() {
       { autoImg: autoImg() === "true", pretty: pretty() === "true" },
     ]);
   };
-  process(`"Hello, world!"`);
+  let initial = `"Hello, world!"`;
+  const runParam = new URLSearchParams(window.location.search).get("run");
+  if (runParam) {
+    const r = atob(runParam.replace(/-/g, "+").replace(/_/g, "/"));
+    const u = Uint8Array.from(r, (m) => m.codePointAt(0)!);
+    initial = new TextDecoder().decode(u);
+  }
+  process(initial);
   let textarea!: HTMLTextAreaElement;
   let inp!: HTMLTextAreaElement;
   return (
@@ -293,15 +300,36 @@ export function Repl() {
               {(result) => (
                 <li>
                   <div
-                    class="flex min-w-max cursor-progress bg-teal-900/20 hover:bg-teal-900/50"
+                    class="group flex min-w-max cursor-progress bg-teal-900/20 hover:bg-teal-900/50"
                     classList={{ "cursor-progress": result.time === null }}
                   >
-                    <div class="w-[8ch]">
-                      <Show when={result.time === null}>
+                    <div class="w-[8ch] leading-0">
+                      {result.time === null ? (
                         <span class="material-symbols-outlined scale-90 animate-spin">
                           progress_activity
                         </span>
-                      </Show>
+                      ) : (
+                        <button
+                          class="hidden cursor-pointer group-hover:inline"
+                          title="copy link to this entry"
+                          onClick={(ev) => {
+                            const by = new TextEncoder().encode(result.source);
+                            const b = btoa(String.fromCodePoint(...by));
+                            const r = b.replace(/\+/g, "-").replace(/\//g, "_");
+                            const url = `${window.location.origin}${window.location.pathname}?run=${r}`;
+                            navigator.clipboard.writeText(url);
+                            ev.target.textContent = "check";
+                            setTimeout(
+                              () => (ev.target.textContent = "link"),
+                              1000,
+                            );
+                          }}
+                        >
+                          <span class="material-symbols-outlined scale-90">
+                            link
+                          </span>
+                        </button>
+                      )}
                     </div>
                     <pre
                       class="selection:!bg-white/50"
