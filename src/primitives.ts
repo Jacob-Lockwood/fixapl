@@ -696,11 +696,10 @@ export const win = mm("⊕", "windows", (err, { err1, err2 }) => async (X) => {
     return F(1, async (w) => {
       if (w.kind !== "array") throw err1(`${omega} must be an array`);
       const { data } = cells(w);
-      const l = data.length - 1;
-      const o = A([l], []);
-      for (let i = 1; i <= l; i++)
-        o.data.push(await X.data(data[i - 1], data[i]));
-      return o;
+      const o: Val[] = [];
+      for (let i = 0; i < data.length - 1; i++)
+        o.push(await X.data(data[i], data[i + 1]));
+      return fromCells(o);
     });
   else
     return F(2, async (v, w) => {
