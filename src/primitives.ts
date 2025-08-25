@@ -523,8 +523,9 @@ export const fil = df("⬚", "fill-merge", () => async (x, y) => {
   for (const v of y.data) {
     if (v.kind === "array") {
       const r = v.shape.length;
-      for (let i = sh.length; i < r; i++) sh.unshift(v.shape[i]);
-      for (let i = 0; i < r; i++) sh[i] = Math.max(sh[i], v.shape.at(-i) ?? 0);
+      for (let i = r - sh.length - 1; i >= 0; i--) sh.unshift(v.shape[i]);
+      for (let i = 1; i <= r; i++)
+        sh[sh.length - i] = Math.max(sh.at(-i) ?? 0, v.shape.at(-i)!);
     }
   }
   const idcs = indices(sh);
