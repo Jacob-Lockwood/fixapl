@@ -343,7 +343,7 @@ export const fla = mf("▽", "flat", () => async (y) => {
 export const enc = mf("□", "enclose", () => async (y) => A([], [y]));
 export const enl = mf("⋄", "enlist", () => async (y) => A([1], [y]));
 export const mer = mf("⊡", "merge", (err) => async (y) => {
-  if (y.kind !== "array") return y;
+  if (y.kind !== "array" || y.data.length === 0) return y;
   const [sh, ...shs] = y.data.map(shape);
   if (!(await asyncEvery(shs, async (v) => (await mat.def(v, sh)).data)))
     throw err("Cannot merge elements whose shapes do not match");
