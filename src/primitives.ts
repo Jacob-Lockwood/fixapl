@@ -21,6 +21,10 @@ import {
   indices,
   prod,
   nilad,
+  alpha,
+  omega,
+  ualpha,
+  uomega,
 } from "./util";
 import { PrimitiveKind } from "./glyphs";
 
@@ -118,10 +122,7 @@ const metaEntry =
     );
     return { kind, glyph, name, def: fn(f, { err1, err2 }) };
   };
-const alpha = "⍺";
-const omega = "⍵";
-const ualpha = "⍶";
-const uomega = "⍹";
+
 const df = metaEntry("dyadic function", (g) => alpha + g + omega);
 const mf = metaEntry("monadic function", (g) => g + omega);
 const dm = metaEntry("dyadic modifier", (g) => ualpha + g + uomega);
