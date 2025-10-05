@@ -19,7 +19,7 @@ I created it based on a few observations I made about APL and its family of lang
 
    A similar idea to this has been implemented in the language [Jelly](https://github.com/DennisMitchell/jellylanguage), though FIXAPL takes a pretty different approach.
 
-You can try FIXAPL in an online REPL at https://fixapl.netlify.app. There are a few examples in the ./examples directory.
+You can try FIXAPL in an online REPL at https://fixapl.netlify.app. There are a few examples in the [`examples`](./examples) directory.
 
 ## Syntax
 
