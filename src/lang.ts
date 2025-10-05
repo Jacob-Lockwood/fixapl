@@ -635,12 +635,17 @@ export class Visitor {
         return 0;
       }
       const arity = getArity(node.def);
-      if (arity === 0) {
-        this.scopes.unshift(newScope());
-        const e = await execnilad(await this.visit(node.def));
-        this.scopes.shift();
-        return e;
-      }
+      if (arity === 0)
+        return F(
+          0,
+          async () => {
+            this.scopes.unshift(newScope());
+            const e = await execnilad(await this.visit(node.def));
+            this.scopes.shift();
+            return e;
+          },
+          "{nilad}",
+        );
       return F(
         arity,
         async (...v) => {
