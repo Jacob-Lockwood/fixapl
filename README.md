@@ -65,25 +65,25 @@ comparing values. characters are greater than numbers. comparing functions or na
 ### monadic pervasive functions
 
 **`¬ not` (alias `not`)**:  
-returns 1-⍵. errors on non-numeric arguments.
+returns `1-⍵`. errors on non-numeric arguments.
 
 **`¯ negate` (alias `ng` or `` ` ``)**:  
-returns 0-⍵ for numeric arguments, swaps case for character arguments.
+returns `0-⍵` for numeric arguments, swaps case for character arguments.
 
 **`± sign` (alias `sig`)**:  
-returns the sign of ⍵ for numeric arguments, for character arguments it returns 1 for uppercase, -1 for lowercase, 0 otherwise.
+returns the sign of `⍵` for numeric arguments, for character arguments it returns 1 for uppercase, -1 for lowercase, 0 otherwise.
 
 **`⌵ absolute value` (alias `abs`)**:  
-returns the absolute value of ⍵ for numeric arguments, returns uppercased version for character arguments.
+returns the absolute value of `⍵` for numeric arguments, returns uppercased version for character arguments.
 
 **`√ square root` (alias `sqr`)**:  
-returns the square root of ⍵, erroring on non-numeric arguments.
+returns the square root of `⍵`, erroring on non-numeric arguments.
 
 **`⌊ floor` (alias `flo`), `⁅ round` (alias `rou`), `⌈ ceiling` (alias `cei`)**:  
 rounding down, up, or to the nearest integer, erroring on non-numeric arguments.
 
 **`? roll` (alias `rol`)**:  
-returns a random integer from \[0,⍵\] for ⍵>0, returns a random float from \[0,1) for ⍵=0, errors for negative or non-integer input.
+returns a random integer from `[0,⍵]` for `⍵>0`, returns a random float from `[0,1)` for `⍵=0`, errors for negative or non-integer input.
 
 ### dyadic pervasive functions
 
@@ -94,7 +94,7 @@ self-explanatory for numbers. a character can be added to a number, a number can
 returns the remainder after dividing `⍵` by `⍺`.
 
 **`* power` (alias `pow`), `⍟ logarithm` (alias `log`)**:  
-`⍺*⍵` is ⍺<sup>⍵</sup>, `⍺⍟⍵` is log<sub>⍺</sub> ⍵.
+`⍺*⍵` is `⍺`<sup>`⍵`</sup>, `⍺⍟⍵` is log<sub>`⍺`</sub> `⍵`.
 
 **`↥ maximum` (alias `max`), `↧ minimum` (alias `min`)**:  
 return the greater or lesser of two values.
