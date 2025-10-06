@@ -203,8 +203,3 @@ export type Num = Extract<Val, { kind: "number" }>;
 export type Fun = Extract<Val, { kind: "function" }>;
 
 export const prod = (x: number[]) => x.reduce((v, w) => v * w, 1);
-
-export const alpha = "⍺";
-export const omega = "⍵";
-export const ualpha = "⍶";
-export const uomega = "⍹";
