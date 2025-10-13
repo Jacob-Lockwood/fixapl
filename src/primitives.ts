@@ -299,7 +299,7 @@ export const min = df("↧", "minimum", () =>
 // export const dcd = df("⊥", "decode", (err) => async (x, y) => {});
 
 export const rev = mf("⋈", "reverse", () => async (y) => {
-  return y.kind === "array" ? A(y.shape, [...y.data].reverse()) : y;
+  return y.kind === "array" ? fromCells(cells(y).data.reverse()) : y;
 });
 export const tra = mf("⍉", "transpose", () => async (y) => {
   if (y.kind !== "array" || y.shape.length === 0) return y;
