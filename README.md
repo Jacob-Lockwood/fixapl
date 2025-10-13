@@ -44,7 +44,7 @@ The arity of the resulting function is the greatest number of inputs required by
 
 Functions can be passed to functions by using the `₀ subject` monadic modifier. The function which is modified enters the syntax position of a value. A function in the value position can be moved back to the function position with `₁ monad` or `₂ dyad`.
 
-Each line can either have an expression or a binding. A binding is a line of the form `Identifier ← Expr`, where everything after the arrow is parsed as one expression. Identifiers begin with an uppercase letter and afterwards can contain any latin letters or digits. The identifier can later be referenced to get its value or function. This can be used to define recursive functions by writing `←₁` or `←₂` (the subscripts format from `1` or `2`) to declare the function as monadic or dyadic. Bindings are global.
+Each line can either have an expression or a binding. A binding is a line of the form `Identifier ← Expr`, where everything after the arrow is parsed as one expression. Identifiers begin with an uppercase letter and afterwards can contain any latin letters or digits. The identifier can later be referenced to get its value or function. Bindings can be used to define recursive functions by writing `←₁` or `←₂` (the subscripts format from `1` or `2`) to declare the function as monadic or dyadic. Bindings are global.
 
 There are also local variables, which take the form `Var↤` which is parsed as a monadic function which takes a value and assigns it to `Var`. These variables are always in the value syntax position, not the function position. Assigning a variable defines it in the current scope (bindings and dfns introduce scopes). The scope can be accessed as a value with `§` for the current scope, `§1` for the enclosing scope, `§2` for the next one, etc. with `§∞` always giving the global scope. Variables in a scope can be accessed with `Scope.Var` (which can also be the right-side of an assignment).
 
@@ -56,48 +56,77 @@ Line comments begin with `⍝`. Identifiers starting with `⎕` are I/O function
 
 ### pervasive comparison funtions
 
-**`= equal` (alias `eq`), `≠ not equal` (alias `ne`)**:  
+**`= equal`, `≠ not equal`**:  
 checking equality/inequality of values. functions always count as inequal.
 
-**`> greater than` (alias `grt`), `greater or equal` (alias `gte`), `< less than` (alias `lt`), `≤ less or equal` (alias `lte`)**:  
+**`> greater than`, `greater or equal`, `< less than`, `≤ less or equal`**:  
 comparing values. characters are greater than numbers. comparing functions or namespaces raise errors.
 
 ### monadic pervasive functions
 
-**`¬ not` (alias `not`)**:  
+**`¬ not`**:  
 returns `1-⍵`. errors on non-numeric arguments.
 
-**`¯ negate` (alias `ng` or `` ` ``)**:  
+**`¯ negate`**:  
 returns `0-⍵` for numeric arguments, swaps case for character arguments.
 
-**`± sign` (alias `sig`)**:  
+**`± sign`**:  
 returns the sign of `⍵` for numeric arguments, for character arguments it returns 1 for uppercase, -1 for lowercase, 0 otherwise.
 
-**`⌵ absolute value` (alias `abs`)**:  
+**`⌵ absolute value`**:  
 returns the absolute value of `⍵` for numeric arguments, returns uppercased version for character arguments.
 
-**`√ square root` (alias `sqr`)**:  
+**`√ square root`**:  
 returns the square root of `⍵`, erroring on non-numeric arguments.
 
-**`⌊ floor` (alias `flo`), `⁅ round` (alias `rou`), `⌈ ceiling` (alias `cei`)**:  
+**`⌊ floor`, `⁅ round`, `⌈ ceiling`**:  
 rounding down, up, or to the nearest integer, erroring on non-numeric arguments.
 
-**`? roll` (alias `rol`)**:  
+**`? roll`**:  
 returns a random integer from `[0,⍵]` for `⍵>0`, returns a random float from `[0,1)` for `⍵=0`, errors for negative or non-integer input.
 
 ### dyadic pervasive functions
 
-**`+ add`, `- subtract` (alias `sub`), `× multiply` (alias `mul`), `÷ divide` (alias `div`)**:  
+**`+ add`, `- subtract`, `× multiply`, `÷ divide`**:  
 self-explanatory for numbers. a character can be added to a number, a number can be subtracted from a character, a character can be subtracted from a character.
 
-**`| modulo` (alias `mod`)**:  
+**`| modulo`**:  
 returns the remainder after dividing `⍵` by `⍺`.
 
-**`* power` (alias `pow`), `⍟ logarithm` (alias `log`)**:  
+**`* power`, `⍟ logarithm`**:  
 `⍺*⍵` is `⍺`<sup>`⍵`</sup>, `⍺⍟⍵` is log<sub>`⍺`</sub> `⍵`.
 
-**`↥ maximum` (alias `max`), `↧ minimum` (alias `min`)**:  
+**`↥ maximum`, `↧ minimum`**:  
 return the greater or lesser of two values.
+
+### monadic array functions
+
+**`⋈ reverse`**:  
+reverse the cells of an array.
+
+**`⍉ transpose`**:  
+rotate the axes of an array, moving the first axis to the end.
+
+**`⍳ index generator`**:  
+if `⍵` is a nonnegative integer, gives a list of integers from zero up to `⍵-1`. if `⍵` is a list of nonnegative integers, returns an array of shape `⍵` where each element is a list corresponding to its multidimensional index.
+
+**`⧻ length`**:  
+if `⍵` is an array of rank > 0, returns the length of its first axis, otherwise returns 1.
+
+**`△ shape`**:  
+if `⍵` is an array, returns its shape, otherwise returns `⟨⟩`.
+
+**`▽ flat`**:  
+if `⍵` is an array, returns a list of all its elements, otherwise returns `⍵` enclosed in a list.
+
+**`□ enclose`**:  
+returns `⍵` enclosed in a rank zero array.
+
+**`⋄ enlist`**:  
+returns `⍵` enclosed in a list.
+
+**`⊡ merge`**:  
+if `⍵` is an array, returns an array of its elements which must all have the same shape
 
 ### I/O functions
 
