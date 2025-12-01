@@ -257,7 +257,7 @@ export const mod = df("|", "modulo", (err) =>
   pervasive(async (x, y) => {
     if (x.kind !== "number" || y.kind !== "number")
       throw err(`${alpha} and ${omega} must be numbers`);
-    return N(y.data >= 0 ? y.data % x.data : x.data + (y.data % x.data));
+    return N((x.data + (y.data % x.data)) % x.data);
   }),
 );
 export const pow = df("*", "power", (err) =>
