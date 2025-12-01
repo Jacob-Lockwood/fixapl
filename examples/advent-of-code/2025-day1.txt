@@ -1,0 +1,5 @@
+Lines ← '\n'(¬⊸-×+\)⟜=⊸⊔
+Parse ← ((⍎1↓)×¬⊸-'L'=0⊃)¨ Lines
+Sum   ← +/0=100|+\50⍪
+P1    ← Sum Parse
+P2    ← Sum (⌵⌿±) Parse
