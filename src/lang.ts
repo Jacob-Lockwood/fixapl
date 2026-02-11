@@ -422,8 +422,8 @@ export class Visitor {
           (t) => !"whitespace,comment".includes(t.kind),
         );
         const p = new Parser(toks);
-        const e = p.expression()!;
-        if (p.tok()) throw "y must contain a single expression";
+        const e = p.expression();
+        if (!e || p.tok()) throw "y must contain a single expression";
         return this.visit(e);
       } catch (e) {
         throw err(e instanceof Error ? e.message : e + "");
