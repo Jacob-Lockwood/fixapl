@@ -409,7 +409,7 @@ export class Visitor {
   private exec = F(
     1,
     recur(async (exec, y) => {
-      const err = (m: string) => new Error(`${glyphs.exc}y: ${m}`);
+      const err = (m: string) => new Error(`${glyphs.exc.glyph}y: ${m}`);
       if (!isString(y)) {
         if (y.kind !== "array")
           throw err("y must be a string or array of strings");
