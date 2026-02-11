@@ -1,4 +1,4 @@
-import { createSignal, For, Show, Component } from "solid-js";
+import { createSignal, For, Show, Component, createEffect } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import ReplWorker from "./worker?worker";
 import { MessageIn, MessageOut } from "./worker";
@@ -108,7 +108,7 @@ export function Repl() {
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
-  const [clearPrompt, setClearPrompt] = setting("clearPrompt", "true");
+  const [enterBehavior, setEnterBehavior] = setting("on-enter", "clear-prompt");
   const [displayTimes, setDisplayTimes] = setting("displayTimes", "false");
   const [autoImg, setAutoImg] = setting("autoImg", "false");
   const [pretty, setPretty] = setting("pretty", "true");
@@ -173,7 +173,7 @@ export function Repl() {
       msg(["text", ctx.getImageData(0, 0, width, d.fontSize)]);
     }
   };
-  const process = async (source: string) => {
+  const process = async (source: string, tkns?: (t: Token[]) => void) => {
     setDisableEntry(true);
     // data is re-assigned so each entry gets its own store
     // eslint-disable-next-line solid/reactivity
@@ -193,6 +193,10 @@ export function Repl() {
       source,
       { autoImg: autoImg() === "true", pretty: pretty() === "true" },
     ]);
+    createEffect((n: number) => {
+      if (data.tokens && n === 1) tkns?.(data.tokens);
+      return n + 1;
+    }, 0);
   };
   let initial = `"Hello, world!"`;
   const runParam = new URLSearchParams(window.location.search).get("run");
@@ -241,14 +245,32 @@ export function Repl() {
           >
             <p class="mb-1 text-sm italic">Settings</p>
             <div class="grid grid-cols-2 place-items-start items-center gap-2">
-              <label for="clear">Clear prompt on enter</label>
-              <input
+              <label for="on-enter">On enter:</label>
+              {/* <input
                 type="checkbox"
                 name="clearprompt"
                 id="clearprompt"
                 checked={clearPrompt() === "true"}
                 onInput={(e) => setClearPrompt(e.target.checked + "")}
-              />
+              /> */}
+              <select
+                id="on-enter"
+                name="On enter"
+                onInput={(e) => setEnterBehavior(e.target.value)}
+              >
+                <option
+                  value="clear-prompt"
+                  selected={enterBehavior() === "clear-prompt"}
+                >
+                  Clear prompt
+                </option>
+                <option
+                  value="format-prompt"
+                  selected={enterBehavior() === "format-prompt"}
+                >
+                  Format prompt
+                </option>
+              </select>
               <label for="displaytimes">Display times</label>
               <input
                 type="checkbox"
@@ -428,8 +450,14 @@ export function Repl() {
               if (ev.key === "Enter" && !ev.shiftKey) {
                 ev.preventDefault();
                 if (!disableEntry()) {
-                  process(textarea.value);
-                  if (clearPrompt() === "true") {
+                  if (enterBehavior() === "format-prompt") {
+                    process(textarea.value, (t) => {
+                      console.log("process callback", t);
+                      textarea.parentElement!.dataset.value = textarea.value =
+                        t.map((z) => z.image).join("") ?? r.source;
+                    });
+                  } else {
+                    process(textarea.value);
                     textarea.parentElement!.dataset.value = textarea.value = "";
                   }
                 }
