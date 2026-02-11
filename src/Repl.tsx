@@ -193,10 +193,7 @@ export function Repl() {
       source,
       { autoImg: autoImg() === "true", pretty: pretty() === "true" },
     ]);
-    createEffect((n: number) => {
-      if (data.tokens && n === 1) tkns?.(data.tokens);
-      return n + 1;
-    }, 0);
+    if (tkns) createEffect(() => data.tokens && tkns(data.tokens));
   };
   let initial = `"Hello, world!"`;
   const runParam = new URLSearchParams(window.location.search).get("run");
