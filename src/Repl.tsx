@@ -329,7 +329,7 @@ export function Repl() {
                         </span>
                       ) : (
                         <button
-                          class="hidden cursor-pointer group-hover:inline"
+                          class="cursor inline cursor-pointer group-hover:inline [@media(hover:hover)]:hidden"
                           title="copy link to this entry"
                           onClick={(ev) => {
                             const by = new TextEncoder().encode(result.source);
