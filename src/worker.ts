@@ -50,6 +50,7 @@ onmessage = async ({
     const p = new Parser(t).program();
     for (const n of p) {
       const v = await execnilad(await visitor.visit(n));
+      if (n.kind === "binding") continue;
       const img = settings.autoImg && vToImg(v);
       if (img && bigEnough(v as Arr<Num>)) msg(["image", img]);
       else {
