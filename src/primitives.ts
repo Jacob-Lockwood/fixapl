@@ -119,6 +119,7 @@ const metaEntry =
     return { kind, glyph, name, def: fn(f, { err1, err2 }) };
   };
 
+// these can't be imported from ./glyphs
 const alpha = "⍺";
 const omega = "⍵";
 const ualpha = "⍶";
