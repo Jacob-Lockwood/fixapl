@@ -840,7 +840,7 @@ export const rnk = dm("⍤", "rank", (err) => async (X, Y) => {
     return v.data;
   });
   return F(X.arity, async (...xs: Val[]) => {
-    const cs = xs.map((y, i) => cells(y, r[i] ?? r[0]));
+    const cs = xs.map((y, i) => y && cells(y, r[i] ?? r[0]));
     return mer.def(await each(X.data, ...cs));
   });
 });
