@@ -17,7 +17,7 @@ import {
   Fun,
   nilad,
 } from "./util";
-import { glyphs, PrimitiveKind, prims, subscripts } from "./glyphs";
+import { glyphs, PrimitiveKind, prims, subscripts, omega } from "./glyphs";
 import quads from "./quads";
 function primitiveByGlyph(s: string) {
   return Object.values(prims).find((v) => v.glyph === s)!.def;
@@ -409,10 +409,10 @@ export class Visitor {
   private exec = F(
     1,
     recur(async (exec, y) => {
-      const err = (m: string) => new Error(`${glyphs.exc.glyph}y: ${m}`);
+      const err = (m: string) => new Error(`${glyphs.exc.glyph}${omega}: ${m}`);
       if (!isString(y)) {
         if (y.kind !== "array")
-          throw err("y must be a string or array of strings");
+          throw err(`${omega} must be a string or array of strings`);
         const v = y.data.every((v) => v.kind === "character") ? cells(y, 1) : y;
         return each(exec, v);
       }
@@ -423,7 +423,7 @@ export class Visitor {
         );
         const p = new Parser(toks);
         const e = p.expression();
-        if (!e || p.tok()) throw "y must contain a single expression";
+        if (!e || p.tok()) throw `${omega} must contain a single expression`;
         return this.visit(e);
       } catch (e) {
         throw err(e instanceof Error ? e.message : e + "");

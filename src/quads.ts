@@ -1,9 +1,6 @@
-import { quad } from "./glyphs";
+import { quad, alpha, omega } from "./glyphs";
 import { ReplContext } from "./lang";
 import { A, Arr, C, F, isString, list, N, Num, Val, vToImg } from "./util";
-
-const alpha = "⍺";
-const omega = "⍵";
 
 // export const quadsList = new Map<string, number>();
 // ?! WHY DOESN'T IT JUST WORK ARGHH
