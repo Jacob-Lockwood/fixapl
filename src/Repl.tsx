@@ -1,4 +1,12 @@
-import { createSignal, For, Show, Component, createEffect } from "solid-js";
+import {
+  createSignal,
+  createEffect,
+  For,
+  Show,
+  Component,
+  ParentComponent,
+  JSX,
+} from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import ReplWorker from "./worker?worker";
 import { MessageIn, MessageOut } from "./worker";
@@ -117,6 +125,20 @@ export function Repl() {
     "defaultFont",
     "TinyAPL386 Unicode",
   );
+
+  const DocEntry: ParentComponent<{ keyword: string; summary: JSX.Element }> = (
+    props,
+  ) => {
+    return (
+      <details open={search() !== "" && props.keyword.includes(search())}>
+        <summary class="text-lg">
+          <h3 class="inline">{props.summary}</h3>
+        </summary>
+        {props.children}
+      </details>
+    );
+  };
+
   const [bindings, setBindings] = createSignal(new Map<string, number>());
   const [disableEntry, setDisableEntry] = createSignal(false);
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
@@ -550,7 +572,38 @@ export function Repl() {
           onInput={(e) => setSearch(e.target.value)}
           value={search()}
         />
-        {search() && <p>docs for {search()} (not here yet!)</p>}
+        <ul>
+          <DocEntry
+            keyword="= equal ≠ ne not equal "
+            summary={<>pervasive comparison functions</>}
+          >
+            <p>
+              characters are compared by their codepoints. characters are always
+              greater than numbers.
+            </p>
+          </DocEntry>
+          <DocEntry
+            keyword="+ add - subtract × multiply ÷ divide | modulo * power ⍟ logarithm"
+            summary={<>arithmetic functions</>}
+          >
+            <p>
+              <code>| modulo</code> takes the divisor on the left rather than
+              the right.
+            </p>
+          </DocEntry>
+          <DocEntry
+            keyword="⋈ reverse ⌽ rotate"
+            summary={<>reverse & rotate</>}
+          >
+            <p>
+              <code>⋈ reverse</code> the cells of <code>⍵</code>
+            </p>
+            <p>
+              <code>⌽ rotate</code> the cells of <code>⍵</code> to the left by{" "}
+              <code>⍺</code> positions
+            </p>
+          </DocEntry>
+        </ul>
       </div>
     </div>
   );

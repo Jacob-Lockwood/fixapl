@@ -62,6 +62,9 @@ checking equality/inequality of values. functions always count as inequal.
 **`> greater than`, `greater or equal`, `< less than`, `≤ less or equal`**:  
 comparing values. characters are greater than numbers. comparing functions or namespaces raise errors.
 
+**`↥ maximum`, `↧ minimum`**:  
+return the greater or lesser of two values.
+
 ### monadic pervasive functions
 
 **`¬ not`**:  
@@ -95,9 +98,6 @@ returns the remainder after dividing `⍵` by `⍺`.
 
 **`* power`, `⍟ logarithm`**:  
 `⍺*⍵` is `⍺`<sup>`⍵`</sup>, `⍺⍟⍵` is log<sub>`⍺`</sub> `⍵`.
-
-**`↥ maximum`, `↧ minimum`**:  
-return the greater or lesser of two values.
 
 ### monadic array functions
 
