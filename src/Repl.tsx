@@ -105,6 +105,7 @@ function timeString(t: number) {
 export function Repl() {
   const [results, setResults] = createSignal<ReplEntry[]>([]);
   const [settingsOpen, setSettingsOpen] = createSignal(false);
+  const [search, setSearch] = createSignal("");
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
@@ -502,7 +503,8 @@ export function Repl() {
             <button
               class="block cursor-pointer rounded-t-lg select-none focus:outline-0"
               classList={{ "bg-emerald-900": selectedGlyph() === i() }}
-              onClick={() => {
+              onClick={(e) => {
+                if (e.shiftKey) return setSearch(data.glyph);
                 textarea.focus();
                 textarea.setRangeText(data.glyph);
                 textarea.selectionStart += data.glyph.length;
@@ -530,9 +532,26 @@ export function Repl() {
         </For>
       </div>
       <p class="mx-auto my-4 max-w-80 text-center text-sm text-green-500 selection:!bg-black/30">
-        Hover over a glyph to see its name and alias. Click on it to enter the
-        glyph.
+        Hover over a glyph to see its name and alias. <br /> Click on it to
+        enter the glyph. <br /> Shift click to open its documentation.
       </p>
+      <div>
+        <p class="my-10 text-amber-400/80">
+          the documentation is under construction! for now, check the{" "}
+          <a href="https://github.com/Jacob-Lockwood/fixapl" class="underline">
+            github readme.md
+          </a>
+        </p>
+        <input
+          type="text"
+          name="Search"
+          placeholder="Search documentation by name, glyph, or alias"
+          class="w-full rounded-xl bg-black/20 p-2"
+          onInput={(e) => setSearch(e.target.value)}
+          value={search()}
+        />
+        {search() && <p>docs for {search()} (not here yet!)</p>}
+      </div>
     </div>
   );
 }
