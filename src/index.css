@@ -40,7 +40,7 @@ body {
   src: url("/APL333.ttf") format("truetype");
 }
 @theme {
-  --font-sans: APL333, "TinyAPL386 Unicode", sans-serif;
+  --font-sans: APL333, "TinyAPL386 Unicode", Uiua386, sans-serif;
   --font-mono: "TinyAPL386 Unicode", Uiua386, monospace;
   --color-emerald-1000: oklch(22% 0.051 172.552);
 }
