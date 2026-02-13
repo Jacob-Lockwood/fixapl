@@ -21,6 +21,7 @@ export const prims = Object.fromEntries(
 export type PrimitiveKind = `${"mon" | "dy"}adic ${"function" | "modifier"}`;
 
 type GlyphKind = PrimitiveKind | "syntax" | "constant";
+export type Glyph = { glyph: string; name: string; kind: GlyphKind };
 export const glyphs = {
   ...prims,
   "(": { name: "open parenthesis", glyph: "(", kind: "syntax" },
@@ -41,7 +42,4 @@ export const glyphs = {
   "&": { name: "quad", glyph: quad, kind: "syntax" },
   "%": { name: "scope", glyph: "§", kind: "syntax" },
   ".": { name: "namespace access", glyph: ".", kind: "syntax" },
-} as const satisfies Record<
-  string,
-  { glyph: string; name: string; kind: GlyphKind }
->;
+} as const satisfies Record<string, Glyph>;

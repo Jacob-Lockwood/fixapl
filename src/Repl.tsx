@@ -4,87 +4,14 @@ import {
   For,
   Show,
   Component,
-  ParentComponent,
-  JSX,
+  onMount,
 } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import ReplWorker from "./worker?worker";
 import { MessageIn, MessageOut } from "./worker";
 import { Token } from "./lang";
-import { glyphs, quad } from "./glyphs";
-import { quadsList } from "./quads";
-
-const glyphColors = {
-  "monadic function": "text-lime-400",
-  "dyadic function": "text-sky-400",
-  "monadic modifier": "text-yellow-400",
-  "dyadic modifier": "text-purple-300",
-  syntax: "text-gray-300",
-  constant: "text-orange-400",
-};
-const special = new Map([
-  [
-    "transpose",
-    "background-clip: text; color: transparent; background-image: linear-gradient(180deg, #5BCEFA 34%, #F5A9B8 34%, #F5A9B8 45%, #FFFFFF 45%, #FFFFFF 56%, #F5A9B8 56%, #F5A9B8 67%, #5BCEFA 67%)",
-  ],
-  ["left dfn argument", "color: var(--color-red-400)"],
-  ["right dfn argument", "color: var(--color-red-400)"],
-]);
-export const Highlight: Component<{
-  tokens: readonly Token[];
-  bindings: Map<string, number>;
-}> = (props) => {
-  return (
-    <For each={props.tokens}>
-      {({ kind, image }) => {
-        switch (kind) {
-          case "monadic function":
-          case "dyadic function":
-          case "monadic modifier":
-          case "dyadic modifier":
-          case "constant":
-            const color = glyphColors[kind];
-            const { name } = Object.values(glyphs).find(
-              (d) => d.glyph === image,
-            )!;
-            return (
-              <span title={name} class={color} style={special.get(name)}>
-                {image}
-              </span>
-            );
-          case "quad":
-          case "identifier":
-            const arity = () =>
-              kind === "quad"
-                ? quadsList.get(image.slice(1))!
-                : props.bindings?.get(image);
-            const cl = [
-              "text-white",
-              glyphColors["monadic function"],
-              glyphColors["dyadic function"],
-            ];
-            return (
-              <span class={`identifier ${cl[arity() ?? 0]}`} data-name={image}>
-                {image}
-              </span>
-            );
-          case "string":
-          case "character":
-            return <span class="text-teal-300">{image}</span>;
-          case "number":
-            return <span class="text-orange-400">{image}</span>;
-          case "comment":
-            return <span class="text-stone-400 italic">{image}</span>;
-          case "left dfn argument":
-          case "right dfn argument":
-            return <span class="text-red-400">{image}</span>;
-          default:
-            return <span class={glyphColors.syntax}>{image}</span>;
-        }
-      }}
-    </For>
-  );
-};
+import { Glyph, glyphs, quad } from "./glyphs";
+import { Highlight, glyphColors, special } from "./Highlight";
 
 type ReplEntry = {
   source: string;
@@ -110,10 +37,14 @@ function timeString(t: number) {
   if (t > 1000) return (t / 1000).toFixed(3) + "s";
   return t + "ms";
 }
-export function Repl() {
+
+export type ReplRef = { process: (source: string) => void };
+export const Repl: Component<{
+  ref?: (r: ReplRef) => void;
+  openDocs?: (glyph: Glyph) => void;
+}> = (props) => {
   const [results, setResults] = createSignal<ReplEntry[]>([]);
   const [settingsOpen, setSettingsOpen] = createSignal(false);
-  const [search, setSearch] = createSignal("");
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
@@ -125,20 +56,6 @@ export function Repl() {
     "defaultFont",
     "TinyAPL386 Unicode",
   );
-
-  const DocEntry: ParentComponent<{ keyword: string; summary: JSX.Element }> = (
-    props,
-  ) => {
-    return (
-      <details open={search() !== "" && props.keyword.includes(search())}>
-        <summary class="text-lg">
-          <h3 class="inline">{props.summary}</h3>
-        </summary>
-        {props.children}
-      </details>
-    );
-  };
-
   const [bindings, setBindings] = createSignal(new Map<string, number>());
   const [disableEntry, setDisableEntry] = createSignal(false);
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
@@ -196,7 +113,7 @@ export function Repl() {
       msg(["text", ctx.getImageData(0, 0, width, d.fontSize)]);
     }
   };
-  const process = async (source: string, tkns?: (t: Token[]) => void) => {
+  const process = (source: string, tkns?: (t: Token[]) => void) => {
     setDisableEntry(true);
     // data is re-assigned so each entry gets its own store
     // eslint-disable-next-line solid/reactivity
@@ -226,6 +143,7 @@ export function Repl() {
     initial = new TextDecoder().decode(u);
   }
   process(initial);
+  onMount(() => props.ref?.({ process }));
   let textarea!: HTMLTextAreaElement;
   let inp!: HTMLTextAreaElement;
   return (
@@ -265,14 +183,7 @@ export function Repl() {
           >
             <p class="mb-1 text-sm italic">Settings</p>
             <div class="grid grid-cols-2 place-items-start items-center gap-2">
-              <label for="on-enter">On enter:</label>
-              {/* <input
-                type="checkbox"
-                name="clearprompt"
-                id="clearprompt"
-                checked={clearPrompt() === "true"}
-                onInput={(e) => setClearPrompt(e.target.checked + "")}
-              /> */}
+              <label for="on-enter">On enter</label>
               <select
                 id="on-enter"
                 name="On enter"
@@ -526,7 +437,7 @@ export function Repl() {
               class="block cursor-pointer rounded-t-lg select-none focus:outline-0"
               classList={{ "bg-emerald-900": selectedGlyph() === i() }}
               onClick={(e) => {
-                if (e.shiftKey) return setSearch(data.glyph);
+                if (e.shiftKey) return props.openDocs?.(data);
                 textarea.focus();
                 textarea.setRangeText(data.glyph);
                 textarea.selectionStart += data.glyph.length;
@@ -557,54 +468,6 @@ export function Repl() {
         Hover over a glyph to see its name and alias. <br /> Click on it to
         enter the glyph. <br /> Shift click to open its documentation.
       </p>
-      <div>
-        <p class="my-10 text-amber-400/80">
-          the documentation is under construction! for now, check the{" "}
-          <a href="https://github.com/Jacob-Lockwood/fixapl" class="underline">
-            github readme.md
-          </a>
-        </p>
-        <input
-          type="text"
-          name="Search"
-          placeholder="Search documentation by name, glyph, or alias"
-          class="w-full rounded-xl bg-black/20 p-2"
-          onInput={(e) => setSearch(e.target.value)}
-          value={search()}
-        />
-        <ul>
-          <DocEntry
-            keyword="= equal ≠ ne not equal "
-            summary={<>pervasive comparison functions</>}
-          >
-            <p>
-              characters are compared by their codepoints. characters are always
-              greater than numbers.
-            </p>
-          </DocEntry>
-          <DocEntry
-            keyword="+ add - subtract × multiply ÷ divide | modulo * power ⍟ logarithm"
-            summary={<>arithmetic functions</>}
-          >
-            <p>
-              <code>| modulo</code> takes the divisor on the left rather than
-              the right.
-            </p>
-          </DocEntry>
-          <DocEntry
-            keyword="⋈ reverse ⌽ rotate"
-            summary={<>reverse & rotate</>}
-          >
-            <p>
-              <code>⋈ reverse</code> the cells of <code>⍵</code>
-            </p>
-            <p>
-              <code>⌽ rotate</code> the cells of <code>⍵</code> to the left by{" "}
-              <code>⍺</code> positions
-            </p>
-          </DocEntry>
-        </ul>
-      </div>
     </div>
   );
-}
+};

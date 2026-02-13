@@ -1,13 +1,36 @@
-import { ParentComponent } from "solid-js";
-import { Repl } from "./Repl";
+import { createSignal, JSX, ParentComponent } from "solid-js";
+import { Repl, ReplRef } from "./Repl";
 
 const Kbd: ParentComponent = (props) => (
   <kbd class="rounded-sm border-b-4 border-green-700 bg-green-900 px-1">
     {props.children}
   </kbd>
 );
+const mandelbrot = `
+Sq  ← ⊡-/⟜×⍨⍮2××/
+Pl  ← ⍉⍉ 2×⍪˜⟜(-0.25)⊞⍨ ⍳⊸÷-0.5
+Gen ← 2<√+/×⍨ ⊣(P+Sq)↺P↤Pl
+⎕Img 25 Gen 150
+`.trim();
+const sierpinski = `
+⎕Img 7(⍪⍨◡⍪0⍪⟜×◡˜)↺⋄1
+`.trim();
 
 export default function App() {
+  const [search, setSearch] = createSignal("");
+  const DocEntry: ParentComponent<{ keyword: string; summary: JSX.Element }> = (
+    props,
+  ) => {
+    return (
+      <details open={search() !== "" && props.keyword.includes(search())}>
+        <summary class="text-lg">
+          <h3 class="inline">{props.summary}</h3>
+        </summary>
+        {props.children}
+      </details>
+    );
+  };
+  let repl!: ReplRef;
   return (
     <div class="bg-emerald-1000/70 mx-auto flex min-h-screen flex-col p-5 text-emerald-300 selection:bg-green-800 sm:p-10 md:w-3/4 lg:py-20">
       <div class="lg:flex">
@@ -159,9 +182,83 @@ export default function App() {
               textbox.
             </p>
           </details>
+          <details class="mt-5">
+            <summary class="text-emerald-500 underline underline-offset-2">
+              Examples
+            </summary>
+            <ul>
+              <li>
+                <button
+                  class="cursor-pointer font-bold underline"
+                  onClick={() => repl.process(mandelbrot)}
+                >
+                  Draw Mandelbrot Set
+                </button>
+              </li>
+              <li>
+                <button
+                  class="cursor-pointer font-bold underline"
+                  onClick={() => repl.process(sierpinski)}
+                >
+                  Draw Sierpinski Triangle
+                </button>
+              </li>
+            </ul>
+          </details>
+          <details class="mt-5">
+            <summary class="text-amber-400/80">
+              documentation - under construction! for now, check the{" "}
+              <a
+                href="https://github.com/Jacob-Lockwood/fixapl"
+                class="underline"
+              >
+                github readme.md
+              </a>
+            </summary>
+            <input
+              type="text"
+              name="Search"
+              placeholder="Search documentation by name, glyph, or alias"
+              class="w-full rounded-xl bg-black/20 p-2"
+              onInput={(e) => setSearch(e.target.value)}
+              value={search()}
+            />
+            <ul>
+              <DocEntry
+                keyword="= equal ≠ ne not equal "
+                summary={<>pervasive comparison functions</>}
+              >
+                <p>
+                  characters are compared by their codepoints. characters are
+                  always greater than numbers.
+                </p>
+              </DocEntry>
+              <DocEntry
+                keyword="+ add - subtract × multiply ÷ divide | modulo * power ⍟ logarithm"
+                summary={<>arithmetic functions</>}
+              >
+                <p>
+                  <code>| modulo</code> takes the divisor on the left rather
+                  than the right.
+                </p>
+              </DocEntry>
+              <DocEntry
+                keyword="⋈ reverse ⌽ rotate"
+                summary={<>reverse & rotate</>}
+              >
+                <p>
+                  <code>⋈ reverse</code> the cells of <code>⍵</code>
+                </p>
+                <p>
+                  <code>⌽ rotate</code> the cells of <code>⍵</code> to the left
+                  by <code>⍺</code> positions
+                </p>
+              </DocEntry>
+            </ul>
+          </details>
         </div>
         <main class="mx-auto max-w-[80ch] lg:w-3/5 lg:pl-10">
-          <Repl />
+          <Repl ref={(r) => (repl = r)} openDocs={(g) => setSearch(g.glyph)} />
         </main>
       </div>
       <footer class="mx-auto mt-60 flex max-w-prose flex-col gap-2 text-center text-sm text-emerald-500">
