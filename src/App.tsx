@@ -174,12 +174,38 @@ export default function App() {
               How to use this page
             </summary>
             <p class="mt-1 text-emerald-300">
-              Click in the REPL textarea to write statements, and press{" "}
-              <Kbd>Enter</Kbd> to process them. Glyphs can be entered by typing
-              in the appropriate alias given in the documentation. Use{" "}
-              <Kbd>Shift+Enter</Kbd> to enter a newline instead of entering the
-              code. Click on a previously inputted segment to paste it into the
-              textbox.
+              Click in the REPL prompt to write statements, and press{" "}
+              <Kbd>Enter</Kbd> to process them. Use <Kbd>Shift+Enter</Kbd> to
+              enter a newline instead of running the code.
+            </p>
+            <p class="mt-2 text-emerald-300">
+              The grid below the REPL contains every glyph used by the language.
+              Hover over a glyph to see its name, alias, and syntactic role. You
+              can enter a glyph by typing its alias, or by clicking it in the
+              grid. Clicking a glyph while holding <Kbd>Shift</Kbd> will open
+              its documentation.
+            </p>
+            <p class="mt-2 text-emerald-300">
+              Click on a previously inputted segment to paste it into the
+              textbox. Navigate through the REPL history with <Kbd>Alt+↑</Kbd>{" "}
+              and <Kbd>Alt+↓</Kbd>.
+            </p>
+            <p class="mt-2 text-emerald-300">
+              Manage the REPL settings with the{" "}
+              <span
+                class="material-symbols-outlined align-middle"
+                title="toggle settings menu"
+              >
+                settings
+              </span>{" "}
+              icon. Clear the REPL with the{" "}
+              <span
+                class="material-symbols-outlined align-middle"
+                title="clear repl"
+              >
+                backspace
+              </span>{" "}
+              icon.
             </p>
           </details>
           <details class="mt-5">
