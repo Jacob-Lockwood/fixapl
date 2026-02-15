@@ -7,7 +7,7 @@ const Kbd: ParentComponent = (props) => (
   </kbd>
 );
 const mandelbrot = `
-Sq  ← ⊡-/⟜×⍨⍮2××/
+Sq  ← ⊡-/⟜×⍨⊟2××/
 Pl  ← ⍉⍉ 2×⍪˜⟜(-0.25)⊞⍨ ⍳⊸÷-0.5
 Gen ← 2<√+/×⍨ ⊣(P+Sq)↺P↤Pl
 ⎕Img 25 Gen 150

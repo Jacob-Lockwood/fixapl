@@ -344,7 +344,9 @@ export const fla = mf("▽", "flat", () => async (y) => {
   return y.kind === "array" ? list(y.data) : list([y]);
 });
 export const enc = mf("□", "enclose", () => async (y) => A([], [y]));
-export const enl = mf("⋄", "enlist", () => async (y) => A([1], [y]));
+export const fix = mf("⋄", "fix", () => async (y) => {
+  return y.kind === "array" ? A([1, ...y.shape], y.data) : A([1], [y]);
+});
 export const mer = mf("⊡", "merge", (err) => async (y) => {
   if (y.kind !== "array" || y.data.length === 0) return y;
   const [sh, ...shs] = y.data.map(shape);
@@ -418,7 +420,10 @@ export const mat = df("≡", "match", () => async (x, y) => {
 export const nmt = df("≢", "nomatch", () => async (x, y) => {
   return N(vMatch(x, y) ? 0 : 1);
 });
-export const par = df("⍮", "pair", () => async (x, y) => list([x, y]));
+export const par = df("⊟", "pair", () => async (x, y) => list([x, y]));
+export const cou = df("⟠", "couple", () => async (x, y) => {
+  return mer.def(list([x, y]));
+});
 export const cat = df("⍪", "catenate", (err) =>
   recur(async (cat, x, y) => {
     if (x.kind === "array" && y.kind === "array") {
