@@ -30,6 +30,15 @@ export default function App() {
       </details>
     );
   };
+  const RunBtn: ParentComponent<{ code: string; class?: string }> = (props) => (
+    <a
+      onClick={() => repl.process(props.code)}
+      class={props.class}
+      href="#repl"
+    >
+      {props.children}
+    </a>
+  );
   let repl!: ReplRef;
   return (
     <div class="bg-emerald-1000/70 mx-auto flex min-h-screen flex-col p-5 text-emerald-300 selection:bg-green-800 sm:p-10 md:w-3/4 lg:py-20">
@@ -214,20 +223,20 @@ export default function App() {
             </summary>
             <ul>
               <li>
-                <button
+                <RunBtn
+                  code={mandelbrot}
                   class="cursor-pointer font-bold underline"
-                  onClick={() => repl.process(mandelbrot)}
                 >
                   Draw Mandelbrot Set
-                </button>
+                </RunBtn>
               </li>
               <li>
-                <button
+                <RunBtn
+                  code={sierpinski}
                   class="cursor-pointer font-bold underline"
-                  onClick={() => repl.process(sierpinski)}
                 >
                   Draw Sierpinski Triangle
-                </button>
+                </RunBtn>
               </li>
             </ul>
           </details>
