@@ -214,7 +214,15 @@ export default function App() {
               >
                 backspace
               </span>{" "}
-              icon.
+              icon. You can kill the REPL with the{" "}
+              <span
+                class="material-symbols-outlined align-middle"
+                title="kill repl"
+              >
+                cancel
+              </span>{" "}
+              icon, but be warned that doing so will erase any bindings you have
+              defined.
             </p>
           </details>
           <details class="mt-5">

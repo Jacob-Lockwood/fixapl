@@ -66,9 +66,9 @@ export const Repl: Component<{
       .map((n) => n * 255)
       .join(" ")} / ${c[3] ?? 1})`;
 
-  const worker = new ReplWorker();
+  let worker = new ReplWorker();
   const msg = (s: MessageIn) => worker.postMessage(s);
-  worker.onmessage = (ev: MessageEvent<MessageOut>) => {
+  const onmessage = (worker.onmessage = (ev: MessageEvent<MessageOut>) => {
     const [kind, d] = ev.data;
     if (kind === "tokens") {
       setData("tokens", d);
@@ -112,7 +112,7 @@ export const Repl: Component<{
       ctx.fillText(d.text, 0, d.fontSize - fontBoundingBoxDescent);
       msg(["text", ctx.getImageData(0, 0, width, d.fontSize)]);
     }
-  };
+  });
   const process = (source: string, tkns?: (t: Token[]) => void) => {
     setDisableEntry(true);
     // data is re-assigned so each entry gets its own store
@@ -151,6 +151,27 @@ export const Repl: Component<{
       <div class="flex flex-col rounded-md bg-black/20 p-4 pt-1">
         <div class="flex items-center gap-4">
           <h2 class="mr-auto">REPL</h2>
+          <button
+            class="cursor-pointer text-2xl hover:text-red-500"
+            title="Kill REPL"
+            onClick={() => {
+              const msg =
+                "Are you sure you want to kill the REPL? Doing so will erase any bindings you have declared.";
+              if (!confirm(msg)) return;
+              worker.terminate();
+              worker = new ReplWorker();
+              worker.onmessage = onmessage;
+              if (data.time) return;
+              setDisableEntry(false);
+              setData("error", "REPL terminated");
+              setData("time", -1);
+              setData("requestingInput", false);
+            }}
+          >
+            <span class="material-symbols-outlined" title="kill repl">
+              cancel
+            </span>
+          </button>
           <button
             class="cursor-pointer text-2xl"
             classList={{ "!cursor-not-allowed": disableEntry() }}
