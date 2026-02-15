@@ -241,7 +241,7 @@ export default function App() {
             </ul>
           </details>
           <details class="mt-5">
-            <summary class="text-amber-400/80">
+            <summary class="cursor-not-allowed text-amber-400/80">
               documentation - under construction! for now, check the{" "}
               <a
                 href="https://github.com/Jacob-Lockwood/fixapl"

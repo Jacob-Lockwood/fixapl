@@ -147,12 +147,10 @@ export const Repl: Component<{
   let textarea!: HTMLTextAreaElement;
   let inp!: HTMLTextAreaElement;
   return (
-    <div class="sticky top-10 flex flex-col gap-2">
+    <div class="sticky top-10 flex flex-col gap-2" id="repl">
       <div class="flex flex-col rounded-md bg-black/20 p-4 pt-1">
         <div class="flex items-center gap-4">
-          <h2 class="mr-auto" id="repl">
-            REPL
-          </h2>
+          <h2 class="mr-auto">REPL</h2>
           <button
             class="cursor-pointer text-2xl"
             classList={{ "!cursor-not-allowed": disableEntry() }}
