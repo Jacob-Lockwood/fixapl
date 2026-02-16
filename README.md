@@ -4,6 +4,8 @@
 <img src="public/FIXAPL.svg" alt="FIXAPL logo" width="200">
 <br><br>
 <i>APL reimagined from the ground up with fixed-arity functions</i>
+<br><br>
+<i><a href="https://www.youtube.com/live/L7pttMExil4">Featured on the ArrayCast!</a></i>
 </p>
 
 FIXAPL is a simple programming language inspired by [APL](<https://en.wikipedia.org/wiki/APL_(programming_language)>), [BQN](https://mlochbaum.github.io/BQN/), and [Uiua](https://www.uiua.org/). (The rest of this document probably won't make much sense without at least a passing knowledge of each of these languages.)
