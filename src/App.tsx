@@ -1,5 +1,6 @@
-import { createSignal, JSX, ParentComponent } from "solid-js";
+import { createSignal, ParentComponent } from "solid-js";
 import { Repl, ReplRef } from "./Repl";
+import Docs from "./Docs";
 
 const Kbd: ParentComponent = (props) => (
   <kbd class="rounded-sm border-b-4 border-green-700 bg-green-900 px-1">
@@ -18,18 +19,6 @@ const sierpinski = `
 
 export default function App() {
   const [search, setSearch] = createSignal("");
-  const DocEntry: ParentComponent<{ keyword: string; summary: JSX.Element }> = (
-    props,
-  ) => {
-    return (
-      <details open={search() !== "" && props.keyword.includes(search())}>
-        <summary class="text-lg">
-          <h3 class="inline">{props.summary}</h3>
-        </summary>
-        {props.children}
-      </details>
-    );
-  };
   const RunBtn: ParentComponent<{ code: string; class?: string }> = (props) => (
     <a
       onClick={() => repl.process(props.code)}
@@ -266,38 +255,7 @@ export default function App() {
               onInput={(e) => setSearch(e.target.value)}
               value={search()}
             />
-            <ul>
-              <DocEntry
-                keyword="= equal ≠ ne not equal "
-                summary={<>pervasive comparison functions</>}
-              >
-                <p>
-                  characters are compared by their codepoints. characters are
-                  always greater than numbers.
-                </p>
-              </DocEntry>
-              <DocEntry
-                keyword="+ add - subtract × multiply ÷ divide | modulo * power ⍟ logarithm"
-                summary={<>arithmetic functions</>}
-              >
-                <p>
-                  <code>| modulo</code> takes the divisor on the left rather
-                  than the right.
-                </p>
-              </DocEntry>
-              <DocEntry
-                keyword="⋈ reverse ⌽ rotate"
-                summary={<>reverse & rotate</>}
-              >
-                <p>
-                  <code>⋈ reverse</code> the cells of <code>⍵</code>
-                </p>
-                <p>
-                  <code>⌽ rotate</code> the cells of <code>⍵</code> to the left
-                  by <code>⍺</code> positions
-                </p>
-              </DocEntry>
-            </ul>
+            <Docs search={search()} />
           </details>
         </div>
         <main class="mx-auto max-w-[80ch] lg:w-3/5 lg:pl-10">
