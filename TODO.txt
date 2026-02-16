@@ -1,0 +1,13 @@
+primitives:
+- encode/decode
+- non-scalar windows
+- non-list sorting
+
+documentation:
+- everything
+
+other:
+- local installation
+- APL387?
+- GIF support
+- summary view for big arrays
