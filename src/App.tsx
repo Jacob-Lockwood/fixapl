@@ -215,22 +215,22 @@ export default function App() {
               >
                 settings
               </span>{" "}
-              icon. Clear the REPL with the{" "}
+              button. Clear the REPL with the{" "}
               <span
                 class="material-symbols-outlined align-middle"
                 title="clear repl"
               >
                 backspace
               </span>{" "}
-              icon. You can kill the REPL with the{" "}
+              button. You can kill the REPL with the{" "}
               <span
                 class="material-symbols-outlined align-middle"
                 title="kill repl"
               >
                 cancel
               </span>{" "}
-              icon, but be warned that doing so will erase any bindings you have
-              defined.
+              button, but be warned that doing so will erase any bindings you
+              have defined.
             </p>
           </details>
           <details class="mt-5">
