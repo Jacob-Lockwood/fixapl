@@ -1,6 +1,7 @@
 import { createSignal, ParentComponent } from "solid-js";
 import { Repl, ReplRef } from "./Repl";
 import Docs from "./Docs";
+import { Glyph } from "./glyphs";
 
 const Kbd: ParentComponent = (props) => (
   <kbd class="rounded-sm border-b-4 border-green-700 bg-green-900 px-1">
@@ -29,6 +30,11 @@ export default function App() {
       {props.children}
     </a>
   );
+  const openDocs = (g: Glyph) => {
+    setDocsOpen(true);
+    setSearch(g.glyph);
+    document.getElementById("docs")?.scrollIntoView(false);
+  };
   let repl!: ReplRef;
   return (
     <div class="bg-emerald-1000/70 mx-auto flex min-h-screen flex-col p-5 text-emerald-300 selection:bg-green-800 sm:p-10 md:w-3/4 lg:py-20">
@@ -256,7 +262,7 @@ export default function App() {
               </li>
             </ul>
           </details>
-          <details class="mt-5" open={docsOpen()}>
+          <details class="mt-5" open={docsOpen()} id="docs">
             <summary class="cursor-not-allowed text-amber-400/80">
               documentation - under construction! for now, check the{" "}
               <a
@@ -278,10 +284,7 @@ export default function App() {
           </details>
         </div>
         <main class="mx-auto max-w-[80ch] lg:w-3/5 lg:pl-10">
-          <Repl
-            ref={(r) => (repl = r)}
-            openDocs={(g) => setDocsOpen(true) && setSearch(g.glyph)}
-          />
+          <Repl ref={(r) => (repl = r)} openDocs={openDocs} />
         </main>
       </div>
       <footer class="mx-auto mt-60 flex max-w-prose flex-col gap-2 text-center text-sm text-emerald-500">
