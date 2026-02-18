@@ -1,5 +1,6 @@
 import { ParentComponent } from "solid-js";
-import { prims, glyphs, omega, alpha } from "./glyphs";
+import { prims, glyphs, omega, alpha, ualpha } from "./glyphs";
+import { glyphColors, special } from "./Highlight";
 type PrimName = keyof typeof prims;
 
 export default function Docs(p: { search: string }) {
@@ -13,27 +14,55 @@ export default function Docs(p: { search: string }) {
     if (prim) searchstr += prim + glyphs[prim].glyph + glyphs[prim].name;
     if (keywords) searchstr += keywords;
     const GlyphStr = (props: { n: PrimName }, g = glyphs[props.n]) => (
-      <code>
+      <code class={glyphColors[g.kind]} style={special.get(g.name)}>
         {g.glyph} {g.name}
       </code>
     );
     return (
       <li
         classList={{
-          hidden: p.search !== "" && !searchstr.includes(p.search),
+          hidden:
+            p.search !== "" &&
+            !searchstr.toLowerCase().includes(p.search.toLowerCase()),
         }}
       >
-        <h3>{title ?? <GlyphStr n={prim!} />}</h3>
+        <h3 class="text-lg text-green-400">
+          {title ?? <GlyphStr n={prim!} />}
+        </h3>
         {children}
       </li>
     );
   };
   return (
-    <ul>
+    <ul class="flex flex-col gap-2">
       <Doc prim="fil">
-        merge items {omega} filling with {alpha}
+        merge items of {omega}, filling with {alpha}
       </Doc>
-      <Doc prim="fol">documentation for fold</Doc>
+      <Doc prim="fol">
+        reduce with initial value: <br />
+        call <code class={glyphColors["dyadic function"]}>
+          {ualpha}
+        </code> with {alpha} on the left and {omega}'s first cell on the right,
+        then again with this result on the left and {omega}'s second cell on the
+        right, and so on to the length of {omega}.
+      </Doc>
+      <Doc title="Array notation" keywords="[]⟨⟩‿">
+        one way to make a list is to write its values separated by ligatures.
+        this is called stranding:
+        <pre>
+          <code>1‿2‿3</code>
+        </pre>
+        another is by wrapping the values in <code>⟨⟩</code> and separating by
+        commas:
+        <pre>
+          <code>⟨1,2,3⟩</code>
+        </pre>
+        to make a higher rank array, surround the cells you want to merge in{" "}
+        <code>[]</code> and separate with commas:
+        <pre>
+          <code>[⟨1,2⟩,⟨3,4⟩,⟨5,6⟩]</code>
+        </pre>
+      </Doc>
     </ul>
   );
 }
