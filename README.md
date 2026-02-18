@@ -5,6 +5,8 @@
 <br><br>
 <i>APL reimagined from the ground up with fixed-arity functions</i>
 <br><br>
+<i><a href="https://fixapl.netlify.app">Try FIXAPL online!</a></i>
+<br><br>
 <i><a href="https://www.youtube.com/live/L7pttMExil4">Featured on the ArrayCast!</a></i>
 </p>
 
