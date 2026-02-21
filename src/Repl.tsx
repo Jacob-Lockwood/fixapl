@@ -48,7 +48,7 @@ export const Repl: Component<{
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
-  const [enterBehavior, setEnterBehavior] = setting("on-enter", "clear-prompt");
+  const [enterBehavior, setEnterBehavior] = setting("onEnter", "clear-prompt");
   const [displayTimes, setDisplayTimes] = setting("displayTimes", "false");
   const [autoImg, setAutoImg] = setting("autoImg", "false");
   const [pretty, setPretty] = setting("pretty", "true");
