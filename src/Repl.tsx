@@ -12,6 +12,7 @@ import { MessageIn, MessageOut } from "./worker";
 import { Token } from "./lang";
 import { Glyph, glyphs, quad } from "./glyphs";
 import { Highlight, glyphColors, special } from "./Highlight";
+import { Keyboard } from "./Keyboard";
 
 type ReplEntry = {
   source: string;
@@ -48,6 +49,7 @@ export const Repl: Component<{
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
+  const [showKeyboard, setShowKeyboard] = setting("showKeyboard", "false");
   const [enterBehavior, setEnterBehavior] = setting("onEnter", "clear-prompt");
   const [displayTimes, setDisplayTimes] = setting("displayTimes", "false");
   const [autoImg, setAutoImg] = setting("autoImg", "false");
@@ -244,6 +246,14 @@ export const Repl: Component<{
                 id="pretty"
                 checked={pretty() === "true"}
                 onInput={(e) => setPretty(e.target.checked + "")}
+              />
+              <label for="keyboard">Show keyboard (WIP)</label>
+              <input
+                type="checkbox"
+                name="keyboard"
+                id="keyboard"
+                checked={showKeyboard() === "true"}
+                onInput={(e) => setShowKeyboard(e.target.checked + "")}
               />
               <label for="defaultfont">
                 Default font for <code>{quad}Text</code>
@@ -448,6 +458,12 @@ export const Repl: Component<{
             }}
           />
         </div>
+      </div>
+      <div classList={{ hidden: showKeyboard() === "false" }}>
+        <Keyboard />
+        <p class="text-center text-sm italic">
+          keyboard WIP! currently non-functional
+        </p>
       </div>
       <div class="flex flex-wrap text-3xl">
         <For each={Object.entries(glyphs)}>
