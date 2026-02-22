@@ -387,12 +387,6 @@ export const grd = mf("⍒", "grade down", (err) => async (y) => {
   const s = d.map((_, i) => i).sort((a, b) => -compare(d[a], d[b]));
   return list(s.map(N));
 });
-export const sru = mf("⊴", "sort up", () => async (y) => {
-  return sel.def(await gru.def(y), y);
-});
-export const srd = mf("⊵", "sort down", () => async (y) => {
-  return sel.def(await grd.def(y), y);
-});
 export const fmt = mf("⍕", "format", () => async (y) => {
   return list([...(await display(y))].map(C));
 });
