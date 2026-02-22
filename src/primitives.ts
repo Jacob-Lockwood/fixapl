@@ -627,10 +627,10 @@ export const gro = df("⊔", "group", (err) => async (x, y) => {
   }
   return list(buckets.map(fromCells));
 });
-export const slf = mm("⍨", "self/const1", () => async (X) => {
+export const slf = mm("⍨", "self", () => async (X) => {
   return F(1, X.kind === "function" ? (v) => X.data(v, v) : async () => X);
 });
-export const bac = mm("˜", "backward/const2", () => async (X) => {
+export const bac = mm("˜", "backward", () => async (X) => {
   if (X.kind === "function" && X.arity === 1) return F(2, X.data);
   return F(2, X.kind === "function" ? (g, h) => X.data(h, g) : async () => X);
 });

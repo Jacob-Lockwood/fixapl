@@ -1,23 +1,46 @@
-import { ParentComponent } from "solid-js";
+import { For, ParentComponent } from "solid-js";
 import { prims, glyphs, omega, alpha, ualpha } from "./glyphs";
 import { glyphColors, special } from "./Highlight";
 type PrimName = keyof typeof prims;
 
+const ar = (n: number, text: string) => (
+  <code
+    class={
+      glyphColors[
+        (
+          [
+            "syntax",
+            "monadic function",
+            "dyadic function",
+            "monadic modifier",
+            "dyadic modifier",
+          ] as const
+        )[n]
+      ]
+    }
+  >
+    {text}
+  </code>
+);
+
 export default function Docs(p: { search: string }) {
+  const GlyphStr = (props: { n: PrimName }, g = glyphs[props.n]) => (
+    <code class={glyphColors[g.kind]} style={special.get(g.name)}>
+      {g.glyph} {g.name}
+    </code>
+  );
   const Doc: ParentComponent<{
-    prim?: PrimName; //| PrimName[];
+    prim?: PrimName | PrimName[];
     title?: string;
     keywords?: string;
     // eslint-disable-next-line solid/no-destructure
   }> = ({ title, prim, keywords, children }) => {
+    const prims = prim ? [prim].flat() : [];
     let searchstr = title ?? "";
-    if (prim) searchstr += prim + glyphs[prim].glyph + glyphs[prim].name;
+    for (const prim of prims)
+      searchstr += prim + glyphs[prim].glyph + glyphs[prim].name;
     if (keywords) searchstr += keywords;
-    const GlyphStr = (props: { n: PrimName }, g = glyphs[props.n]) => (
-      <code class={glyphColors[g.kind]} style={special.get(g.name)}>
-        {g.glyph} {g.name}
-      </code>
-    );
+
     return (
       <li
         classList={{
@@ -27,7 +50,14 @@ export default function Docs(p: { search: string }) {
         }}
       >
         <h3 class="text-lg text-green-400">
-          {title ?? <GlyphStr n={prim!} />}
+          <For each={prims} fallback={title}>
+            {(prim, idx) => (
+              <>
+                {idx() && <span> and </span>}
+                <GlyphStr n={prim} />
+              </>
+            )}
+          </For>
         </h3>
         {children}
       </li>
@@ -62,6 +92,107 @@ export default function Docs(p: { search: string }) {
         <pre>
           <code>[⟨1,2⟩,⟨3,4⟩,⟨5,6⟩]</code>
         </pre>
+      </Doc>
+      <Doc prim={["bef", "aft"]}>
+        <div class="flex flex-col gap-2">
+          <p>
+            these two modifiers are used to express many cases of function
+            composition. in both cases, the circle in the glyph points to the
+            second function to be called.
+          </p>
+          <table class="border-separate border-spacing-4">
+            <thead>
+              <tr>
+                <th scope="col">
+                  <code>F{ar(4, "⊸")}G</code>
+                </th>
+                <th scope="col" class="text-center">
+                  {ar(1, "G₁")}
+                </th>
+                <th scope="col" class="text-center">
+                  {ar(2, "G₂")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">{ar(0, "F₀")}</th>
+                <td>
+                  <code>(G F)</code>
+                </td>
+                <td>
+                  <code>{`{F G ⍵}`}</code>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{ar(1, "F₁")}</th>
+                <td>
+                  <code>{`{G F ⍵}`}</code>
+                </td>
+                <td>
+                  <code>{`{(F ⍵) G ⍵}`}</code>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{ar(2, "F₂")}</th>
+                <td>
+                  <code>{`{G ⍺ F ⍵}`}</code>
+                </td>
+                <td>
+                  <code>{`{(⍺ F ⍵) G ⍵}`}</code>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="border-separate border-spacing-4">
+            <thead>
+              <tr>
+                <th scope="col">
+                  <code>F{ar(4, "⟜")}G</code>
+                </th>
+                <th scope="col" class="text-center">
+                  {ar(1, "G₀")}
+                </th>
+                <th scope="col" class="text-center">
+                  {ar(1, "G₁")}
+                </th>
+                <th scope="col" class="text-center">
+                  {ar(2, "G₂")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">{ar(1, "F₁")}</th>
+                <td>
+                  <code>{`(F G)`}</code>
+                </td>
+                <td>
+                  <code>{`{F G ⍵}`}</code>
+                </td>
+                <td>
+                  <code>{`{F ⍺ G ⍵}`}</code>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{ar(2, "F₂")}</th>
+                <td>
+                  <code>{`{⍵ F G}`}</code>
+                </td>
+                <td>
+                  <code>{`{⍺ F G ⍵}`}</code>
+                </td>
+                <td>
+                  <code>{`{⍺ F ⍺ G ⍵}`}</code>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            there are a few cases which these don't cover directly but you can
+            use <GlyphStr n="bac" /> and <GlyphStr n="slf" /> to reach those.
+          </p>
+        </div>
       </Doc>
     </ul>
   );
