@@ -459,7 +459,11 @@ export const Repl: Component<{
           />
         </div>
       </div>
-      <div classList={{ hidden: showKeyboard() === "false" }}>
+      <div
+        classList={{ hidden: showKeyboard() === "false" }}
+        style={{ "--spacing": "0.18rem" }}
+        class="text-xs"
+      >
         <Keyboard />
         <p class="text-center text-sm italic">
           keyboard WIP! currently non-functional
