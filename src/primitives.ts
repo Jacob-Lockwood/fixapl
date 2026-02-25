@@ -134,26 +134,6 @@ const ct = (glyph: string, name: string, def: () => Val) => {
   order.push(glyph);
   return { kind: "constant" as const, glyph, name, def };
 };
-
-export const eq = df("=", "equal", () =>
-  pervasive(async (x, y) => N(equal(x, y) ? 1 : 0)),
-);
-export const ne = df("≠", "not equal", () =>
-  pervasive(async (x, y) => N(equal(x, y) ? 0 : 1)),
-);
-export const gt = df(">", "greater than", () =>
-  pervasive(async (x, y) => N(greater(x, y) ? 1 : 0)),
-);
-export const ge = df("≥", "greater or equal", () =>
-  pervasive(async (x, y) => N(greater(x, y) || equal(x, y) ? 1 : 0)),
-);
-export const lt = df("<", "less than", () =>
-  pervasive(async (x, y) => N(greater(x, y) || equal(x, y) ? 0 : 1)),
-);
-export const le = df("≤", "less or equal", () =>
-  pervasive(async (x, y) => N(greater(x, y) ? 0 : 1)),
-);
-
 export const not = mf("¬", "not", () => (y) => sub.def(N(1), y));
 export const ng = mf("¯", "negate", (err) =>
   pervasive(async (y) => {
@@ -218,86 +198,6 @@ export const rol = mf("?", "roll", (err) =>
     return N(y.data === 0 ? Math.random() : Math.floor(Math.random() * y.data));
   }),
 );
-
-export const add = df("+", "add", (err) =>
-  pervasive(async (x, y) => {
-    if (x.kind === "function" || y.kind === "function")
-      throw err("Cannot add functions");
-    if (x.kind === "namespace" || y.kind === "namespace")
-      throw err("Cannot add namespaces");
-    if (x.kind === "character" && y.kind === "character")
-      throw err("Cannot add two characters");
-    const kind = x.kind === "character" ? x.kind : y.kind;
-    return { kind, data: x.data + y.data };
-  }),
-);
-export const sub = df("-", "subtract", (err) =>
-  pervasive(async (x, y) => {
-    if (x.kind === "character" && y.kind === "character")
-      return N(x.data - y.data);
-    if (y.kind !== "number")
-      throw err(`Cannot subtract ${y.kind} from ${x.kind}`);
-    if (x.kind === "function") throw err(`Cannot subtract a function`);
-    if (x.kind === "namespace") throw err(`Cannot subtract a namespace`);
-    return { kind: x.kind, data: x.data - y.data };
-  }),
-);
-export const mul = df("×", "multiply", (err) =>
-  pervasive(async (x, y) => {
-    if (x.kind === "number" && y.kind === "number") return N(x.data * y.data);
-    throw err(`${alpha} and ${omega} must be numbers`);
-  }),
-);
-export const div = df("÷", "divide", (err) =>
-  pervasive(async (x, y) => {
-    if (x.kind === "number" && y.kind === "number") return N(x.data / y.data);
-    throw err(`${alpha} and ${omega} must be numbers`);
-  }),
-);
-export const mod = df("|", "modulo", (err) =>
-  pervasive(async (x, y) => {
-    if (x.kind !== "number" || y.kind !== "number")
-      throw err(`${alpha} and ${omega} must be numbers`);
-    return N((x.data + (y.data % x.data)) % x.data);
-  }),
-);
-export const pow = df("*", "power", (err) =>
-  pervasive(async (x, y) => {
-    if (x.kind === "number" && y.kind === "number") return N(x.data ** y.data);
-    throw err(`${alpha} and ${omega} must be numbers`);
-  }),
-);
-export const log = df("⍟", "logarithm", (err) =>
-  pervasive(async (x, y) => {
-    if (x.kind === "number" && y.kind === "number")
-      return N(Math.log(y.data) / Math.log(x.data));
-    throw err(`${alpha} and ${omega} must be numbers`);
-  }),
-);
-export const max = df("↥", "maximum", () =>
-  pervasive(async (x, y) => (greater(x, y) ? x : y)),
-);
-export const min = df("↧", "minimum", () =>
-  pervasive(async (x, y) => (greater(y, x) ? x : y)),
-);
-// export const ecd = df("⊤", "encode", (err) =>
-//   recur(async (ecd, x, y) => {
-//     //! should support mixed-bases
-//     if (x.kind !== "number") throw err("x must be a number");
-//     //! should pad with zeroes
-//     if (y.kind === "array") return each(ecd, x, y);
-//     if (y.kind !== "number") throw err("y must be a number");
-//     const b = x.data;
-//     let v = y.data;
-//     const o: number[] = [];
-//     while (v) {
-//       o.push(v % b);
-//       v = Math.floor(v / b);
-//     }
-//     return list(o.map(N));
-//   }),
-// );
-// export const dcd = df("⊥", "decode", (err) => async (x, y) => {});
 
 export const rev = mf("⋈", "reverse", () => async (y) => {
   return y.kind === "array" ? fromCells(cells(y).data.reverse()) : y;
@@ -399,6 +299,105 @@ export const ari = mf("⪫", "arity", () =>
     return N(y.kind === "function" ? y.arity : 0);
   }),
 );
+
+export const eq = df("=", "equal", () =>
+  pervasive(async (x, y) => N(equal(x, y) ? 1 : 0)),
+);
+export const ne = df("≠", "not equal", () =>
+  pervasive(async (x, y) => N(equal(x, y) ? 0 : 1)),
+);
+export const gt = df(">", "greater than", () =>
+  pervasive(async (x, y) => N(greater(x, y) ? 1 : 0)),
+);
+export const ge = df("≥", "greater or equal", () =>
+  pervasive(async (x, y) => N(greater(x, y) || equal(x, y) ? 1 : 0)),
+);
+export const lt = df("<", "less than", () =>
+  pervasive(async (x, y) => N(greater(x, y) || equal(x, y) ? 0 : 1)),
+);
+export const le = df("≤", "less or equal", () =>
+  pervasive(async (x, y) => N(greater(x, y) ? 0 : 1)),
+);
+
+export const add = df("+", "add", (err) =>
+  pervasive(async (x, y) => {
+    if (x.kind === "function" || y.kind === "function")
+      throw err("Cannot add functions");
+    if (x.kind === "namespace" || y.kind === "namespace")
+      throw err("Cannot add namespaces");
+    if (x.kind === "character" && y.kind === "character")
+      throw err("Cannot add two characters");
+    const kind = x.kind === "character" ? x.kind : y.kind;
+    return { kind, data: x.data + y.data };
+  }),
+);
+export const sub = df("-", "subtract", (err) =>
+  pervasive(async (x, y) => {
+    if (x.kind === "character" && y.kind === "character")
+      return N(x.data - y.data);
+    if (y.kind !== "number")
+      throw err(`Cannot subtract ${y.kind} from ${x.kind}`);
+    if (x.kind === "function") throw err(`Cannot subtract a function`);
+    if (x.kind === "namespace") throw err(`Cannot subtract a namespace`);
+    return { kind: x.kind, data: x.data - y.data };
+  }),
+);
+export const mul = df("×", "multiply", (err) =>
+  pervasive(async (x, y) => {
+    if (x.kind === "number" && y.kind === "number") return N(x.data * y.data);
+    throw err(`${alpha} and ${omega} must be numbers`);
+  }),
+);
+export const div = df("÷", "divide", (err) =>
+  pervasive(async (x, y) => {
+    if (x.kind === "number" && y.kind === "number") return N(x.data / y.data);
+    throw err(`${alpha} and ${omega} must be numbers`);
+  }),
+);
+export const mod = df("|", "modulo", (err) =>
+  pervasive(async (x, y) => {
+    if (x.kind !== "number" || y.kind !== "number")
+      throw err(`${alpha} and ${omega} must be numbers`);
+    return N((x.data + (y.data % x.data)) % x.data);
+  }),
+);
+export const pow = df("*", "power", (err) =>
+  pervasive(async (x, y) => {
+    if (x.kind === "number" && y.kind === "number") return N(x.data ** y.data);
+    throw err(`${alpha} and ${omega} must be numbers`);
+  }),
+);
+export const log = df("⍟", "logarithm", (err) =>
+  pervasive(async (x, y) => {
+    if (x.kind === "number" && y.kind === "number")
+      return N(Math.log(y.data) / Math.log(x.data));
+    throw err(`${alpha} and ${omega} must be numbers`);
+  }),
+);
+export const max = df("↥", "maximum", () =>
+  pervasive(async (x, y) => (greater(x, y) ? x : y)),
+);
+export const min = df("↧", "minimum", () =>
+  pervasive(async (x, y) => (greater(y, x) ? x : y)),
+);
+// export const ecd = df("⊤", "encode", (err) =>
+//   recur(async (ecd, x, y) => {
+//     //! should support mixed-bases
+//     if (x.kind !== "number") throw err("x must be a number");
+//     //! should pad with zeroes
+//     if (y.kind === "array") return each(ecd, x, y);
+//     if (y.kind !== "number") throw err("y must be a number");
+//     const b = x.data;
+//     let v = y.data;
+//     const o: number[] = [];
+//     while (v) {
+//       o.push(v % b);
+//       v = Math.floor(v / b);
+//     }
+//     return list(o.map(N));
+//   }),
+// );
+// export const dcd = df("⊥", "decode", (err) => async (x, y) => {});
 
 export const mem = df("∊", "member of", (err) => (x, y) => {
   if (y.kind !== "array" || y.shape.length < 1)
