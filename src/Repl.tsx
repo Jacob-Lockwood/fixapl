@@ -54,7 +54,7 @@ export const Repl: Component<{
   const [showKeyboard, setShowKeyboard] = setting("showKeyboard", "false");
   const [enterBehavior, setEnterBehavior] = setting("onEnter", "clear-prompt");
   const [displayTimes, setDisplayTimes] = setting("displayTimes", "false");
-  const [autoImg, setAutoImg] = setting("autoImg", "false");
+  const [autoImg, setAutoImg] = setting("autoImg", "true");
   const [pretty, setPretty] = setting("pretty", "true");
   const [defaultFont, setDefaultFont] = setting(
     "defaultFont",
@@ -250,7 +250,7 @@ export const Repl: Component<{
                 checked={pretty() === "true"}
                 onInput={(e) => setPretty(e.target.checked + "")}
               />
-              <label for="keyboard">Show keyboard (WIP)</label>
+              <label for="keyboard">Show keyboard</label>
               <input
                 type="checkbox"
                 name="keyboard"
@@ -263,7 +263,7 @@ export const Repl: Component<{
                 type="text"
                 name="prefixkey"
                 id="prefixkey"
-                class="bg-green-300 px-1 text-green-800 focus:ring-4 focus:ring-green-800 focus:outline-0"
+                class="bg-green-300 px-1 text-green-800 selection:!bg-green-500 focus:ring-4 focus:ring-green-800 focus:outline-0"
                 value={prefixKey()}
                 onInput={(e) => setPrefixKey(e.target.value)}
               />
@@ -275,7 +275,7 @@ export const Repl: Component<{
                 name="defaultfont"
                 id="defaultfont"
                 list="font-families"
-                class="bg-green-300 px-1 text-green-800 focus:ring-4 focus:ring-green-800 focus:outline-0"
+                class="bg-green-300 px-1 text-green-800 selection:!bg-green-500 focus:ring-4 focus:ring-green-800 focus:outline-0"
                 value={defaultFont()}
                 onInput={(e) => setDefaultFont(e.target.value)}
               />
