@@ -28,6 +28,8 @@ export const glyphs = {
   ")": { name: "close parenthesis", glyph: ")", kind: "syntax" },
   "{": { name: "open dfn", glyph: "{", kind: "syntax" },
   "}": { name: "close dfn", glyph: "}", kind: "syntax" },
+  aa: { name: "left dmod fn (unused)", glyph: ualpha, kind: "syntax" },
+  ww: { name: "right dmod fn (unused)", glyph: uomega, kind: "syntax" },
   a: { name: "left dfn argument", glyph: alpha, kind: "syntax" },
   w: { name: "right dfn argument", glyph: omega, kind: "syntax" },
   "[": { name: "open array", glyph: "[", kind: "syntax" },
