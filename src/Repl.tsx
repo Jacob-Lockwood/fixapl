@@ -546,8 +546,8 @@ export const Repl: Component<{
                       )}
                     >
                       {(k) => (
-                        <span class="rounded-sm bg-emerald-800 p-1 pb-2">
-                          <Kbd>{prefixKey()}</Kbd> + <Kbd>{k()[0]}</Kbd>
+                        <span class="rounded-sm bg-emerald-950 p-1 pb-2">
+                          <Kbd>{prefixKey()}</Kbd> <Kbd>{k()[0]}</Kbd>
                         </span>
                       )}
                     </Show>
