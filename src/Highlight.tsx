@@ -1,6 +1,6 @@
 import { Component, For } from "solid-js";
 import { Token } from "./lang";
-import { glyphs } from "./glyphs";
+import { Glyph, glyphs } from "./glyphs";
 import { quadsList } from "./quads";
 export const glyphColors = {
   "monadic function": "text-lime-400",
@@ -73,3 +73,11 @@ export const Highlight: Component<{
     </For>
   );
 };
+export const Gly: Component<{ g: Glyph }> = (props) => (
+  <span
+    class={"font-mono " + glyphColors[props.g.kind]}
+    style={special.get(props.g.name)}
+  >
+    {props.g.glyph}
+  </span>
+);

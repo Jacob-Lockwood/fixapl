@@ -11,7 +11,7 @@ import ReplWorker from "./worker?worker";
 import { MessageIn, MessageOut } from "./worker";
 import { Token } from "./lang";
 import { Glyph, glyphs, quad } from "./glyphs";
-import { Highlight, glyphColors, special } from "./Highlight";
+import { Gly, Highlight } from "./Highlight";
 import { Keyboard, KeyboardControls } from "./Keyboard";
 import { Kbd } from "./UtilComponents";
 
@@ -529,12 +529,9 @@ export const Repl: Component<{
                 onBlur={exit}
                 onMouseLeave={exit}
               >
-                <span
-                  class={"-z-10 p-2 font-mono " + glyphColors[data.kind]}
-                  style={special.get(data.name)}
-                >
-                  {data.glyph}
-                </span>
+                <div class="-z-10 px-1">
+                  <Gly g={data} />
+                </div>
                 <Show when={selectedGlyph() === i()}>
                   <p class="absolute z-10 w-max rounded-lg rounded-tl-none bg-emerald-900 px-2 py-1 text-base">
                     {data.name} <br /> alias:{" "}
