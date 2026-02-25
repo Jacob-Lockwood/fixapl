@@ -504,36 +504,46 @@ export const Repl: Component<{
       </div>
       <div class="flex flex-wrap text-3xl">
         <For each={Object.entries(glyphs)}>
-          {([alias, data], i) => (
-            <button
-              class="block cursor-pointer rounded-t-lg select-none focus:outline-0"
-              classList={{ "bg-emerald-900": selectedGlyph() === i() }}
-              onClick={(e) => {
-                if (e.shiftKey) return props.openDocs?.(data);
-                textarea.focus();
-                textarea.setRangeText(data.glyph);
-                textarea.selectionStart += data.glyph.length;
-              }}
-              onFocus={() => setSelectedGlyph(i())}
-              onMouseEnter={() => setSelectedGlyph(i())}
-              onBlur={() => setSelectedGlyph(-1)}
-              onMouseLeave={() => setSelectedGlyph(-1)}
-            >
-              <span
-                class={"-z-10 p-2 font-mono " + glyphColors[data.kind]}
-                style={special.get(data.name)}
+          {([alias, data], i) => {
+            const hover = () => {
+              setSelectedGlyph(i());
+              keyboard.highlight(data.glyph);
+            };
+            const exit = () => {
+              setSelectedGlyph(-1);
+              keyboard.highlight(null);
+            };
+            return (
+              <button
+                class="block cursor-pointer rounded-t-lg select-none focus:outline-0"
+                classList={{ "bg-emerald-900": selectedGlyph() === i() }}
+                onClick={(e) => {
+                  if (e.shiftKey) return props.openDocs?.(data);
+                  textarea.focus();
+                  textarea.setRangeText(data.glyph);
+                  textarea.selectionStart += data.glyph.length;
+                }}
+                onFocus={hover}
+                onMouseEnter={hover}
+                onBlur={exit}
+                onMouseLeave={exit}
               >
-                {data.glyph}
-              </span>
-              <Show when={selectedGlyph() === i()}>
-                <p class="absolute z-10 w-max rounded-lg rounded-tl-none bg-emerald-900 px-2 py-1 text-base">
-                  {data.name} <br /> alias:{" "}
-                  <code class="bg-emerald-900 px-1">{alias}</code> <br />{" "}
-                  {data.kind}
-                </p>
-              </Show>
-            </button>
-          )}
+                <span
+                  class={"-z-10 p-2 font-mono " + glyphColors[data.kind]}
+                  style={special.get(data.name)}
+                >
+                  {data.glyph}
+                </span>
+                <Show when={selectedGlyph() === i()}>
+                  <p class="absolute z-10 w-max rounded-lg rounded-tl-none bg-emerald-900 px-2 py-1 text-base">
+                    {data.name} <br /> alias:{" "}
+                    <code class="bg-emerald-900 px-1">{alias}</code> <br />{" "}
+                    {data.kind}
+                  </p>
+                </Show>
+              </button>
+            );
+          }}
         </For>
       </div>
       <p class="mx-auto my-4 max-w-80 text-center text-sm text-green-500 selection:!bg-black/30">

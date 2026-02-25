@@ -1,4 +1,4 @@
-import { createEffect } from "solid-js";
+import { createEffect, createSignal, JSX } from "solid-js";
 import { glyphs, ualpha, uomega } from "./glyphs";
 const g = (s: keyof typeof glyphs) => glyphs[s].glyph;
 
@@ -7,6 +7,7 @@ export type KeyboardControls = {
   keyMap: Map<string, string>;
 };
 export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
+  const [highlight, setHighlight] = createSignal<string | null>(null);
   const keyMap = new Map<string, string>();
   keyMap.set(" ", g("_"));
   function Key(props: { a: string; A: string; b?: string; B?: string }) {
@@ -14,8 +15,15 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
     if (props.b) keyMap.set(props.a, props.b);
     // eslint-disable-next-line solid/reactivity
     if (props.B) keyMap.set(props.A, props.B);
+    // eslint-disable-next-line solid/reactivity
+    const s = props.a + props.A + (props.b ?? "") + (props.B ?? "");
     return (
-      <table class="h-12 w-12 border-1 border-t-0 border-r-0 border-solid">
+      <table
+        class="h-12 w-12 border-1 border-t-0 border-r-0 border-solid"
+        classList={{
+          "outline-4 z-100 text-green-300": s.includes(highlight()!),
+        }}
+      >
         <tbody>
           <tr>
             <td class="h-1/2 w-1/2 text-center align-middle">{props.A}</td>
@@ -29,10 +37,25 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
       </table>
     );
   }
-  createEffect(() => props.ref?.({ highlight: () => {}, keyMap }));
+  const PlaceholderKey = (props: { class: string }) => (
+    <div class={`border-b-1 border-l-1 ${props.class}`} />
+  );
+  const KeyRow = (props: { top?: boolean; children?: JSX.Element }) => (
+    <div
+      class="bg-emerald-1000 flex min-h-12 border-r-1"
+      classList={{ "border-t-1": props.top }}
+    >
+      {props.children}
+    </div>
+  );
+
+  createEffect(() => props.ref?.({ keyMap, highlight: setHighlight }));
   return (
-    <div class="flex flex-col items-center font-mono">
-      <div class="bg-emerald-1000 flex border-t-1 border-r-1">
+    <div
+      class="flex flex-col items-center font-mono"
+      classList={{ "text-gray-400": highlight() !== null }}
+    >
+      <KeyRow top>
         <Key a="`" A="~" B={g("emp")} />
         <Key a="1" A="!" b={g("mn")} B={g("unt")} />
         <Key a="2" A="@" b={g("dy")} B={g("rep")} />
@@ -46,10 +69,10 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
         <Key a="0" A=")" b={g("sb")} B={g(">>")} />
         <Key a="-" A="_" b={g("ng")} B={g("not")} />
         <Key a="=" A="+" b={g("ne")} B={g("sig")} />
-        <div class="flex w-18 items-end justify-end border-b-1 border-l-1 p-1" />
-      </div>
-      <div class="bg-emerald-1000 flex border-r-1">
-        <div class="flex w-18 items-end border-b-1 border-l-1 p-1" />
+        <PlaceholderKey class="w-18" />
+      </KeyRow>
+      <KeyRow>
+        <PlaceholderKey class="w-18" />
         <Key a="q" A="Q" b={g("rev")} B={g("rot")} />
         <Key a="w" A="W" b={g("w")} B={uomega} />
         <Key a="e" A="E" b={g("mem")} B={g("rou")} />
@@ -63,9 +86,9 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
         <Key a="[" A="{" b={g(":")} B={g("lft")} />
         <Key a="]" A="}" b={g("::")} B={g("rgt")} />
         <Key a="\" A="|" B={g("abs")} />
-      </div>
-      <div class="bg-emerald-1000 flex border-r-1">
-        <div class="flex w-21 items-end border-b-1 border-l-1 p-1 leading-[1]" />
+      </KeyRow>
+      <KeyRow>
+        <PlaceholderKey class="w-21" />
         <Key a="a" A="A" b={g("a")} B={ualpha} />
         <Key a="s" A="S" b={g("sel")} B={g("pic")} />
         <Key a="d" A="D" b={g("len")} B={g("sha")} />
@@ -77,10 +100,10 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
         <Key a="l" A="L" b={g("&")} B={g("gro")} />
         <Key a=";" A=":" b={g("exc")} B={g("fmt")} />
         <Key a="'" A='"' b={g("fla")} B={g("con")} />
-        <div class="flex w-21 items-end justify-end border-b-1 border-l-1 p-1" />
-      </div>
-      <div class="bg-emerald-1000 flex border-r-1">
-        <div class="flex w-27 items-end border-b-1 border-l-1 p-1" />
+        <PlaceholderKey class="w-21" />
+      </KeyRow>
+      <KeyRow>
+        <PlaceholderKey class="w-27" />
         <Key a="z" A="Z" b={g("tab")} B={g("win")} />
         <Key a="x" A="X" b={g("enc")} B={g("par")} />
         <Key a="c" A="C" b={g("fix")} B={g("cou")} />
@@ -91,16 +114,21 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
         <Key a="," A="<" b={g("cat")} B={g("lte")} />
         <Key a="." A=">" b={g("id")} B={g("gte")} />
         <Key a="/" A="?" b={g("fol")} B={g("rpl")} />
-        <div class="flex w-27 items-end justify-end border-b-1 border-l-1 p-1" />
-      </div>
-      <div class="bg-emerald-1000 flex h-12 border-r-1">
-        <div class="flex w-51 items-end border-b-1 border-l-1 p-1" />
-        <div class="flex w-60 items-end justify-center border-b-1 border-l-1 p-1">
+        <PlaceholderKey class="w-27" />
+      </KeyRow>
+      <KeyRow>
+        <PlaceholderKey class="w-51" />
+        <div
+          class="flex w-60 items-end justify-center border-b-1 border-l-1 p-1"
+          classList={{
+            "outline-4 z-100 text-green-300": " ‿".includes(highlight()!),
+          }}
+        >
           <p>space</p>
           <p class="ml-10">{g("_")}</p>
         </div>
-        <div class="flex w-63 items-end justify-end border-b-1 border-l-1 p-1" />
-      </div>
+        <PlaceholderKey class="w-63" />
+      </KeyRow>
     </div>
   );
 }
