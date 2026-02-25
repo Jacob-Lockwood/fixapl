@@ -250,7 +250,7 @@ export const Repl: Component<{
                 checked={pretty() === "true"}
                 onInput={(e) => setPretty(e.target.checked + "")}
               />
-              <label for="keyboard">Show keyboard</label>
+              <label for="keyboard">Show keyboard (WIP)</label>
               <input
                 type="checkbox"
                 name="keyboard"
@@ -435,7 +435,6 @@ export const Repl: Component<{
                 setPrefixHit(false);
                 if (fnMods.includes(ev.key)) return;
                 ev.preventDefault();
-                console.log(ev.key);
                 const text = keyboard.keyMap.get(ev.key) ?? ev.key;
                 textarea.setRangeText(text);
                 textarea.selectionStart += text.length;
@@ -450,7 +449,6 @@ export const Repl: Component<{
                 if (!disableEntry()) {
                   if (enterBehavior() === "format-prompt") {
                     process(textarea.value, (t) => {
-                      console.log("process callback", t);
                       textarea.parentElement!.dataset.value = textarea.value =
                         t.map((z) => z.image).join("") ?? r.source;
                     });
