@@ -61,16 +61,11 @@ export default function App() {
               </span>
             </summary>
             <p class="mt-1">
-              Several planned primitives have not been implemented yet. There is
-              currently very little documentation for the language. The existing
-              help text on the site is either outdated or speculative. Expect
-              everything to change.
-            </p>
-            <p class="mt-2">
-              If you do find bugs with the existing primitives, please report
-              them to me, either via GitHub issues or on Discord (DM @jacob.abc
-              or ping me in the #general-programming channel of the Uiua
-              discord.)
+              Some planned primitives have not been implemented yet. There is
+              currently very little documentation for the language. If you do
+              find bugs with the existing primitives, please report them to me,
+              either via GitHub issues or on Discord (DM @jacob.abc or ping me
+              in the #general-programming channel of the Uiua discord.)
             </p>
           </details>
 
@@ -167,11 +162,9 @@ export default function App() {
                   elegant solution to this problem, without needing any extra
                   syntax. Instead of breaking expressions into only forks, the
                   expression can be broken into forks, atops, even hooks, based
-                  entirely on the arity of the tines. Examples of this can be
-                  found in the language reference on this page. Another nice
-                  consequence of this is that a train may have a value as its
-                  rightmost tine and still resolve to a function rather than a
-                  value.
+                  entirely on the arity of the tines. Another nice consequence
+                  of this is that a train may have a value as its rightmost tine
+                  and still resolve to a function rather than a value.
                 </p>
                 <p class="mt-2">
                   This element of using fixed-arity functions to write more
@@ -266,15 +259,17 @@ export default function App() {
             </ul>
           </details>
           <details class="mt-5" open={docsOpen()} id="docs">
-            <summary class="cursor-not-allowed text-amber-400/80">
-              documentation - under construction! for now, check the{" "}
+            <summary class="text-amber-400/80">Documentation (WIP)</summary>
+            <p>
+              under construction! check the{" "}
               <a
                 href="https://github.com/Jacob-Lockwood/fixapl"
                 class="underline"
               >
-                github readme.md
-              </a>
-            </summary>
+                github readme
+              </a>{" "}
+              for some more docs
+            </p>
             <input
               type="text"
               name="Search"
