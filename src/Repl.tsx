@@ -13,6 +13,7 @@ import { Token } from "./lang";
 import { Glyph, glyphs, quad } from "./glyphs";
 import { Highlight, glyphColors, special } from "./Highlight";
 import { Keyboard, KeyboardControls } from "./Keyboard";
+import { Kbd } from "./UtilComponents";
 
 type ReplEntry = {
   source: string;
@@ -537,8 +538,19 @@ export const Repl: Component<{
                 <Show when={selectedGlyph() === i()}>
                   <p class="absolute z-10 w-max rounded-lg rounded-tl-none bg-emerald-900 px-2 py-1 text-base">
                     {data.name} <br /> alias:{" "}
-                    <code class="bg-emerald-900 px-1">{alias}</code> <br />{" "}
-                    {data.kind}
+                    <code class="bg-emerald-900 px-1">{alias}</code> <br />
+                    {data.kind} <br />
+                    <Show
+                      when={[...keyboard.keyMap.entries()].find(
+                        ([, v]) => v === data.glyph,
+                      )}
+                    >
+                      {(k) => (
+                        <span class="rounded-sm bg-emerald-800 p-1 pb-2">
+                          <Kbd>{prefixKey()}</Kbd> + <Kbd>{k()[0]}</Kbd>
+                        </span>
+                      )}
+                    </Show>
                   </p>
                 </Show>
               </button>

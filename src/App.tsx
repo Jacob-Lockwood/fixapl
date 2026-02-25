@@ -2,12 +2,8 @@ import { createSignal, ParentComponent } from "solid-js";
 import { Repl, ReplRef } from "./Repl";
 import Docs from "./Docs";
 import { Glyph } from "./glyphs";
+import { Kbd } from "./UtilComponents";
 
-const Kbd: ParentComponent = (props) => (
-  <kbd class="rounded-sm border-b-4 border-green-700 bg-green-900 px-1">
-    {props.children}
-  </kbd>
-);
 const mandelbrot = `
 Sq  ← ⊡-/⟜×⍨⊟2××/
 Pl  ← ⍉⍉ 2×⍪˜⟜(-0.25)⊞⍨ ⍳⊸÷-0.5
