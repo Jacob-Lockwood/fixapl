@@ -199,15 +199,22 @@ export default function App() {
             </p>
             <p class="mt-2 text-emerald-300">
               The grid below the REPL contains every glyph used by the language.
-              Hover over a glyph to see its name, alias, and syntactic role. You
-              can enter a glyph by typing its alias, or by clicking it in the
-              grid. Clicking a glyph while holding <Kbd>Shift</Kbd> will open
-              its documentation.
+              Hover over a glyph to see its name, alias, syntactic role, and
+              keyboard input. Clicking a glyph while holding <Kbd>Shift</Kbd>{" "}
+              will open its documentation.
+            </p>
+            <p class="mt-2 text-emerald-300">
+              You can enter a glyph by typing its alias, by clicking it in the
+              grid, or by entering the keyboard sequence indicated by the
+              tooltip. In the settings, you can change the prefix key for
+              keyboard input (default is <Kbd>Tab</Kbd>), or enable the keyboard
+              layout diagram to visualize the locations of each key (on a US
+              keyboard).
             </p>
             <p class="mt-2 text-emerald-300">
               Click on a previously inputted segment to paste it into the
-              textbox. Navigate through the REPL history with <Kbd>Alt+↑</Kbd>{" "}
-              and <Kbd>Alt+↓</Kbd>.
+              textbox. Navigate through the REPL history with <Kbd>Alt</Kbd>+
+              <Kbd>↑</Kbd> and <Kbd>Alt</Kbd>+<Kbd>↓</Kbd>.
             </p>
             <p class="mt-2 text-emerald-300">
               Manage the REPL settings with the{" "}
