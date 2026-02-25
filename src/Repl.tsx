@@ -12,7 +12,7 @@ import { MessageIn, MessageOut } from "./worker";
 import { Token } from "./lang";
 import { Glyph, glyphs, quad } from "./glyphs";
 import { Highlight, glyphColors, special } from "./Highlight";
-import { Keyboard } from "./Keyboard";
+import { Keyboard, KeyboardControls } from "./Keyboard";
 
 type ReplEntry = {
   source: string;
@@ -49,6 +49,8 @@ export const Repl: Component<{
   const [selectedGlyph, setSelectedGlyph] = createSignal(-1);
   const [unsubmitted, setUnsubmitted] = createSignal("");
   const [historyIdx, setHistoryIdx] = createSignal(-1);
+  const [prefixHit, setPrefixHit] = createSignal(false);
+  const [prefixKey, setPrefixKey] = setting("useKeyboard", "Tab");
   const [showKeyboard, setShowKeyboard] = setting("showKeyboard", "false");
   const [enterBehavior, setEnterBehavior] = setting("onEnter", "clear-prompt");
   const [displayTimes, setDisplayTimes] = setting("displayTimes", "false");
@@ -146,6 +148,7 @@ export const Repl: Component<{
   }
   process(initial);
   onMount(() => props.ref?.({ process }));
+  let keyboard!: KeyboardControls;
   let textarea!: HTMLTextAreaElement;
   let inp!: HTMLTextAreaElement;
   return (
@@ -247,13 +250,22 @@ export const Repl: Component<{
                 checked={pretty() === "true"}
                 onInput={(e) => setPretty(e.target.checked + "")}
               />
-              <label for="keyboard">Show keyboard (WIP)</label>
+              <label for="keyboard">Show keyboard</label>
               <input
                 type="checkbox"
                 name="keyboard"
                 id="keyboard"
                 checked={showKeyboard() === "true"}
                 onInput={(e) => setShowKeyboard(e.target.checked + "")}
+              />
+              <label for="prefixkey">Keyboard prefix key</label>
+              <input
+                type="text"
+                name="prefixkey"
+                id="prefixkey"
+                class="bg-green-300 px-1 text-green-800 focus:ring-4 focus:ring-green-800 focus:outline-0"
+                value={prefixKey()}
+                onInput={(e) => setPrefixKey(e.target.value)}
               />
               <label for="defaultfont">
                 Default font for <code>{quad}Text</code>
@@ -407,6 +419,32 @@ export const Repl: Component<{
             // https://github.com/solidjs/vite-plugin-solid/issues/203
             spellcheck={"false" as unknown as boolean}
             onKeyDown={(ev) => {
+              const charMods = ["Shift", "Alt", "Control"];
+              const fnMods = [
+                "Meta",
+                "Enter",
+                "Backspace",
+                "Escape",
+                "Tab",
+                "ArrowUp",
+                "ArrowDown",
+                "ArrowLeft",
+                "ArrowRight",
+              ];
+              if (prefixHit() && !charMods.includes(ev.key)) {
+                setPrefixHit(false);
+                if (fnMods.includes(ev.key)) return;
+                ev.preventDefault();
+                console.log(ev.key);
+                const text = keyboard.keyMap.get(ev.key) ?? ev.key;
+                textarea.setRangeText(text);
+                textarea.selectionStart += text.length;
+                return;
+              }
+              if (ev.key === prefixKey()) {
+                ev.preventDefault();
+                return setPrefixHit(true);
+              }
               if (ev.key === "Enter" && !ev.shiftKey) {
                 ev.preventDefault();
                 if (!disableEntry()) {
@@ -464,10 +502,7 @@ export const Repl: Component<{
         style={{ "--spacing": "0.18rem" }}
         class="text-xs"
       >
-        <Keyboard />
-        <p class="text-center text-sm italic">
-          keyboard WIP! currently non-functional
-        </p>
+        <Keyboard ref={(k) => (keyboard = k)} />
       </div>
       <div class="flex flex-wrap text-3xl">
         <For each={Object.entries(glyphs)}>

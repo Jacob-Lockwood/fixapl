@@ -1,23 +1,35 @@
+import { createEffect } from "solid-js";
 import { glyphs, ualpha, uomega } from "./glyphs";
 const g = (s: keyof typeof glyphs) => glyphs[s].glyph;
 
-function Key(props: { a?: string; A?: string; b?: string; B?: string }) {
-  return (
-    <table class="h-12 w-12 border-1 border-t-0 border-r-0 border-solid">
-      <tbody>
-        <tr>
-          <td class="h-1/2 w-1/2 text-center align-middle">{props.A}</td>
-          <td class="h-1/2 w-1/2 text-center align-middle">{props.B}</td>
-        </tr>
-        <tr>
-          <td class="h-1/2 w-1/2 text-center align-middle">{props.a}</td>
-          <td class="h-1/2 w-1/2 text-center align-middle">{props.b}</td>
-        </tr>
-      </tbody>
-    </table>
-  );
-}
-export function Keyboard() {
+export type KeyboardControls = {
+  highlight(key: string | null): void;
+  keyMap: Map<string, string>;
+};
+export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
+  const keyMap = new Map<string, string>();
+  keyMap.set(" ", g("_"));
+  function Key(props: { a: string; A: string; b?: string; B?: string }) {
+    // eslint-disable-next-line solid/reactivity
+    if (props.b) keyMap.set(props.a, props.b);
+    // eslint-disable-next-line solid/reactivity
+    if (props.B) keyMap.set(props.A, props.B);
+    return (
+      <table class="h-12 w-12 border-1 border-t-0 border-r-0 border-solid">
+        <tbody>
+          <tr>
+            <td class="h-1/2 w-1/2 text-center align-middle">{props.A}</td>
+            <td class="h-1/2 w-1/2 text-center align-middle">{props.B}</td>
+          </tr>
+          <tr>
+            <td class="h-1/2 w-1/2 text-center align-middle">{props.a}</td>
+            <td class="h-1/2 w-1/2 text-center align-middle">{props.b}</td>
+          </tr>
+        </tbody>
+      </table>
+    );
+  }
+  createEffect(() => props.ref?.({ highlight: () => {}, keyMap }));
   return (
     <div class="flex flex-col items-center font-mono">
       <div class="bg-emerald-1000 flex border-t-1 border-r-1">
