@@ -141,16 +141,16 @@ export const eq = df("=", "equal", () =>
 export const ne = df("≠", "not equal", () =>
   pervasive(async (x, y) => N(equal(x, y) ? 0 : 1)),
 );
-export const grt = df(">", "greater than", () =>
+export const gt = df(">", "greater than", () =>
   pervasive(async (x, y) => N(greater(x, y) ? 1 : 0)),
 );
-export const gte = df("≥", "greater or equal", () =>
+export const ge = df("≥", "greater or equal", () =>
   pervasive(async (x, y) => N(greater(x, y) || equal(x, y) ? 1 : 0)),
 );
-export const les = df("<", "less than", () =>
+export const lt = df("<", "less than", () =>
   pervasive(async (x, y) => N(greater(x, y) || equal(x, y) ? 0 : 1)),
 );
-export const lte = df("≤", "less or equal", () =>
+export const le = df("≤", "less or equal", () =>
   pervasive(async (x, y) => N(greater(x, y) ? 0 : 1)),
 );
 
