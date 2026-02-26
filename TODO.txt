@@ -2,6 +2,7 @@ primitives:
 - encode/decode
 - non-scalar windows
 - non-list sorting
+- computed rank
 
 documentation:
 - everything
