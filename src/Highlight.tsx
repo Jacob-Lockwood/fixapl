@@ -1,5 +1,5 @@
 import { Component, For } from "solid-js";
-import { Token } from "./lang";
+import { lex, Token } from "./lang";
 import { Glyph, glyphs } from "./glyphs";
 import { quadsList } from "./quads";
 export const glyphColors = {
@@ -20,7 +20,7 @@ export const special = new Map([
 ]);
 export const Highlight: Component<{
   tokens: readonly Token[];
-  bindings: Map<string, number>;
+  bindings: Record<string, number>;
 }> = (props) => {
   return (
     <For each={props.tokens}>
@@ -45,7 +45,7 @@ export const Highlight: Component<{
             const arity = () =>
               kind === "quad"
                 ? quadsList.get(image.slice(1))!
-                : props.bindings?.get(image);
+                : props.bindings[image];
             const cl = [
               "text-white",
               glyphColors["monadic function"],
@@ -81,3 +81,18 @@ export const Gly: Component<{ g: Glyph }> = (props) => (
     {props.g.glyph}
   </span>
 );
+export const Code = (props: {
+  bindings?: Record<string, number>;
+  children: string;
+}) => {
+  return (
+    <pre>
+      <code>
+        <Highlight
+          bindings={props.bindings ?? {}}
+          tokens={lex(props.children)}
+        />
+      </code>
+    </pre>
+  );
+};

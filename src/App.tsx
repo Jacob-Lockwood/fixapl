@@ -3,14 +3,17 @@ import { Repl, ReplRef } from "./Repl";
 import Docs from "./Docs";
 import { Glyph } from "./glyphs";
 import { Kbd } from "./UtilComponents";
+import { Code } from "./Highlight";
 
 const mandelbrot = `
+⍝ Mandelbrot Set
 Sq  ← ⊡-/⟜×⍨⊟2××/
 Pl  ← ⍉⍉ 2×⍪˜⟜(-0.25)⊞⍨ ⍳⊸÷-0.5
 Gen ← 2<√+/×⍨ ⊣(P+Sq)↺P↤Pl
 ⎕Img 25 Gen 150
 `.trim();
 const sierpinski = `
+⍝ Sierpinski Triangle
 ⎕Img 7(⍪⍨◡⍪0⍪⟜×◡˜)↺⋄1
 `.trim();
 
@@ -239,21 +242,15 @@ export default function App() {
             <summary class="text-emerald-500 underline underline-offset-2">
               Examples
             </summary>
-            <ul>
+            <ul class="flex flex-col gap-4">
               <li>
-                <RunBtn
-                  code={mandelbrot}
-                  class="cursor-pointer font-bold underline"
-                >
-                  Draw Mandelbrot Set
+                <RunBtn code={sierpinski} class="cursor-pointer">
+                  <Code>{sierpinski}</Code>
                 </RunBtn>
               </li>
               <li>
-                <RunBtn
-                  code={sierpinski}
-                  class="cursor-pointer font-bold underline"
-                >
-                  Draw Sierpinski Triangle
+                <RunBtn code={mandelbrot} class="cursor-pointer">
+                  <Code bindings={{ Sq: 1, Pl: 1, Gen: 2 }}>{mandelbrot}</Code>
                 </RunBtn>
               </li>
             </ul>

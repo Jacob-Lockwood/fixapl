@@ -1,15 +1,8 @@
-import {
-  createSignal,
-  createEffect,
-  For,
-  Show,
-  Component,
-  onMount,
-} from "solid-js";
+import { createSignal, For, Show, Component, onMount } from "solid-js";
 import { createStore, SetStoreFunction } from "solid-js/store";
 import ReplWorker from "./worker?worker";
 import { MessageIn, MessageOut } from "./worker";
-import { Token } from "./lang";
+import { lex, Token } from "./lang";
 import { Glyph, glyphs, quad } from "./glyphs";
 import { Gly, Highlight } from "./Highlight";
 import { Keyboard, KeyboardControls } from "./Keyboard";
@@ -61,7 +54,7 @@ export const Repl: Component<{
     "defaultFont",
     "TinyAPL386 Unicode",
   );
-  const [bindings, setBindings] = createSignal(new Map<string, number>());
+  const [bindings, setBindings] = createSignal<Record<string, number>>({});
   const [disableEntry, setDisableEntry] = createSignal(false);
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
 
@@ -75,9 +68,7 @@ export const Repl: Component<{
   const msg = (s: MessageIn) => worker.postMessage(s);
   const onmessage = (worker.onmessage = (ev: MessageEvent<MessageOut>) => {
     const [kind, d] = ev.data;
-    if (kind === "tokens") {
-      setData("tokens", d);
-    } else if (kind === "result") {
+    if (kind === "result") {
       setData("result", (v) => [...v, d]);
     } else if (kind === "bindings") {
       setBindings(d);
@@ -119,7 +110,6 @@ export const Repl: Component<{
     }
   });
   const process = (source: string, tkns?: (t: Token[]) => void) => {
-    setDisableEntry(true);
     // data is re-assigned so each entry gets its own store
     // eslint-disable-next-line solid/reactivity
     [data, setData] = createStore<ReplEntry>({
@@ -132,13 +122,21 @@ export const Repl: Component<{
       time: null,
       requestingInput: false,
     });
+    try {
+      const tokens = lex(source);
+      setData("tokens", tokens);
+      tkns?.(tokens);
+      setDisableEntry(true);
+      msg([
+        "eval",
+        tokens,
+        { autoImg: autoImg() === "true", pretty: pretty() === "true" },
+      ]);
+    } catch (err) {
+      setData("error", err + "");
+      setData("time", 0);
+    }
     setResults((res) => [data, ...res]);
-    msg([
-      "eval",
-      source,
-      { autoImg: autoImg() === "true", pretty: pretty() === "true" },
-    ]);
-    if (tkns) createEffect(() => data.tokens && tkns(data.tokens));
   };
   let initial = `"Hello, world!"`;
   const runParam = new URLSearchParams(window.location.search).get("run");

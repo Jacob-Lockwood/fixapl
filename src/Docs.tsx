@@ -1,6 +1,6 @@
 import { For, ParentComponent } from "solid-js";
 import { prims, glyphs, omega, alpha, ualpha } from "./glyphs";
-import { glyphColors, special } from "./Highlight";
+import { Code, glyphColors, special } from "./Highlight";
 type PrimName = keyof typeof prims;
 
 const ar = (n: number, text: string) => (
@@ -79,19 +79,13 @@ export default function Docs(p: { search: string }) {
       <Doc title="Array notation" keywords="[]⟨⟩‿">
         one way to make a list is to write its values separated by ligatures.
         this is called stranding:
-        <pre>
-          <code>1‿2‿3</code>
-        </pre>
+        <Code>1‿2‿3</Code>
         another is by wrapping the values in <code>⟨⟩</code> and separating by
         commas:
-        <pre>
-          <code>⟨1,2,3⟩</code>
-        </pre>
+        <Code>⟨1,2,3⟩</Code>
         to make a higher rank array, surround the cells you want to merge in{" "}
         <code>[]</code> and separate with commas:
-        <pre>
-          <code>[⟨1,2⟩,⟨3,4⟩,⟨5,6⟩]</code>
-        </pre>
+        <Code>[⟨1,2⟩,⟨3,4⟩,⟨5,6⟩]</Code>
       </Doc>
       <Doc prim={["bef", "aft"]}>
         <div class="flex flex-col gap-2">
@@ -104,7 +98,7 @@ export default function Docs(p: { search: string }) {
             <thead>
               <tr>
                 <th scope="col">
-                  <code>F{ar(4, "⊸")}G</code>
+                  <Code>F⊸G</Code>
                 </th>
                 <th scope="col" class="text-center">
                   {ar(1, "G₁")}
@@ -118,28 +112,28 @@ export default function Docs(p: { search: string }) {
               <tr>
                 <th scope="row">{ar(0, "F₀")}</th>
                 <td>
-                  <code>(G F)</code>
+                  <Code bindings={{ F: 0, G: 1 }}>(G F)</Code>
                 </td>
                 <td>
-                  <code>{`{F G ⍵}`}</code>
+                  <Code bindings={{ F: 0, G: 2 }}>{`{F G ⍵}`}</Code>
                 </td>
               </tr>
               <tr>
                 <th scope="row">{ar(1, "F₁")}</th>
                 <td>
-                  <code>{`{G F ⍵}`}</code>
+                  <Code bindings={{ F: 1, G: 1 }}>{`{G F ⍵}`}</Code>
                 </td>
                 <td>
-                  <code>{`{(F ⍵) G ⍵}`}</code>
+                  <Code bindings={{ F: 1, G: 2 }}>{`{(F ⍵) G ⍵}`}</Code>
                 </td>
               </tr>
               <tr>
                 <th scope="row">{ar(2, "F₂")}</th>
                 <td>
-                  <code>{`{G ⍺ F ⍵}`}</code>
+                  <Code bindings={{ F: 2, G: 1 }}>{`{G ⍺ F ⍵}`}</Code>
                 </td>
                 <td>
-                  <code>{`{(⍺ F ⍵) G ⍵}`}</code>
+                  <Code bindings={{ F: 2, G: 2 }}>{`{(⍺ F ⍵) G ⍵}`}</Code>
                 </td>
               </tr>
             </tbody>
@@ -148,7 +142,7 @@ export default function Docs(p: { search: string }) {
             <thead>
               <tr>
                 <th scope="col">
-                  <code>F{ar(4, "⟜")}G</code>
+                  <Code>F⟜G</Code>
                 </th>
                 <th scope="col" class="text-center">
                   {ar(1, "G₀")}
@@ -165,25 +159,25 @@ export default function Docs(p: { search: string }) {
               <tr>
                 <th scope="row">{ar(1, "F₁")}</th>
                 <td>
-                  <code>{`(F G)`}</code>
+                  <Code bindings={{ F: 1, G: 0 }}>{`(F G)`}</Code>
                 </td>
                 <td>
-                  <code>{`{F G ⍵}`}</code>
+                  <Code bindings={{ F: 1, G: 1 }}>{`{F G ⍵}`}</Code>
                 </td>
                 <td>
-                  <code>{`{F ⍺ G ⍵}`}</code>
+                  <Code bindings={{ F: 1, G: 2 }}>{`{F ⍺ G ⍵}`}</Code>
                 </td>
               </tr>
               <tr>
                 <th scope="row">{ar(2, "F₂")}</th>
                 <td>
-                  <code>{`{⍵ F G}`}</code>
+                  <Code bindings={{ F: 2, G: 0 }}>{`{⍵ F G}`}</Code>
                 </td>
                 <td>
-                  <code>{`{⍺ F G ⍵}`}</code>
+                  <Code bindings={{ F: 2, G: 1 }}>{`{⍺ F G ⍵}`}</Code>
                 </td>
                 <td>
-                  <code>{`{⍺ F ⍺ G ⍵}`}</code>
+                  <Code bindings={{ F: 2, G: 2 }}>{`{⍺ F ⍺ G ⍵}`}</Code>
                 </td>
               </tr>
             </tbody>

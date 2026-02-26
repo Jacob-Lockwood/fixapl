@@ -1,16 +1,15 @@
-import { lex, Parser, TextOptions, Token, Visitor } from "./lang";
+import { Parser, TextOptions, Token, Visitor } from "./lang";
 import pretty from "./pretty";
 import { Arr, display, execnilad, Num, vToImg } from "./util";
 
 export type MessageIn =
-  | ["eval", string, { autoImg: boolean; pretty: boolean }]
+  | ["eval", Token[], { autoImg: boolean; pretty: boolean }]
   | ["input", string | null]
   | ["text", ImageData];
 export type MessageOut =
-  | ["tokens", Token[]]
   | ["result", string]
   | ["error", unknown]
-  | ["bindings", Map<string, number>]
+  | ["bindings", Record<string, number>]
   | ["time", number]
   | ["write", string]
   | ["image", ImageData]
@@ -44,30 +43,25 @@ onmessage = async ({
   if (kind === "text") return textSubscriber(data);
   const t = Date.now();
   try {
-    const toks = lex(data);
-    msg(["tokens", toks]);
-    const t = toks.filter((x) => !"whitespace,comment".includes(x.kind));
+    const t = data.filter((x) => !"whitespace,comment".includes(x.kind));
     const p = new Parser(t).program();
     for (const n of p) {
       const v = await execnilad(await visitor.visit(n));
-      if (n.kind === "binding") continue;
-      const img = settings.autoImg && vToImg(v);
-      if (img && bigEnough(v as Arr<Num>)) msg(["image", img]);
-      else {
-        const r = settings.pretty
-          ? (await pretty(v)).join("\n")
-          : await display(v);
-        msg(["result", r]);
+      if (n.kind !== "binding") {
+        const img = settings.autoImg && vToImg(v);
+        if (img && bigEnough(v as Arr<Num>)) msg(["image", img]);
+        else {
+          const r = settings.pretty
+            ? (await pretty(v)).join("\n")
+            : await display(v);
+          msg(["result", r]);
+        }
       }
-      const bindings = new Map([
-        ...visitor.scopes.flatMap((scope) =>
-          [...scope.keys()].map((name) => [name, 0] as const),
-        ),
-        ...[...visitor.bindings.entries()].map(
-          ([name, val]) =>
-            [name, val.kind === "function" ? val.arity : 0] as const,
-        ),
-      ]);
+      const bindings: Record<string, number> = {};
+      for (const scope of visitor.scopes)
+        for (const name in scope.keys()) bindings[name] = 0;
+      for (const [name, val] of visitor.bindings.entries())
+        bindings[name] = val.kind === "function" ? val.arity : 0;
       msg(["bindings", bindings]);
     }
   } catch (e) {
