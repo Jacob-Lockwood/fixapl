@@ -65,17 +65,6 @@ export default function Docs(p: { search: string }) {
   };
   return (
     <ul class="flex flex-col gap-2">
-      <Doc prim="fil">
-        merge items of {omega}, filling with {alpha}
-      </Doc>
-      <Doc prim="fol">
-        reduce with initial value: <br />
-        call <code class={glyphColors["dyadic function"]}>
-          {ualpha}
-        </code> with {alpha} on the left and {omega}'s first cell on the right,
-        then again with this result on the left and {omega}'s second cell on the
-        right, and so on to the length of {omega}.
-      </Doc>
       <Doc title="Array notation" keywords="[]⟨⟩‿">
         one way to make a list is to write its values separated by ligatures.
         this is called stranding:
@@ -86,6 +75,17 @@ export default function Docs(p: { search: string }) {
         to make a higher rank array, surround the cells you want to merge in{" "}
         <code>[]</code> and separate with commas:
         <Code>[⟨1,2⟩,⟨3,4⟩,⟨5,6⟩]</Code>
+      </Doc>
+      <Doc prim="fil">
+        merge items of {omega}, filling with {alpha}
+      </Doc>
+      <Doc prim="fol">
+        reduce with initial value: <br />
+        call <code class={glyphColors["dyadic function"]}>
+          {ualpha}
+        </code> with {alpha} on the left and {omega}'s first cell on the right,
+        then again with this result on the left and {omega}'s second cell on the
+        right, and so on to the length of {omega}.
       </Doc>
       <Doc prim={["bef", "aft"]}>
         <div class="flex flex-col gap-2">
