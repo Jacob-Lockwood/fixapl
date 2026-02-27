@@ -490,8 +490,8 @@ export class Visitor {
           const call = (f: Val, ...v: Val[]) =>
             f.kind !== "function"
               ? f
-              : f.arity === 1
-                ? f.data(v[r === 2 ? 1 : 0])
+              : f.arity === 1 && r === 2
+                ? f.data(v[1])
                 : f.data(...v);
           y = F(r, async (...v) => {
             const k = await call(f, ...v);
@@ -502,73 +502,6 @@ export class Visitor {
       }
       y.repr = `(${(await asyncMap(tines, display)).join(" ")})`;
       return y;
-      // let i = node.values.length;
-      // const tines: Val[] = [];
-      // const get = async () => {
-      //   const v = await this.visit(node.values[--i]);
-      //   return tines.unshift(v), v;
-      // };
-      // const l = await get();
-      // if (i === 0) return l;
-      // let rgt: Fun;
-      // if (l.kind === "function" && l.arity === 2) {
-      //   const m = await get();
-      //   if (m.kind === "function" && m.arity === 2 && i > 0) {
-      //     const lft = await get();
-      //     const lf =
-      //       lft.kind === "function"
-      //         ? lft.arity === 1
-      //           ? (_: Val, y: Val) => lft.data(y)
-      //           : lft.data
-      //         : async () => lft;
-      //     const r = l.data;
-      //     rgt = F(2, (x, y) =>
-      //       r(x, y).then(async (r) => m.data(await lf(x, y), r)),
-      //     );
-      //   } else {
-      //     if (m.kind !== "function" || m.arity === 0)
-      //       rgt = F(1, async (y) => l.data(await execnilad(m), y));
-      //     else if (m.arity === 1)
-      //       rgt = F(2, async (x, y) => m.data(await l.data(x, y)));
-      //     else rgt = F(2, async (x, y) => m.data(x, await l.data(x, y)));
-      //   }
-      // } else {
-      //   rgt = l.kind === "function" ? l : nilad(l);
-      // }
-      // while (i > 0) {
-      //   const rfn = rgt.data;
-      //   const cur = await get();
-      //   if (cur.kind !== "function" || cur.arity === 0)
-      //     throw new Error("Unexpected nilad");
-      //   if (cur.arity === 1) {
-      //     rgt = F(rgt.arity, (...v) => rfn(...v).then(cur.data));
-      //   } else if (i > 0) {
-      //     const lft = await get();
-      //     const arity = Math.max(
-      //       rgt.arity,
-      //       lft.kind === "function" ? lft.arity : 0,
-      //     );
-      //     const l =
-      //       lft.kind === "function"
-      //         ? lft.arity === 1 && arity === 2
-      //           ? (_: Val, y: Val) => lft.data(y)
-      //           : lft.data
-      //         : async () => lft;
-      //     const r =
-      //       arity === 2 && rgt.arity === 1 ? (_: Val, y: Val) => rfn(y) : rfn;
-      //     rgt = F(arity, (...v) =>
-      //       r(...v).then(async (r) => cur.data(await l(...v), r)),
-      //     );
-      //   } else {
-      //     if (rgt.arity === 0)
-      //       rgt = F(1, async (y) => cur.data(y, await rfn()));
-      //     else if (rgt.arity === 1)
-      //       rgt = F(2, async (x, y) => cur.data(x, await rfn(y)));
-      //     else rgt = F(2, async (x, y) => cur.data(x, await rfn(x, y)));
-      //   }
-      // }
-      // rgt.repr = `(${(await asyncMap(tines, display)).join(" ")})`;
-      // return rgt;
     } else if (node.kind === "strand" || node.kind === "list") {
       const o: Val[] = [];
       for (let i = node.values.length - 1; i >= 0; i--)
