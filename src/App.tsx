@@ -8,7 +8,7 @@ import { Code } from "./Highlight";
 const mandelbrot = `
 ⍝ Mandelbrot Set
 Sq  ← ⊡-/⟜×⍨⊟2××/
-Pl  ← ⍉⍉ 2×⍪˜⟜(-0.25)⊞⍨ ⍳⊸÷-0.5
+Pl  ← ⍉⍉ 2×⍪˜⟜(⋅-0.25)⊞⍨ ⍳⊸÷-0.5
 Gen ← 2<√+/×⍨ ⊣(P+Sq)↺P↤Pl
 ⎕Img 25 Gen 150
 `.trim();

@@ -92,7 +92,9 @@ export default function Docs(p: { search: string }) {
           <p>
             these two modifiers are used to express many cases of function
             composition. in both cases, the circle in the glyph points to the
-            second function to be called.
+            second function to be called. if that function is monadic, the
+            resulting composition is equivalent to the 2-train with that
+            function left of the other.
           </p>
           <table class="border-separate border-spacing-4">
             <thead>
@@ -222,4 +224,12 @@ export default function Docs(p: { search: string }) {
     by <code>⍺</code> positions
   </p>
 </DocEntry>
+<Doc title="Trains">
+  in FIXAPL, you can write functions tacitly with a simple syntax called
+  trains. if you've used other APL-family languages with trains, these'll
+  feel familiar but different (and hopefully, better). <br />
+  in general, expressions in FIXAPL are parsed from right to left. the
+  rightmost part of an expression is handled a bit differently from the
+  rest, so we'll start there.
+</Doc>
 */
