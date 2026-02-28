@@ -1,21 +1,11 @@
-import { createSignal, ParentComponent } from "solid-js";
+import { Component, createSignal, ParentComponent } from "solid-js";
 import { Repl, ReplRef } from "./Repl";
 import Docs from "./Docs";
 import { Glyph } from "./glyphs";
 import { Kbd } from "./UtilComponents";
 import { Code } from "./Highlight";
 
-const mandelbrot = `
-⍝ Mandelbrot Set
-Sq  ← ⊡-/⟜×⍨⊟2××/
-Pl  ← ⍉⍉ 2×⍪˜⟜(⋅-0.25)⊞⍨ ⍳⊸÷-0.5
-Gen ← 2<√+/×⍨ ⊣(P+Sq)↺P↤Pl
-⎕Img 25 Gen 150
-`.trim();
-const sierpinski = `
-⍝ Sierpinski Triangle
-⎕Img 7(⍪⍨◡⍪0⍪⟜×◡˜)↺⋄1
-`.trim();
+const dedent = (s: string) => s.trim().replace(/^ */gm, "");
 
 export default function App() {
   const [search, setSearch] = createSignal("");
@@ -28,6 +18,14 @@ export default function App() {
     >
       {props.children}
     </a>
+  );
+  const Example: Component<{
+    bindings?: Record<string, number>;
+    children: string;
+  }> = (props) => (
+    <RunBtn code={dedent(props.children)} class="cursor-pointer">
+      <Code bindings={props.bindings}>{dedent(props.children)}</Code>
+    </RunBtn>
   );
   const openDocs = (g: Glyph) => {
     setDocsOpen(true);
@@ -244,14 +242,19 @@ export default function App() {
             </summary>
             <ul class="flex flex-col gap-4">
               <li>
-                <RunBtn code={sierpinski} class="cursor-pointer">
-                  <Code>{sierpinski}</Code>
-                </RunBtn>
+                <Example>{`
+                  ⍝ Sierpinski Triangle
+                  ⎕Img 7(⍪⍨◡⍪0⍪⟜×◡˜)↺⋄1
+                `}</Example>
               </li>
               <li>
-                <RunBtn code={mandelbrot} class="cursor-pointer">
-                  <Code bindings={{ Sq: 1, Pl: 1, Gen: 2 }}>{mandelbrot}</Code>
-                </RunBtn>
+                <Example bindings={{ Sq: 1, Pl: 1, Gen: 2 }}>{`
+                  ⍝ Mandelbrot Set
+                  Sq  ← ⊡-/⟜×⍨⊟2××/
+                  Pl  ← ⍉⍉ 2×⍪˜⟜(⋅-0.25)⊞⍨ ⍳⊸÷-0.5
+                  Gen ← 2<√+/×⍨ ⊣(P+Sq)↺P↤Pl
+                  ⎕Img 25 Gen 150
+                `}</Example>
               </li>
             </ul>
           </details>
