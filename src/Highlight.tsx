@@ -84,15 +84,16 @@ export const Gly: Component<{ g: Glyph }> = (props) => (
 export const Code = (props: {
   bindings?: Record<string, number>;
   children: string;
-}) => {
-  return (
-    <pre>
-      <code>
-        <Highlight
-          bindings={props.bindings ?? {}}
-          tokens={lex(props.children)}
-        />
-      </code>
-    </pre>
-  );
-};
+}) => (
+  <code>
+    <Highlight bindings={props.bindings ?? {}} tokens={lex(props.children)} />
+  </code>
+);
+export const CodeBlock = (props: {
+  bindings?: Record<string, number>;
+  children: string;
+}) => (
+  <pre>
+    <Code {...props} />
+  </pre>
+);

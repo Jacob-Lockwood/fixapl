@@ -3,7 +3,7 @@ import { Repl, ReplRef } from "./Repl";
 import Docs from "./Docs";
 import { Glyph } from "./glyphs";
 import { Kbd } from "./UtilComponents";
-import { Code } from "./Highlight";
+import { CodeBlock } from "./Highlight";
 
 const dedent = (s: string) => s.trim().replace(/^ */gm, "");
 
@@ -24,7 +24,7 @@ export default function App() {
     children: string;
   }> = (props) => (
     <RunBtn code={dedent(props.children)} class="cursor-pointer">
-      <Code bindings={props.bindings}>{dedent(props.children)}</Code>
+      <CodeBlock bindings={props.bindings}>{dedent(props.children)}</CodeBlock>
     </RunBtn>
   );
   const openDocs = (g: Glyph) => {
