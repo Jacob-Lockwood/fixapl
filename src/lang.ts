@@ -14,7 +14,6 @@ import {
   cells,
   graphemes,
   nilad,
-  asyncMap,
 } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts, omega } from "./glyphs";
 import quads from "./quads";
@@ -467,11 +466,13 @@ export class Visitor {
       let n = await get();
       if (i === 0) return n;
       let y = (n = n.kind === "function" ? n : nilad(n));
+      let repr = await display(y);
       if (y.arity === 2) {
         const x = await peek();
         if (x.kind !== "function" || x.arity === 0) {
           y = F(1, (y) => n.data(x, y));
           i--;
+          repr = `(${await display(x)} ${repr})`;
         }
       }
       while (i > 0) {
@@ -482,6 +483,7 @@ export class Visitor {
         }
         if (x.arity === 1) {
           y = F(y.arity, (...v) => f.data(...v).then(x.data));
+          repr = `(${await display(x)} ${repr})`;
         } else {
           if (i === 0)
             throw new Error("Leftmost part of expression may not be dyadic");
@@ -498,9 +500,10 @@ export class Visitor {
             const j = await call(w, ...v);
             return call(x, j, k);
           });
+          repr = `(${await display(w)} ${await display(x)} ${repr})`;
         }
       }
-      y.repr = `(${(await asyncMap(tines, display)).join(" ")})`;
+      y.repr = repr;
       return y;
     } else if (node.kind === "strand" || node.kind === "list") {
       const o: Val[] = [];
