@@ -118,8 +118,8 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
         <Key a="b" A="B" b={g.flo} B={g.cei} />
         <Key a="n" A="N" b={g.mer} B={g.fil} />
         <Key a="m" A="M" b={g.mat} B={g.nmt} />
-        <Key a="," A={g.gt} b={g.cat} B={g.le} />
-        <Key a="." A={g.lt} b={g.id} B={g.ge} />
+        <Key a="," A={g.gt} b={g.cat} B={g.ge} />
+        <Key a="." A={g.lt} b={g.id} B={g.le} />
         <Key a={g.red} A={g.rol} b={g.fol} B={g.rpl} />
         <PlaceholderKey class="w-27" />
       </KeyRow>
