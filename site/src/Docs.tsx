@@ -1,5 +1,5 @@
 import { For, ParentComponent } from "solid-js";
-import { prims, glyphs, omega, alpha, ualpha } from "./fixapl/glyphs";
+import { prims, glyphs, omega, alpha, ualpha } from "fixapl/glyphs";
 import { Code, CodeBlock, glyphColors, special } from "./Highlight";
 type PrimName = keyof typeof prims;
 

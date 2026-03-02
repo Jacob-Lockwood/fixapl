@@ -1,7 +1,7 @@
 import { Component, createSignal, ParentComponent } from "solid-js";
 import { Repl, ReplRef } from "./Repl";
 import Docs from "./Docs";
-import { Glyph } from "./fixapl/glyphs";
+import { Glyph } from "fixapl/glyphs";
 import { Kbd } from "./UtilComponents";
 import { CodeBlock } from "./Highlight";
 
