@@ -1,6 +1,6 @@
-import { Parser, TextOptions, Token, Visitor } from "./lang";
-import pretty from "./pretty";
-import { Arr, display, execnilad, Num, vToImg } from "./util";
+import { Parser, TextOptions, Token, Visitor } from "./fixapl/lang";
+import pretty from "./fixapl/pretty";
+import { Arr, display, execnilad, Num, vToImg } from "./fixapl/util";
 
 export type MessageIn =
   | ["eval", Token[], { autoImg: boolean; pretty: boolean }]
