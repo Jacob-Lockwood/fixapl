@@ -49,17 +49,27 @@ export default function Docs(p: { search: string }) {
             !searchstr.toLowerCase().includes(p.search.toLowerCase()),
         }}
       >
-        <h3 class="text-lg text-green-400">
-          <For each={prims} fallback={title}>
-            {(prim, idx) => (
-              <>
-                {idx() && <span> and </span>}
-                <GlyphStr n={prim} />
-              </>
-            )}
-          </For>
-        </h3>
-        {children}
+        <details
+          open={
+            p.search !== "" &&
+            searchstr.toLowerCase().includes(p.search.toLowerCase())
+          }
+          class="relative"
+        >
+          <summary class="bg-emerald-1000 sticky top-0">
+            <h3 class="inline-block text-lg text-green-400">
+              <For each={prims} fallback={title}>
+                {(prim, idx) => (
+                  <>
+                    {idx() && <span> and </span>}
+                    <GlyphStr n={prim} />
+                  </>
+                )}
+              </For>
+            </h3>
+          </summary>
+          {children}
+        </details>
       </li>
     );
   };
@@ -133,7 +143,7 @@ export default function Docs(p: { search: string }) {
         </p>
         <CodeBlock
           bindings={{ F: 1, G: 2, H: 0 }}
-        >{`(F H G F H G F F H) ⍝ is equivalent to:
+        >{`(F H G F H G F F H) ⍝ ← is equivalent to:
 (F(H G(F(H G(F(F H))))))`}</CodeBlock>
         <p class="mt-1">
           if you enter a train into the REPL, its parenthesized form will be
