@@ -1,5 +1,5 @@
 import { createEffect, createSignal, JSX } from "solid-js";
-import { Glyph, glyphs as g } from "fixapl/glyphs";
+import { Glyph, glyphs as g } from "#fixapl/glyphs";
 import { Gly } from "./Highlight";
 
 export type KeyboardControls = {

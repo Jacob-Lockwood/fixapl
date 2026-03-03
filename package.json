@@ -1,4 +1,6 @@
 {
+  "name": "fixapl",
+  "version": "0.0.1",
   "scripts": {},
   "packageManager": "pnpm@10.17.1"
 }
