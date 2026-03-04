@@ -403,8 +403,8 @@ export class Visitor {
   q: ReturnType<typeof quads>;
   private thisBinding?: [string, number];
   private dfns?: Val[];
-  constructor(ctx: ReplContext) {
-    this.q = quads(ctx);
+  constructor(ctx: Partial<ReplContext>) {
+    this.q = quads(ctx as ReplContext);
   }
   private exec = F(
     1,

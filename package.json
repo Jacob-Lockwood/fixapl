@@ -1,6 +1,19 @@
 {
   "name": "fixapl",
   "version": "0.0.1",
-  "scripts": {},
-  "packageManager": "pnpm@10.17.1"
+  "type": "module",
+  "scripts": {
+    "build": "tsdown"
+  },
+  "files": [
+    "dist"
+  ],
+  "packageManager": "pnpm@10.17.1",
+  "bin": {
+    "fixapl": "dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsdown": "^0.20.3"
+  }
 }
