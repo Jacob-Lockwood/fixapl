@@ -357,7 +357,9 @@ export const Repl: Component<{
                             if (ev.key !== "Enter") return;
                             ev.preventDefault();
                             setData("requestingInput", false);
-                            msg(["input", ev.currentTarget.value]);
+                            const { value } = ev.currentTarget;
+                            setData("output", (s) => s + value);
+                            msg(["input", value]);
                           }}
                         />
                       </Show>

@@ -37,7 +37,7 @@ export default (ctx: ReplContext) =>
       ctx.write(s);
       const o = await ctx.read();
       if (o === null) throw err("no input was provided");
-      ctx.write(o + "\n");
+      ctx.write("\n");
       return list([...o].map(C));
     }),
     q("Sleep", 1, (err) => async (y) => {
