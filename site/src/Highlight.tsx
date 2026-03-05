@@ -1,7 +1,7 @@
 import { Component, For } from "solid-js";
-import { lex, Token } from "./lang";
-import { Glyph, glyphs } from "./glyphs";
-import { quadsList } from "./quads";
+import { lex, Token } from "#fixapl/lang";
+import { Glyph, glyphs } from "#fixapl/glyphs";
+import { quadsList } from "#fixapl/quads";
 export const glyphColors = {
   "monadic function": "text-lime-400",
   "dyadic function": "text-sky-400",

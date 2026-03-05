@@ -1,0 +1,3 @@
+Greet ← ⎕Print '!'⍪˜"Hello, "⍪0⌵⍢⊃
+Greet "world"
+Greet ⎕Prompt"what's your name? "

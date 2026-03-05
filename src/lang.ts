@@ -183,11 +183,13 @@ export class Parser {
       this.i++;
       return {
         kind: "string",
-        value: eval(tok.image.replaceAll("\\\n", "").replaceAll("\n", "\\n")),
+        value: (0, eval)(
+          tok.image.replaceAll("\\\n", "").replaceAll("\n", "\\n"),
+        ),
       };
     } else if (tok.kind === "character") {
       this.i++;
-      const str: string = eval(tok.image.replaceAll("\n", "\\n"));
+      const str: string = (0, eval)(tok.image.replaceAll("\n", "\\n"));
       if (graphemes(str).length !== 1)
         throw this.error(
           `character literal must be one character: ${tok.image}`,
@@ -401,8 +403,8 @@ export class Visitor {
   q: ReturnType<typeof quads>;
   private thisBinding?: [string, number];
   private dfns?: Val[];
-  constructor(ctx: ReplContext) {
-    this.q = quads(ctx);
+  constructor(ctx: Partial<ReplContext>) {
+    this.q = quads(ctx as ReplContext);
   }
   private exec = F(
     1,
