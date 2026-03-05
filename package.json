@@ -10,7 +10,7 @@
   ],
   "packageManager": "pnpm@10.17.1",
   "bin": {
-    "fixapl": "dist/cli.js"
+    "fixapl": "cli.js"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",
