@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsdown"
   },
+  "repository": "https://github.com/jacob-lockwood/fixapl",
   "files": [
     "dist"
   ],
