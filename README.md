@@ -1,7 +1,7 @@
 <h1 align="center">FIXAPL</h1>
 
 <p align="center">
-<img src="public/FIXAPL.svg" alt="FIXAPL logo" width="200">
+<img src="site/public/FIXAPL.svg" alt="FIXAPL logo" width="200">
 <br><br>
 <i>APL reimagined from the ground up with fixed-arity functions</i>
 <br><br>
