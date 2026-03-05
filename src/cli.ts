@@ -1,49 +1,59 @@
 #!/usr/bin/env node
-import { readFile } from "fs/promises";
-import { argv } from "process";
+import { readFile, writeFile } from "fs/promises";
+import { createInterface } from "readline/promises";
+import { text } from "stream/consumers";
+import { argv, cwd, stdin, stdout } from "process";
+import { resolve } from "path";
 import { version } from "../package.json";
 import { lex, Parser, Visitor } from "./lang";
-import { text } from "stream/consumers";
-import { createInterface } from "readline/promises";
 import { execnilad, Val } from "./util";
 import pretty from "./pretty";
-import { clearScreenDown, moveCursor } from "readline";
-import { resolve } from "path";
 
-const rl = createInterface({ input: process.stdin, output: process.stdout });
+let rl = createInterface({ input: stdin, output: stdout }).pause();
+
+const fmt = (s: string) =>
+  lex(s)
+    .map((x) => x.image)
+    .join("");
+const read = (p: string) => readFile(resolve(cwd(), p), "utf8");
 
 if (["-v", "--version"].includes(argv[2])) console.log(version);
 else if (["-h", "--help", "help"].includes(argv[2])) {
   console.log(`FIXAPL v${version}
-REPL:   fixapl
-run:    fixapl file.fxapl    or    fixapl run [file]   
-format: fixapl fmt [file]
-
-options: -h = --help, -v = --version
-`);
+    REPL:   fixapl
+    run:    fixapl file.fxapl    or    fixapl run [file]   
+    format: fixapl fmt [file]
+    
+    options: -h = --help, -v = --version
+    `);
 } else {
   const v = new Visitor({
-    write: (s) => process.stdout.write(s),
-    // read:
+    write: (s) => stdout.write(s),
+    read: () => {
+      rl.resume();
+      return new Promise((res) =>
+        rl.once("line", (s) => {
+          rl.pause();
+          res(s);
+        }),
+      );
+    },
   });
   async function run(s: string) {
-    const p = new Parser(lex(s)).program();
+    const t = lex(s).filter((t) => !"whitespace,comment".includes(t.kind));
+    rl.pause();
+    const p = new Parser(t).program();
     const o: Val[] = [];
     for (const x of p) o.push(await execnilad(await v.visit(x)));
     return o;
   }
-  const fmt = (s: string) =>
-    lex(s)
-      .map((x) => x.image)
-      .join("");
   if (argv[2]?.endsWith(".fxapl"))
-    run(await readFile(resolve(process.cwd(), argv[2]), "utf8"));
+    run(await readFile(resolve(cwd(), argv[2]), "utf8"));
   else if (argv[2] === "run") {
-    if (!argv[3]) {
-      const x = await text(process.stdin);
-      console.log(x);
-      await run(x.trim());
-    } else run(await readFile(resolve(process.cwd(), argv[3]), "utf8"));
+    await run(argv[3] ?? (await text(stdin)));
+  } else if (argv[2] === "fmt") {
+    if (!argv[3]) console.log(fmt(await text(stdin)));
+    else await writeFile(argv[3], fmt(await read(argv[3])));
   } else if (!argv[2]) {
     console.log(`FIXAPL v${version} REPL`);
     console.log("type .exit to close");
@@ -56,8 +66,9 @@ options: -h = --help, -v = --version
       }
       try {
         const f = fmt(line);
-        moveCursor(process.stdout, 0, -1);
-        clearScreenDown(process.stdout);
+        const h = Math.ceil(line.length / stdout.getWindowSize()[0]);
+        stdout.moveCursor(0, -h);
+        stdout.clearScreenDown();
         console.log(prompt + f);
         for (const r of await run(line))
           console.log((await pretty(r)).join("\n"));

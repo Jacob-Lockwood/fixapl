@@ -1,0 +1,2 @@
+⎕Print "hello, world!"
+⎕Print '!'⍪˜"Hello, "⍪0⌵⍢⊃⎕Prompt"what's your name? "
