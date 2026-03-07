@@ -8,7 +8,6 @@ documentation:
 - everything
 
 other:
-- local installation
 - APL387?
 - GIF support
 - summary view for big arrays
