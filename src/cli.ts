@@ -61,11 +61,7 @@ async function run(s: string) {
   rl.pause();
   const p = new Parser(t).program();
   const o: Val[] = [];
-  for (const x of p) {
-    const r = await v.visit(x);
-    if (x.kind === "binding") bdg[x.name] = r.kind === "function" ? r.arity : 0;
-    else o.push(await execnilad(r));
-  }
+  for (const x of p) o.push(await execnilad(await v.visit(x)));
   return o;
 }
 
@@ -80,11 +76,10 @@ run:     fixapl file.fxapl    or    fixapl run [file]
 format:  fixapl fmt [file]
 options: -h = --help, -v = --version
 update:  npm i -g fixapl`);
-}
-if (argv[2]?.endsWith(".fxapl"))
+} else if (argv[2]?.endsWith(".fxapl"))
   run(await readFile(resolve(cwd(), argv[2]), "utf8"));
 else if (argv[2] === "run") {
-  await run(argv[3] ?? (await text(stdin)));
+  await run(argv[3] ? await read(argv[3]) : await text(stdin));
 } else if (argv[2] === "fmt") {
   if (!argv[3]) console.log(fmt(await text(stdin)));
   else await writeFile(argv[3], fmt(await read(argv[3])));
