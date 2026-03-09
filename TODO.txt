@@ -1,4 +1,8 @@
 primitives:
+- &Import
+  - will require some rewriting of namespaces; &Import should
+    return a namespace which contains all bindings, but bindings
+    currently aren't stored in namespaces.
 - encode/decode
 - non-scalar windows
 - non-list sorting
