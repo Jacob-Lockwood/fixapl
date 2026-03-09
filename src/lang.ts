@@ -394,6 +394,7 @@ export type ReplContext = {
   write: (s: string) => void;
   read: () => Promise<string | null>;
   drawText: (opts: TextOptions) => Promise<ImageData>;
+  readFile: (p: string) => Promise<string>;
 };
 const newScope = () => new Map<string, Val>([]);
 export class Visitor {

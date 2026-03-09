@@ -44,6 +44,7 @@ const highlight = (tks: Token[]) =>
       return style(image);
     })
     .join("");
+let root = cwd();
 const v = new Visitor({
   write: (s) => stdout.write(s),
   read: () => {
@@ -55,6 +56,7 @@ const v = new Visitor({
       }),
     );
   },
+  readFile: (p) => readFile(resolve(root, p), "utf8"),
 });
 async function run(s: string) {
   const t = lex(s).filter((t) => !"whitespace,comment".includes(t.kind));
@@ -64,7 +66,6 @@ async function run(s: string) {
   for (const x of p) o.push(await execnilad(await v.visit(x)));
   return o;
 }
-
 const read = (p: string) => readFile(resolve(cwd(), p), "utf8");
 
 if (["-v", "--version"].includes(argv[2])) console.log(version);
@@ -76,9 +77,10 @@ run:     fixapl file.fxapl    or    fixapl run [file]
 format:  fixapl fmt [file]
 options: -h = --help, -v = --version
 update:  npm i -g fixapl`);
-} else if (argv[2]?.endsWith(".fxapl"))
-  run(await readFile(resolve(cwd(), argv[2]), "utf8"));
-else if (argv[2] === "run") {
+} else if (argv[2]?.endsWith(".fxapl")) {
+  run(await read(argv[2]));
+} else if (argv[2] === "run") {
+  if (argv[3]) root = argv[3];
   await run(argv[3] ? await read(argv[3]) : await text(stdin));
 } else if (argv[2] === "fmt") {
   if (!argv[3]) console.log(fmt(await text(stdin)));
@@ -104,7 +106,7 @@ else if (argv[2] === "run") {
       if (x.kind !== "binding")
         console.log((await pretty(await execnilad(r))).join("\n"));
     } catch (e) {
-      console.error(e);
+      console.error(kleur.red(e instanceof Error ? e.message : e + ""));
     }
   }
 }

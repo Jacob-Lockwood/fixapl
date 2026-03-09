@@ -358,7 +358,7 @@ export const Repl: Component<{
                             ev.preventDefault();
                             setData("requestingInput", false);
                             const { value } = ev.currentTarget;
-                            setData("output", (s) => s + value);
+                            setData("output", (s) => s + value + "\n");
                             msg(["input", value]);
                           }}
                         />

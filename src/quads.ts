@@ -1,6 +1,18 @@
 import { quad, alpha, omega } from "./glyphs";
 import { ReplContext } from "./lang";
-import { A, Arr, C, F, isString, list, N, Num, Val, vToImg } from "./util";
+import {
+  A,
+  Arr,
+  C,
+  F,
+  graphemes,
+  isString,
+  list,
+  N,
+  Num,
+  Val,
+  vToImg,
+} from "./util";
 
 // export const quadsList = new Map<string, number>();
 // ?! WHY DOESN'T IT JUST WORK ARGHH
@@ -11,6 +23,7 @@ export const quadsList = new Map([
   ["Sleep", 1],
   ["Img", 1],
   ["Text", 2],
+  ["File", 1],
 ]);
 
 const q = (
@@ -37,8 +50,7 @@ export default (ctx: ReplContext) =>
       ctx.write(s);
       const o = await ctx.read();
       if (o === null) throw err("no input was provided");
-      ctx.write("\n");
-      return list([...o].map(C));
+      return list(graphemes(o).map(C));
     }),
     q("Sleep", 1, (err) => async (y) => {
       if (y.kind !== "number") throw err(`${omega} must be a number`);
@@ -108,5 +120,14 @@ export default (ctx: ReplContext) =>
         [height, width, 4],
         [...data].map((v) => N(v / 255)),
       );
+    }),
+    q("File", 1, (err) => async (y) => {
+      if (!isString(y)) throw err(`${omega} must be a string`);
+      const s = String.fromCodePoint(...y.data.map((v) => v.data));
+      try {
+        return list(graphemes(await ctx.readFile(s)).map(C));
+      } catch (e) {
+        throw err(e instanceof Error ? e.message : e + "");
+      }
     }),
   ]);
