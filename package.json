@@ -3,8 +3,8 @@
   "version": "0.0.2",
   "type": "module",
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch"
+    "dev": "tsdown --watch",
+    "prepare": "tsdown"
   },
   "repository": "https://github.com/jacob-lockwood/fixapl",
   "files": [
