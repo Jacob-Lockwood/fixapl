@@ -1,24 +1,25 @@
 import { createEffect, createSignal, JSX } from "solid-js";
 import { Glyph, glyphs as g } from "#fixapl/glyphs";
 import { Gly } from "./Highlight";
+import keyboard from "#fixapl/keyboard.json";
+const keyMap = new Map(Object.entries(keyboard));
 
 export type KeyboardControls = {
   highlight(key: string | null): void;
   keyMap: Map<string, string>;
 };
+
+type GP = Glyph | string;
+const sToGP = (s: string): GP =>
+  Object.entries(g).find(([_, v]) => v.glyph === s)?.[1] ?? s;
+
 export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
   const [highlight, setHighlight] = createSignal<string | null>(null);
-  const keyMap = new Map<string, string>();
-  keyMap.set(" ", g._.glyph);
-  type GP = Glyph | string;
-  function Key(props: { a: GP; A: GP; b?: GP; B?: GP }) {
-    const toS = (a: GP) => (typeof a === "string" ? a : a.glyph);
+  function Key(props: { a: string; A: string }) {
+    const b = keyMap.get(props.a);
+    const B = keyMap.get(props.A);
     // eslint-disable-next-line solid/reactivity
-    if (props.b) keyMap.set(toS(props.a), toS(props.b));
-    // eslint-disable-next-line solid/reactivity
-    if (props.B) keyMap.set(toS(props.A), toS(props.B));
-    const s = // eslint-disable-next-line solid/reactivity
-      toS(props.a) + toS(props.A) + toS(props.b ?? "") + toS(props.B ?? "");
+    const s = props.a + props.A + b + B;
     const Td = (props: { g: GP | undefined }) => (
       <td class="h-1/2 w-1/2 text-center align-middle">
         {typeof props.g === "string" ? props.g : props.g && <Gly g={props.g} />}
@@ -33,12 +34,12 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
       >
         <tbody>
           <tr>
-            <Td g={props.A} />
-            <Td g={props.B} />
+            <Td g={sToGP(props.A)} />
+            <Td g={B && sToGP(B)} />
           </tr>
           <tr>
-            <Td g={props.a} />
-            <Td g={props.b} />
+            <Td g={sToGP(props.a)} />
+            <Td g={b && sToGP(b)} />
           </tr>
         </tbody>
       </table>
@@ -63,64 +64,64 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
       classList={{ "!text-gray-400": highlight() !== null }}
     >
       <KeyRow top>
-        <Key a="`" A="~" B={g.emp} />
-        <Key a="1" A="!" b={g.mn} B={g.unt} />
-        <Key a="2" A="@" b={g.dy} B={g.rep} />
-        <Key a="3" A="#" b={g.eac} B={g["#"]} />
-        <Key a="4" A="$" b={g.und} B={g.ctc} />
-        <Key a="5" A="%" b={g.slf} B={g.cho} />
-        <Key a="6" A="^" b={g.bac} B={g.ari} />
-        <Key a="7" A="&" b={g.div} B={g["%"]} />
-        <Key a="8" A={g.pow} b={g.mul} B={g.log} />
-        <Key a="9" A={g["("]} b={g.inf} B={g["<<"]} />
-        <Key a="0" A={g[")"]} b={g.sb} B={g[">>"]} />
-        <Key a={g.sub} A="_" b={g.ng} B={g.not} />
-        <Key a={g.eq} A={g.add} b={g.ne} B={g.sig} />
+        <Key a="`" A="~" />
+        <Key a="1" A="!" />
+        <Key a="2" A="@" />
+        <Key a="3" A="#" />
+        <Key a="4" A="$" />
+        <Key a="5" A="%" />
+        <Key a="6" A="^" />
+        <Key a="7" A="&" />
+        <Key a="8" A="*" />
+        <Key a="9" A="(" />
+        <Key a="0" A=")" />
+        <Key a="-" A="_" />
+        <Key a="=" A="+" />
         <PlaceholderKey class="w-18" />
       </KeyRow>
       <KeyRow>
         <PlaceholderKey class="w-18" />
-        <Key a="q" A="Q" b={g.rev} B={g.rot} />
-        <Key a="w" A="W" b={g.w} B={g.ww} />
-        <Key a="e" A="E" b={g.mem} B={g.rou} />
-        <Key a="r" A="R" b={g.res} B={g.sqr} />
-        <Key a="t" A="T" b={g.tra} />
-        <Key a="y" A="Y" b={g.tak} B={g.max} />
-        <Key a="u" A="U" b={g.dro} B={g.min} />
-        <Key a="i" A="I" b={g.iot} B={g.whe} />
-        <Key a="o" A="O" b={g.ov} />
-        <Key a="p" A="P" b={g.pi} B={g.tau} />
-        <Key a={g["["]} A={g["{"]} b={g[":"]} B={g.lft} />
-        <Key a={g["]"]} A={g["}"]} b={g["::"]} B={g.rgt} />
-        <Key a={g.pre} A={g.mod} B={g.abs} />
+        <Key a="q" A="Q" />
+        <Key a="w" A="W" />
+        <Key a="e" A="E" />
+        <Key a="r" A="R" />
+        <Key a="t" A="T" />
+        <Key a="y" A="Y" />
+        <Key a="u" A="U" />
+        <Key a="i" A="I" />
+        <Key a="o" A="O" />
+        <Key a="p" A="P" />
+        <Key a="[" A="{" />
+        <Key a="]" A="}" />
+        <Key a="\" A="|" />
       </KeyRow>
       <KeyRow>
         <PlaceholderKey class="w-21" />
-        <Key a="a" A="A" b={g.a} B={g.aa} />
-        <Key a="s" A="S" b={g.sel} B={g.pic} />
-        <Key a="d" A="D" b={g.len} B={g.sha} />
-        <Key a="f" A="F" b={g.bef} />
-        <Key a="g" A="G" b={g.aft} />
+        <Key a="a" A="A" />
+        <Key a="s" A="S" />
+        <Key a="d" A="D" />
+        <Key a="f" A="F" />
+        <Key a="g" A="G" />
         <Key a="h" A="H" />
         <Key a="j" A="J" />
-        <Key a="k" A="K" b={g.cel} B={g.rnk} />
-        <Key a="l" A="L" b={g["&"]} B={g.gro} />
-        <Key a=";" A=":" b={g.exc} B={g.fmt} />
-        <Key a="'" A='"' b={g.fla} B={g.con} />
+        <Key a="k" A="K" />
+        <Key a="l" A="L" />
+        <Key a=";" A=":" />
+        <Key a="'" A='"' />
         <PlaceholderKey class="w-21" />
       </KeyRow>
       <KeyRow>
         <PlaceholderKey class="w-27" />
-        <Key a="z" A="Z" b={g.tab} B={g.win} />
-        <Key a="x" A="X" b={g.enc} B={g.par} />
-        <Key a="c" A="C" b={g.fix} B={g.cou} />
-        <Key a="v" A="V" b={g.gru} B={g.grd} />
-        <Key a="b" A="B" b={g.flo} B={g.cei} />
-        <Key a="n" A="N" b={g.mer} B={g.fil} />
-        <Key a="m" A="M" b={g.mat} B={g.nmt} />
-        <Key a="," A={g.gt} b={g.cat} B={g.ge} />
-        <Key a="." A={g.lt} b={g.id} B={g.le} />
-        <Key a={g.fol} A={g.rol} b={g.twf} B={g.rpl} />
+        <Key a="z" A="Z" />
+        <Key a="x" A="X" />
+        <Key a="c" A="C" />
+        <Key a="v" A="V" />
+        <Key a="b" A="B" />
+        <Key a="n" A="N" />
+        <Key a="m" A="M" />
+        <Key a="," A="<" />
+        <Key a="." A=">" />
+        <Key a="/" A="?" />
         <PlaceholderKey class="w-27" />
       </KeyRow>
       <KeyRow>
