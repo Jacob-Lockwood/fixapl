@@ -642,9 +642,18 @@ export const eac = mm("¨", "each", (err) => async (X) => {
   if (X.kind !== "function") throw err(`${ualpha} must be a function`);
   return F(X.arity, (...x) => each(X.data, ...x));
 });
-export const sca = mm("\\", "scan", (err, { err1 }) => async (X) => {
-  if (X.kind !== "function" || X.arity !== 2)
-    throw err(`${ualpha} must be a dyadic function`);
+export const pre = mm("\\", "prefixes", (err, { err1 }) => async (X) => {
+  if (X.kind !== "function") throw err(`${ualpha} must be a function`);
+  if (X.arity === 1)
+    return F(1, async (y) => {
+      if (y.kind !== "array" || y.shape.length < 1)
+        throw err1(`${omega}'s rank must be at least 1'`);
+      const cel = cells(y).data;
+      const o = [];
+      for (let i = 1; i < cel.length; i++)
+        o.push(await X.data(fromCells(cel.slice(0, i))));
+      return fromCells(o);
+    });
   return F(1, async (y) => {
     if (y.kind !== "array" || y.shape.length < 1)
       throw err1(`${omega}'s rank must be at least 1'`);
@@ -655,7 +664,7 @@ export const sca = mm("\\", "scan", (err, { err1 }) => async (X) => {
     return fromCells(o);
   });
 });
-export const red = mm("/", "reduce", (err, { err1 }) => async (X) => {
+export const fol = mm("/", "fold", (err, { err1 }) => async (X) => {
   if (X.kind !== "function" || X.arity !== 2)
     throw err(`${ualpha} must be a dyadic function`);
   return F(1, async (y) => {
@@ -667,7 +676,7 @@ export const red = mm("/", "reduce", (err, { err1 }) => async (X) => {
     return acc;
   });
 });
-export const fol = mm("⫽", "fold", (err, { err2 }) => async (X) => {
+export const twf = mm("⫽", "twofold", (err, { err2 }) => async (X) => {
   if (X.kind !== "function" || X.arity !== 2)
     throw err(`${ualpha} must be a dyadic function`);
   return F(2, async (v, w) => {

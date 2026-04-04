@@ -134,11 +134,17 @@ if `⍵` is an array, returns an array of its elements which must all have the s
 
 ### I/O functions
 
-**`⎕Print`**:  
+**`⎕P`**:  
 print a string, returning that string.
+
+**`⎕S`**:  
+pretty-print a value, returning that value.
 
 **`⎕Prompt`**:  
 print the given string, prompt for a line of input, return it.
+
+**`⎕File`**:  
+read as a string the contents of a file at the given path.
 
 **`⎕Sleep`**:  
 sleep for the given number of seconds before returning the actual amount of time elapsed.

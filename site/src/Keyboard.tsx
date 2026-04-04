@@ -92,7 +92,7 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
         <Key a="p" A="P" b={g.pi} B={g.tau} />
         <Key a={g["["]} A={g["{"]} b={g[":"]} B={g.lft} />
         <Key a={g["]"]} A={g["}"]} b={g["::"]} B={g.rgt} />
-        <Key a={g.sca} A={g.mod} B={g.abs} />
+        <Key a={g.pre} A={g.mod} B={g.abs} />
       </KeyRow>
       <KeyRow>
         <PlaceholderKey class="w-21" />
@@ -120,7 +120,7 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
         <Key a="m" A="M" b={g.mat} B={g.nmt} />
         <Key a="," A={g.gt} b={g.cat} B={g.ge} />
         <Key a="." A={g.lt} b={g.id} B={g.le} />
-        <Key a={g.red} A={g.rol} b={g.fol} B={g.rpl} />
+        <Key a={g.fol} A={g.rol} b={g.twf} B={g.rpl} />
         <PlaceholderKey class="w-27" />
       </KeyRow>
       <KeyRow>

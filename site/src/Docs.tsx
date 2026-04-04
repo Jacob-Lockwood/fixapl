@@ -25,7 +25,7 @@ const ar = (n: number, text: string) => (
 
 export default function Docs(p: { search: string }) {
   const GlyphStr = (props: { n: PrimName }, g = glyphs[props.n]) => (
-    <code class={glyphColors[g.kind]} style={special.get(g.name)}>
+    <code class={"mx-1 " + glyphColors[g.kind]} style={special.get(g.name)}>
       {g.glyph} {g.name}
     </code>
   );
@@ -116,7 +116,7 @@ export default function Docs(p: { search: string }) {
           left of the base, it becomes a <i>forking function</i>, and it must
           have another tine to its left. when the expression is evaluated,
           everything to the right is called first; this overall result can be
-          considered the right tine. next the left time is evaluated, and
+          considered the right tine. next the left tine is evaluated, and
           finally the forking function is called, passing the left tine on the
           left and the right tine on the right.
         </p>
@@ -164,13 +164,15 @@ export default function Docs(p: { search: string }) {
       <Doc prim="fil">
         merge items of {omega}, filling with {alpha}
       </Doc>
-      <Doc prim="fol">
-        reduce with initial value: <br />
-        call <code class={glyphColors["dyadic function"]}>
-          {ualpha}
-        </code> with {alpha} on the left and {omega}'s first cell on the right,
-        then again with this result on the left and {omega}'s second cell on the
-        right, and so on to the length of {omega}.
+      <Doc prim={["fol", "twf"]}>
+        fold over major cells of an array from left to right. use with{" "}
+        <GlyphStr n="con" /> to fold over items of a list. use{" "}
+        <GlyphStr n="twf" /> to specify an initial value in {alpha}.
+      </Doc>
+      <Doc prim="pre">
+        for monadic {ualpha}, apply to prefixes of {omega}. <br />
+        for dyadic {ualpha}, cumulatively fold over the cells of {omega},
+        applying to items.
       </Doc>
       <Doc prim={["bef", "aft"]}>
         <div class="flex flex-col gap-2">
@@ -236,7 +238,7 @@ export default function Docs(p: { search: string }) {
                   <CodeBlock>F⟜G</CodeBlock>
                 </th>
                 <th scope="col" class="text-center">
-                  {ar(1, "G₀")}
+                  {ar(0, "G₀")}
                 </th>
                 <th scope="col" class="text-center">
                   {ar(1, "G₁")}
