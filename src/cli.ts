@@ -124,7 +124,7 @@ update:  npm i -g fixapl`);
   await run(fileArg ? await read(fileArg) : await text(stdin));
   exit(0);
 } else if (argv[2] === "fmt") {
-  if (!argv[3]) console.log(fmt(await text(stdin)));
+  if (!argv[3]) stdout.write(fmt(await text(stdin)));
   else await writeFile(argv[3], fmt(await read(argv[3])) + "\n");
 } else {
   console.log(`${verStr} REPL\n^C to close`);
