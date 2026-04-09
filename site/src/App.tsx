@@ -186,18 +186,18 @@ export default function App() {
             <summary class="text-emerald-500 underline underline-offset-2">
               How to use this page
             </summary>
-            <p class="mt-1 text-emerald-300">
+            <p class="mt-1">
               Click in the REPL prompt to write statements, and press{" "}
               <Kbd>Enter</Kbd> to process them. Use <Kbd>Shift+Enter</Kbd> to
               enter a newline instead of running the code.
             </p>
-            <p class="mt-2 text-emerald-300">
+            <p class="mt-2">
               The grid below the REPL contains every glyph used by the language.
               Hover over a glyph to see its name, alias, syntactic role, and
               keyboard input. Clicking a glyph while holding <Kbd>Shift</Kbd>{" "}
               will open its documentation.
             </p>
-            <p class="mt-2 text-emerald-300">
+            <p class="mt-2">
               You can enter a glyph by typing its alias, by clicking it in the
               grid, or by entering the keyboard sequence indicated by the
               tooltip. In the settings, you can change the prefix key for
@@ -205,12 +205,12 @@ export default function App() {
               layout diagram to visualize the locations of each key (on a US
               keyboard).
             </p>
-            <p class="mt-2 text-emerald-300">
+            <p class="mt-2">
               Click on a previously inputted segment to paste it into the
               textbox. Navigate through the REPL history with <Kbd>Alt</Kbd>+
               <Kbd>↑</Kbd> and <Kbd>Alt</Kbd>+<Kbd>↓</Kbd>.
             </p>
-            <p class="mt-2 text-emerald-300">
+            <p class="mt-2">
               Manage the REPL settings with the{" "}
               <span
                 class="material-symbols-outlined align-middle"
@@ -257,6 +257,55 @@ export default function App() {
                 `}</Example>
               </li>
             </ul>
+          </details>
+          <details class="mt-5">
+            <summary class="text-emerald-500 underline underline-offset-2">
+              Installation
+            </summary>
+            <p class="mt-1">
+              You can install FIXAPL from{" "}
+              <a
+                href="https://www.npmjs.com/package/fixapl"
+                class="text-green-500 underline"
+                target="_blank"
+              >
+                NPM
+              </a>{" "}
+              by running:
+            </p>
+            <pre class="mt-2">
+              <code>npm i -g fixapl</code>
+            </pre>
+            <p class="mt-2">
+              You'll need to install{" "}
+              <a
+                href="https://nodejs.org/en"
+                class="text-green-500 underline"
+                target="_blank"
+              >
+                Node.js
+              </a>{" "}
+              first, if you don't already have it.
+            </p>
+            <p class="mt-2">
+              Once FIXAPL is installed, run <code>fixapl -h</code> for a list of
+              commands. In the local REPL, you can use the keyboard layout with{" "}
+              <Kbd>Tab</Kbd> as the prefix key.
+            </p>
+            <p class="mt-2">
+              If you want to play with the latest version of FIXAPL in
+              development before it's released to NPM, you can clone the
+              repository from{" "}
+              <a
+                href="https://github.com/Jacob-Lockwood/fixapl"
+                class="text-green-500 underline"
+                target="_blank"
+              >
+                GitHub
+              </a>{" "}
+              and run <code>pnpm prepare</code> to build the CLI to{" "}
+              <code>./dist/cli.mjs</code>.
+            </p>
           </details>
           <details class="mt-5" open={docsOpen()} id="docs">
             <summary class="text-amber-400/80">Documentation (WIP)</summary>

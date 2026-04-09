@@ -58,6 +58,8 @@ Line comments begin with `⍝`. Identifiers starting with `⎕` are I/O function
 
 ## Function List
 
+some additional documentation is also available at the website.
+
 ### pervasive comparison funtions
 
 **`= equal`, `≠ not equal`**:  

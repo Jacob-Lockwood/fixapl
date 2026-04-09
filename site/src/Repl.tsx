@@ -4,6 +4,7 @@ import ReplWorker from "./worker?worker";
 import { MessageIn, MessageOut } from "./worker";
 import { lex, Token } from "#fixapl/lang";
 import { Glyph, glyphs, quad } from "#fixapl/glyphs";
+import { version } from "#fixapl/../package.json";
 import { Gly, Highlight } from "./Highlight";
 import { Keyboard, KeyboardControls } from "./Keyboard";
 import { Kbd } from "./UtilComponents";
@@ -18,6 +19,17 @@ type ReplEntry = {
   time: number | null;
   requestingInput: boolean;
 };
+const defaultEntry = (merge: Partial<ReplEntry>): ReplEntry => ({
+  source: "",
+  tokens: null,
+  output: "",
+  result: [],
+  error: "",
+  images: [],
+  time: null,
+  requestingInput: false,
+  ...merge,
+});
 
 function setting(name: string, def: string) {
   const initial = localStorage.getItem(name);
@@ -112,16 +124,7 @@ export const Repl: Component<{
   const process = (source: string, tkns?: (t: Token[]) => void) => {
     // data is re-assigned so each entry gets its own store
     // eslint-disable-next-line solid/reactivity
-    [data, setData] = createStore<ReplEntry>({
-      source,
-      tokens: null,
-      output: "",
-      result: [],
-      error: "",
-      images: [],
-      time: null,
-      requestingInput: false,
-    });
+    [data, setData] = createStore<ReplEntry>(defaultEntry({ source }));
     try {
       const tokens = lex(source);
       setData("tokens", tokens);
@@ -138,6 +141,9 @@ export const Repl: Component<{
     }
     setResults((res) => [data, ...res]);
   };
+  let versionStr = `FIXAPL v${version}`;
+  versionStr += "\n" + "¯".repeat(versionStr.length);
+  setResults([defaultEntry({ output: versionStr, time: -1 })]);
   let initial = `"Hello, world!"`;
   const runParam = new URLSearchParams(window.location.search).get("run");
   if (runParam) {
@@ -395,7 +401,11 @@ export const Repl: Component<{
                     </pre>
                     <pre class="text-red-300">{result.error}</pre>
                     <Show
-                      when={displayTimes() === "true" && result.time !== null}
+                      when={
+                        displayTimes() === "true" &&
+                        result.time !== null &&
+                        result.time !== -1
+                      }
                     >
                       <pre class="text-emerald-600">
                         Finished in {timeString(result.time!)}

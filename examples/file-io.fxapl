@@ -1,0 +1,2 @@
+⍝ currently, only reading files is implemented, not writing
+(⎕P¯1↓⎕File⊣⎕P'-'⍴˜△⎕P"reading from "⍪) "./hello-world.fxapl"
