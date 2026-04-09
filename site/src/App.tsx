@@ -306,6 +306,18 @@ export default function App() {
               and run <code>pnpm prepare</code> to build the CLI to{" "}
               <code>./dist/cli.mjs</code>.
             </p>
+            <p class="mt-2">
+              For Vim and Neovim users, 0racle has created some files for using
+              FIXAPL, including syntax highlighting and keyboard logic, at{" "}
+              <a
+                href="https://github.com/0racle/vim-fixapl"
+                class="font-mono text-green-500 underline"
+                target="_blank"
+              >
+                0racle/vim-fixapl
+              </a>
+              .
+            </p>
           </details>
           <details class="mt-5" open={docsOpen()} id="docs">
             <summary class="text-amber-400/80">Documentation (WIP)</summary>
