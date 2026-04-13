@@ -370,7 +370,8 @@ export default function App() {
           .
         </p>
         <p>
-          This page uses the fonts{" "}
+          Fonts used on this page:
+          <br /> For text,{" "}
           <a
             href="https://apl385.com/fonts/index.htm"
             class="underline"
@@ -378,7 +379,23 @@ export default function App() {
           >
             APL333
           </a>
-          ,{" "}
+          . For code,{" "}
+          <a
+            href="https://github.com/Jacob-Lockwood/fixapl/blob/main/site/public/FIXAPL386.ttf"
+            class="underline"
+            target="_blank"
+          >
+            FIXAPL386
+          </a>{" "}
+          (a combination of{" "}
+          <a
+            href="https://github.com/uiua-lang/uiua/blob/main/src/algorithm/Uiua386.ttf"
+            class="underline"
+            target="_blank"
+          >
+            Uiua386
+          </a>{" "}
+          and{" "}
           <a
             href="https://github.com/RubenVerg/tinyapl386/blob/97fb8c10bbb5ac9d34555812cfed0070c545fa4c/TinyAPL386.ttf"
             class="underline"
@@ -386,15 +403,7 @@ export default function App() {
           >
             TinyAPL386
           </a>
-          , and{" "}
-          <a
-            href="https://github.com/uiua-lang/uiua/blob/main/src/algorithm/Uiua386.ttf"
-            class="underline"
-            target="_blank"
-          >
-            Uiua386
-          </a>
-          .
+          ).
         </p>
         <p>
           The FIXAPL logo was modified from the official{" "}
