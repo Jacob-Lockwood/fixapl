@@ -3,25 +3,16 @@ import { prims, glyphs, omega, alpha, ualpha } from "#fixapl/glyphs";
 import { Code, CodeBlock, glyphColors, special } from "./Highlight";
 type PrimName = keyof typeof prims;
 
-const ar = (n: number, text: string) => (
-  <code
-    class={
-      glyphColors[
-        (
-          [
-            "syntax",
-            "monadic function",
-            "dyadic function",
-            "monadic modifier",
-            "dyadic modifier",
-          ] as const
-        )[n]
-      ]
-    }
-  >
-    {text}
-  </code>
-);
+const ar = (n: number, text: string) => {
+  const colorsByArity = [
+    "syntax",
+    "monadic function",
+    "dyadic function",
+    "monadic modifier",
+    "dyadic modifier",
+  ] satisfies (keyof typeof glyphColors)[];
+  return <code class={glyphColors[colorsByArity[n]]}>{text}</code>;
+};
 
 export default function Docs(p: { search: string }) {
   const GlyphStr = (props: { n: PrimName }, g = glyphs[props.n]) => (
@@ -40,28 +31,18 @@ export default function Docs(p: { search: string }) {
     for (const prim of prims)
       searchstr += prim + glyphs[prim].glyph + glyphs[prim].name;
     if (keywords) searchstr += keywords;
-
+    const searched = () =>
+      searchstr.toLowerCase().includes(p.search.toLowerCase());
     return (
-      <li
-        classList={{
-          hidden:
-            p.search !== "" &&
-            !searchstr.toLowerCase().includes(p.search.toLowerCase()),
-        }}
-      >
-        <details
-          open={
-            p.search !== "" &&
-            searchstr.toLowerCase().includes(p.search.toLowerCase())
-          }
-          class="relative"
-        >
+      <li classList={{ hidden: p.search !== "" && !searched() }}>
+        <details open={p.search !== "" && searched()} class="relative">
           <summary class="bg-emerald-1000 sticky top-0">
             <h3 class="inline-block text-lg text-green-400">
               <For each={prims} fallback={title}>
                 {(prim, idx) => (
                   <>
-                    {idx() && <span> and </span>}
+                    {idx() > 0 && <>{prims.length > 2 && ","} </>}
+                    {idx() > 0 && idx() === prims.length - 1 && "and "}
                     <GlyphStr n={prim} />
                   </>
                 )}
@@ -164,13 +145,19 @@ export default function Docs(p: { search: string }) {
       <Doc prim="fil">
         merge items of {omega}, filling with {alpha}
       </Doc>
-      <Doc prim={["fol", "twf"]}>
-        fold over major cells of an array from left to right. use with{" "}
-        <GlyphStr n="con" /> to fold over items of a list. use{" "}
-        <GlyphStr n="twf" /> to specify an initial value in {alpha}.
+      <Doc prim={["red", "fol", "twf"]}>
+        these modifiers are all used to fold over an array from left to right.{" "}
+        <br />
+        the simplest of the three is <GlyphStr n="red" />, which folds over
+        items of a list. <br />
+        the other two, <GlyphStr n="fol" /> and <GlyphStr n="twf" />, fold over
+        major cells of an array. if you use them to fold over a list, the
+        arguments to {ualpha} will be rank-zero arrays; this can be accounted
+        for using <GlyphStr n="con" />. <br />
+        use <GlyphStr n="twf" /> to specify an initial value in {alpha}.
       </Doc>
       <Doc prim="pre">
-        for monadic {ualpha}, apply to prefixes of {omega}. <br />
+        for monadic {ualpha}, apply to each prefix of {omega}. <br />
         for dyadic {ualpha}, cumulatively fold over the cells of {omega},
         applying to items.
       </Doc>

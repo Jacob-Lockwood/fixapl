@@ -6,7 +6,7 @@ import { lex, Token } from "#fixapl/lang";
 import { Glyph, glyphs, quad } from "#fixapl/glyphs";
 import { version } from "#fixapl/../package.json";
 import { Gly, Highlight } from "./Highlight";
-import { Keyboard, KeyboardControls } from "./Keyboard";
+import { Keyboard, KeyboardControls, keyMap } from "./Keyboard";
 import { Kbd } from "./UtilComponents";
 
 type ReplEntry = {
@@ -446,7 +446,7 @@ export const Repl: Component<{
                 setPrefixHit(false);
                 if (fnMods.includes(ev.key)) return;
                 ev.preventDefault();
-                const text = keyboard.keyMap.get(ev.key) ?? ev.key;
+                const text = keyMap.get(ev.key) ?? ev.key;
                 textarea.setRangeText(text);
                 textarea.selectionStart += text.length;
                 return;
@@ -548,7 +548,7 @@ export const Repl: Component<{
                     <code class="bg-emerald-900 px-1">{alias}</code> <br />
                     {data.kind} <br />
                     <Show
-                      when={[...keyboard.keyMap.entries()].find(
+                      when={[...keyMap.entries()].find(
                         ([, v]) => v === data.glyph,
                       )}
                     >

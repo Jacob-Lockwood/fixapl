@@ -459,7 +459,7 @@ export const res = df("⍴", "reshape", (err) => async (x, y) => {
   for (let i = 0; i < len; i++) o.push(data[i % data.length]);
   return A(sh, o);
 });
-export const rpl = df("⌿", "replicate", (err) => async (x, y) => {
+export const rpl = df("⊠", "replicate", (err) => async (x, y) => {
   if (y.kind !== "array") throw err(`${omega} must be an array`);
   const cel = cells(y);
   const isOk = (v: Val) =>
@@ -649,10 +649,10 @@ export const pre = mm("\\", "prefixes", (err, { err1 }) => async (X) => {
       if (y.kind !== "array" || y.shape.length < 1)
         throw err1(`${omega}'s rank must be at least 1'`);
       const cel = cells(y).data;
-      const o = [];
-      for (let i = 1; i < cel.length; i++)
+      const o: Val[] = [];
+      for (let i = 1; i <= cel.length; i++)
         o.push(await X.data(fromCells(cel.slice(0, i))));
-      return fromCells(o);
+      return list(o);
     });
   return F(1, async (y) => {
     if (y.kind !== "array" || y.shape.length < 1)
@@ -662,6 +662,18 @@ export const pre = mm("\\", "prefixes", (err, { err1 }) => async (X) => {
     for (let i = 1, acc = cel[0]; i < cel.length; i++)
       o.push((acc = await each(X.data, acc, cel[i])));
     return fromCells(o);
+  });
+});
+export const red = mm("⌿", "reduce", (err, { err1 }) => async (X) => {
+  if (X.kind !== "function" || X.arity !== 2)
+    throw err(`${ualpha} must be a dyadic function`);
+  return F(1, async (y) => {
+    if (y.kind !== "array" || y.shape.length !== 1)
+      throw err1(`${omega} must be a list`);
+    if (y.shape[0] === 0) throw err1(`${omega} may not be empty`);
+    let acc = y.data[0];
+    for (let i = 1; i < y.shape[0]; i++) acc = await X.data(acc, y.data[i]);
+    return acc;
   });
 });
 export const fol = mm("/", "fold", (err, { err1 }) => async (X) => {

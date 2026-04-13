@@ -89,10 +89,7 @@ export const Code = (props: {
     <Highlight bindings={props.bindings ?? {}} tokens={lex(props.children)} />
   </code>
 );
-export const CodeBlock = (props: {
-  bindings?: Record<string, number>;
-  children: string;
-}) => (
+export const CodeBlock = (props: Parameters<typeof Code>[0]) => (
   <pre>
     <Code {...props} />
   </pre>

@@ -2,11 +2,10 @@ import { createEffect, createSignal, JSX } from "solid-js";
 import { Glyph, glyphs as g } from "#fixapl/glyphs";
 import { Gly } from "./Highlight";
 import keyboard from "#fixapl/keyboard.json";
-const keyMap = new Map(Object.entries(keyboard));
+export const keyMap = new Map(Object.entries(keyboard));
 
 export type KeyboardControls = {
   highlight(key: string | null): void;
-  keyMap: Map<string, string>;
 };
 
 type GP = Glyph | string;
@@ -57,7 +56,7 @@ export function Keyboard(props: { ref?: (k: KeyboardControls) => void }) {
     </div>
   );
 
-  createEffect(() => props.ref?.({ keyMap, highlight: setHighlight }));
+  createEffect(() => props.ref?.({ highlight: setHighlight }));
   return (
     <div
       class="flex flex-col items-center font-mono text-green-200/80"
