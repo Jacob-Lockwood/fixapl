@@ -43,7 +43,7 @@ export async function display(val: Val): Promise<string> {
   }
   if (val.kind === "namespace") {
     let s = "{§";
-    for (const [name, v] of val.data)
+    for (const [name, v] of val.data.variables)
       s += ` ${lft.glyph} ${name}↤${await display(v)}`;
     return s + "}";
   }

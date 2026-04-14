@@ -59,8 +59,8 @@ onmessage = async ({
       }
       const bindings: Record<string, number> = {};
       for (const scope of visitor.scopes)
-        for (const name in scope.keys()) bindings[name] = 0;
-      for (const [name, val] of visitor.bindings.entries())
+        for (const name in scope.variables.keys()) bindings[name] = 0;
+      for (const [name, val] of visitor.global.bindings.entries())
         bindings[name] = val.kind === "function" ? val.arity : 0;
       msg(["bindings", bindings]);
     }
