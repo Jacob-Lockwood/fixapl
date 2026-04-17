@@ -151,7 +151,7 @@ export type AstNode =
   | { kind: "strand"; values: AstNode[] }
   | { kind: "array"; values: AstNode[] }
   | { kind: "list"; values: AstNode[] }
-  | { kind: "dfn"; def: AstNode }
+  | { kind: "dfn"; def: AstNode[] }
   | { kind: "dfn arg"; left: boolean }
   | { kind: "namespace access"; left: AstNode; name: string }
   | { kind: "assignment"; left: AstNode };
@@ -285,7 +285,7 @@ export class Parser {
   }
   dfn(): AstNode {
     this.i++;
-    const m = this.expression();
+    const m = this.block();
     if (!m) throw this.expected("dfn body", this.tok());
     const tok = this.tok();
     if (tok?.kind !== "close dfn") throw this.expected("close dfn", tok);
@@ -370,7 +370,7 @@ export class Parser {
       value: this.expression()!,
     };
   }
-  program() {
+  block() {
     const statements: AstNode[] = [];
     while (this.tok()) {
       if (this.tok()?.kind === "newline") {
@@ -378,9 +378,14 @@ export class Parser {
         continue;
       }
       const e = this.binding() ?? this.expression();
-      if (!e) throw this.expected("statement", this.tok());
+      if (!e) break;
       statements.push(e);
     }
+    return statements;
+  }
+  program() {
+    const statements = this.block();
+    if (this.tok()) throw this.expected("statement or end of file", this.tok());
     return statements;
   }
 }
@@ -618,13 +623,14 @@ export class Visitor {
           return getArity(node.left);
         return 0;
       }
-      const arity = getArity(node.def);
+      const arity = Math.max(...node.def.map(getArity));
       if (arity === 0)
         return F(
           0,
           async () => {
             this.scopes.unshift(newScope());
-            const e = await execnilad(await this.visit(node.def));
+            let e!: Val;
+            for (const s of node.def) e = await execnilad(await this.visit(s));
             this.scopes.shift();
             return e;
           },
@@ -636,7 +642,8 @@ export class Visitor {
           const temp = this.dfns?.slice();
           this.dfns = arity === 1 ? [N(0), v[0]] : v;
           this.scopes.unshift(newScope());
-          const e = await execnilad(await this.visit(node.def));
+          let e!: Val;
+          for (const s of node.def) e = await execnilad(await this.visit(s));
           this.scopes.shift();
           this.dfns = temp;
           return e;
