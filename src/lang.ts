@@ -408,7 +408,7 @@ export class Visitor {
   global = newScope();
   scopes = [this.global];
   q: ReturnType<typeof quads>;
-  private thisBinding?: [string, number];
+  private thisBinding?: [string, number, Scope];
   private dfns?: Val[];
   constructor(ctx: Partial<ReplContext>) {
     this.q = quads(ctx as ReplContext);
@@ -539,19 +539,20 @@ export class Visitor {
       throw new Error("Elements of array literal must have matching shapes");
     } else if (node.kind === "reference") {
       if (this.thisBinding?.[0] === node.name) {
-        const arity = this.thisBinding[1];
+        const [, arity, scope] = this.thisBinding;
         if (arity === -1)
           throw new Error(
             `Recursive binding ${node.name} must declare its arity`,
           );
         return F(arity, (...v) => {
-          const g = this.global.bindings.get(node.name) as Fun;
+          const g = scope.bindings.get(node.name) as Fun;
           return g.data(...v);
         });
       } else {
-        if (this.global.bindings.has(node.name))
-          return this.global.bindings.get(node.name)!;
         const scopes = [...this.scopes];
+        for (const scope of scopes)
+          if (scope.bindings.has(node.name))
+            return scope.bindings.get(node.name)!;
         return F(
           0,
           async () => {
@@ -565,7 +566,7 @@ export class Visitor {
       }
     } else if (node.kind === "binding") {
       const { name, declaredArity, value } = node;
-      this.thisBinding = [name, declaredArity];
+      this.thisBinding = [name, declaredArity, this.scopes[0]];
       this.scopes.unshift(newScope());
       const v = await execnilad(await this.visit(value));
       this.scopes.shift();
@@ -580,7 +581,7 @@ export class Visitor {
         );
       }
       this.thisBinding = undefined;
-      this.global.bindings.set(node.name, v);
+      this.scopes[0].bindings.set(node.name, v);
       return v;
     } else if (node.kind === "assignment") {
       const { left } = node;
