@@ -32,7 +32,7 @@ export async function display(val: Val): Promise<string> {
       .replace("Infinity", inf.glyph);
   if (val.kind === "character") {
     const j = JSON.stringify(String.fromCodePoint(val.data));
-    return `'${j.slice(1, -1).replace(/'/g, "\\'")}'`;
+    return `'${j.slice(1, -1).replace(/'/g, "\\'").replace(/\\"/g, '"')}'`;
   }
   if (val.kind === "function") {
     if (val.repr) return val.repr;
