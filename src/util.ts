@@ -1,7 +1,6 @@
 export function match(a: readonly unknown[], b: readonly unknown[]) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
-export type Scope = Record<"bindings" | "variables", Map<string, Val>>;
 export type Val =
   | { kind: "character"; data: number }
   | { kind: "number"; data: number }
@@ -12,7 +11,7 @@ export type Val =
       data: Fn;
       repr?: string;
     }
-  | { kind: "namespace"; data: Scope };
+  | { kind: "namespace"; data: Map<string, Val> };
 type Fn = (...x: Val[]) => Promise<Val>;
 export const F = (arity: number, data: Fn, repr?: string) =>
   ({

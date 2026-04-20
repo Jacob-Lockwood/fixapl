@@ -15,7 +15,6 @@ import {
   graphemes,
   nilad,
   Fun,
-  Scope,
 } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts, omega } from "./glyphs";
 import quads from "./quads";
@@ -403,12 +402,17 @@ export type ReplContext = {
   drawText: (opts: TextOptions) => Promise<ImageData>;
   readFile: (p: string) => Promise<string>;
 };
-const newScope = (): Scope => ({ bindings: new Map(), variables: new Map() });
+type Module = Record<"bindings" | "variables", Map<string, Val>>;
+const modToNS = (m: Module): Val => ({
+  kind: "namespace",
+  data: new Map([...m.variables, ...m.bindings]),
+});
+const newScope = (): Module => ({ bindings: new Map(), variables: new Map() });
 export class Visitor {
   global = newScope();
   scopes = [this.global];
   q: ReturnType<typeof quads>;
-  private thisBinding?: [string, number, Scope];
+  private thisBinding?: [string, number, Module];
   private dfns?: Val[];
   constructor(ctx: Partial<ReplContext>) {
     this.q = quads(ctx as ReplContext);
@@ -593,7 +597,7 @@ export class Visitor {
           );
         return F(
           1,
-          async (v) => (from.data.variables.set(left.name, v), v),
+          async (v) => (from.data.set(left.name, v), v),
           `${await display(from)}.${left.name}${glyphs["::"].glyph}`,
         );
       } else if (left.kind === "reference") {
@@ -657,41 +661,31 @@ export class Visitor {
       const v = node.left ? this.dfns[0] : this.dfns[1];
       return F(0, async () => v);
     } else if (node.kind === "scope reference") {
-      return {
-        kind: "namespace",
-        data: this.scopes[Math.min(node.level, this.scopes.length - 1)],
-      };
+      return modToNS(this.scopes[Math.min(node.level, this.scopes.length - 1)]);
     } else if (node.kind === "namespace access") {
       let from = await execnilad(await this.visit(node.left));
-      if (from.kind !== "namespace")
-        throw new Error("Left side of namespace access must be a namespace");
-      const sc = from.data;
-      if (sc.bindings.has(node.name)) return sc.bindings.get(node.name)!;
-      if (sc.variables.has(node.name))
-        return F(0, async () => sc.variables.get(node.name)!);
-      throw new Error(`Name '${node.name}' not found in namespace`);
-      // if (from.kind === "namespace") from = nilad(from);
-      // if (from.kind === "function")
-      //   return F(
-      //     from.arity,
-      //     async (...v) => {
-      //       const ns = await from.data(...v);
-      //       if (ns.kind !== "namespace")
-      //         throw new Error(
-      //           "Namespace access function must return a namespace",
-      //         );
-      //       const p = ns.data.get(node.name);
-      //       if (!p)
-      //         throw new Error(
-      //           `Property '${node.name}' does not exist in namespace`,
-      //         );
-      //       return p;
-      //     },
-      //     `${await display(from)}.${node.name}`,
-      //   );
-      // throw new Error(
-      //   "Left side of namespace access must be a namespace or a function",
-      // );
+      if (from.kind === "namespace") from = nilad(from);
+      if (from.kind === "function")
+        return F(
+          from.arity,
+          async (...v) => {
+            const ns = await from.data(...v);
+            if (ns.kind !== "namespace")
+              throw new Error(
+                "Namespace access function must return a namespace",
+              );
+            const p = ns.data.get(node.name);
+            if (!p)
+              throw new Error(
+                `Property '${node.name}' does not exist in namespace`,
+              );
+            return p;
+          },
+          `${await display(from)}.${node.name}`,
+        );
+      throw new Error(
+        "Left side of namespace access must be a namespace or a function",
+      );
     }
 
     throw new Error(
