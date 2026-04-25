@@ -9,7 +9,7 @@ export type MessageIn =
 export type MessageOut =
   | ["result", string]
   | ["error", unknown]
-  | ["bindings", Record<string, number>]
+  | ["identArities", Record<number, number>]
   | ["time", number]
   | ["write", string]
   | ["image", ImageData]
@@ -47,7 +47,7 @@ onmessage = async ({
     const p = new Parser(t).program();
     for (const n of p) {
       const v = await execnilad(await visitor.visit(n));
-      if (n.kind !== "binding") {
+      if (n.kind !== "binding" && n.kind !== "module definition") {
         const img = settings.autoImg && vToImg(v);
         if (img && bigEnough(v as Arr<Num>)) msg(["image", img]);
         else {
@@ -57,12 +57,7 @@ onmessage = async ({
           msg(["result", r]);
         }
       }
-      const bindings: Record<string, number> = {};
-      for (const scope of visitor.scopes)
-        for (const name in scope.variables.keys()) bindings[name] = 0;
-      for (const [name, val] of visitor.global.bindings.entries())
-        bindings[name] = val.kind === "function" ? val.arity : 0;
-      msg(["bindings", bindings]);
+      msg(["identArities", Object.fromEntries(visitor.identArities)]);
     }
   } catch (e) {
     msg(["error", e]);

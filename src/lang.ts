@@ -49,7 +49,7 @@ export type Token = {
 };
 export function lex(source: string) {
   const o: Token[] = [];
-  const push = (k: Omit<Token, "id">) => o.push({ ...k, id: o.length });
+  const push = (k: Omit<Token, "id">) => o.push({ ...k, id: Math.random() });
   let line = 1;
   lex: while (source.length) {
     const cur = source.slice(0, 10);

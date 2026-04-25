@@ -27,12 +27,12 @@ const fmt = (s: string) =>
     .map((x) => x.image)
     .join("")
     .trimEnd();
-const bdg: Record<string, number> = {};
+let idents: Record<number, number> = {};
 const highlight = (tks: Token[]) =>
   tks
-    .map(({ kind, image }) => {
+    .map(({ kind, image, id }) => {
       let style = kleur.white;
-      const ba = kind === "identifier" ? (bdg[image] ?? 0) : 0;
+      const ba = kind === "identifier" ? (idents[id] ?? 0) : 0;
       const qa = kind === "quad" ? (quadsList.get(image.slice(1)) ?? 0) : 0;
       if (kind === "monadic function" || ba === 1 || qa === 1)
         style = kleur.green;
@@ -236,11 +236,10 @@ update:  npm i -g fixapl`);
       if (t.length === 0) break evaluate;
       const x = new Parser(t).program()[0];
       const r = await v.visit(x);
-      if (x.kind === "binding")
-        bdg[x.name] = r.kind === "function" ? r.arity : 0;
+      idents = Object.fromEntries(v.identArities);
       erase(h(f));
       console.log(prompt + highlight(tks));
-      if (x.kind !== "binding") {
+      if (x.kind !== "binding" && x.kind !== "module definition") {
         const out = await pretty(await execnilad(r));
         console.log(out.join("\n"));
       }
