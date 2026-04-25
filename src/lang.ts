@@ -29,7 +29,7 @@ const basic = {
   comment: /^⍝.*(?=\n|$)/,
   space: /^ +/,
   newline: /^\n/,
-  other: /^;*[^\d'"A-Z#⍝ \n;][^'"A-Z#⍝ \n;]*/,
+  other: /^;;|;?[^\d'"A-Z#⍝ \n;][^'"A-Z#⍝ \n;]*/,
 };
 type SyntaxName = {
   [K in keyof typeof glyphs as (typeof glyphs)[K]["kind"] extends "syntax"
@@ -39,10 +39,17 @@ type SyntaxName = {
 type TokenKind =
   | keyof Omit<typeof basic & SyntaxName, "other" | "semi">
   | PrimitiveKind
-  | "constant";
-export type Token = { kind: TokenKind; line: number; image: string };
+  | "constant"
+  | "module name";
+export type Token = {
+  kind: TokenKind;
+  line: number;
+  image: string;
+  id: number;
+};
 export function lex(source: string) {
   const o: Token[] = [];
+  const push = (k: Omit<Token, "id">) => o.push({ ...k, id: o.length });
   let line = 1;
   lex: while (source.length) {
     const cur = source.slice(0, 10);
@@ -53,22 +60,30 @@ export function lex(source: string) {
       let [m] = mat;
       source = source.slice(m.length);
       if (bkind !== "other") {
-        o.push({ kind: bkind as TokenKind, line, image: m });
+        push({ kind: bkind as TokenKind, line, image: m });
         line += m.split("\n").length - 1;
         continue lex;
       }
+      // if (m === ";;") {
+      //   push({
+      //     kind: "expression separator",
+      //     line,
+      //     image: glyphs[";;"].glyph,
+      //   });
+      //   continue lex;
+      // }
       m = m.replaceAll("`", glyphs.ng.glyph).replaceAll(";", "");
       other: while (m.length) {
         const num = m.match(basic.number);
         if (num) {
-          o.push({ kind: "number", line, image: num[0] });
+          push({ kind: "number", line, image: num[0] });
           m = m.slice(num[0].length);
           continue other;
         }
         const brack = m.match(/^(<<|>>)/);
         if (brack) {
           const g = glyphs[brack[0] as "<<" | ">>"];
-          o.push({ kind: g.name, line, image: g.glyph });
+          push({ kind: g.name, line, image: g.glyph });
           m = m.slice(brack[0].length);
           continue other;
         }
@@ -84,14 +99,14 @@ export function lex(source: string) {
           if (minf) {
             m = m.slice(minf.length);
             const image = glyph + minf.replace("inf", glyphs.inf.glyph);
-            o.push({ kind: "number", line, image });
+            push({ kind: "number", line, image });
             continue other;
           }
           const mnum = m.match(basic.number);
           if (mnum) {
             const n = mnum[0];
             m = m.slice(n.length);
-            o.push({ kind: "number", line, image: glyph + n });
+            push({ kind: "number", line, image: glyph + n });
             continue other;
           }
         }
@@ -101,14 +116,14 @@ export function lex(source: string) {
             const ident = source.match(basic.identifier);
             if (m === "" && ident) {
               source = source.slice(ident[0].length);
-              o.push({ kind: name, line, image: glyph + ident[0] });
+              push({ kind: name, line, image: glyph + ident[0] });
               continue other;
             }
           } else if (name === "binding") {
             let sub = subscripts[subscripts.indexOf(m[0]) % 3] ?? "";
             if (sub) {
               m = m.slice(1);
-            } else if ("sb mn dy".includes(m.slice(0, 2))) {
+            } else if (["sb", "mn", "dy"].includes(m.slice(0, 2))) {
               sub = subscripts[["sb", "mn", "dy"].indexOf(m.slice(0, 2))] ?? "";
               if (sub) m = m.slice(2);
             }
@@ -118,14 +133,21 @@ export function lex(source: string) {
               image += m[0];
               m = m.slice(1);
             } else {
-              const [level] = m.match(/^inf|\d*/)!;
-              image += level.replace("inf", glyphs.inf.glyph);
-              m = m.slice(level.length);
+              const ident = source.match(basic.identifier);
+              if (m === "" && ident) {
+                source = source.slice(ident[0].length);
+                push({ kind: "module name", line, image: glyph + ident[0] });
+                continue other;
+              } else {
+                const [level] = m.match(/^inf|\d*/)!;
+                image += level.replace("inf", glyphs.inf.glyph);
+                m = m.slice(level.length);
+              }
             }
           }
-          o.push({ kind: name, line, image });
+          push({ kind: name, line, image });
         } else {
-          o.push({ kind, line, image: glyph });
+          push({ kind, line, image: glyph });
         }
       }
       continue lex;
@@ -135,26 +157,32 @@ export function lex(source: string) {
   return o;
 }
 
+type Ident = { name: string; id: number };
+const mkIdent = (t: Token): Ident => ({ name: t.image, id: t.id });
 export type AstNode =
   | { kind: "number"; value: number }
   | { kind: "string"; value: string }
   | { kind: "character"; value: number }
   | { kind: "monadic modifier"; glyph: string; fn: AstNode }
   | { kind: "dyadic modifier"; glyph: string; fns: [AstNode, AstNode] }
-  | { kind: "reference"; name: string }
+  | { kind: "reference"; ident: Ident }
   | { kind: "scope reference"; level: number }
   | { kind: "glyph reference"; arity: number; glyph: string }
+  | { kind: "module reference"; name: string }
+  | { kind: "module definition"; name: string; def: AstNode }
+  | { kind: "module import"; name: string; path: string }
+  | { kind: "module access"; from: string[]; ident: Ident }
   | { kind: "quad"; name: string }
-  | { kind: "binding"; name: string; declaredArity: number; value: AstNode }
+  | { kind: "binding"; ident: Ident; declaredArity: number; value: AstNode }
   | { kind: "expression"; values: AstNode[] }
+  | { kind: "block"; values: AstNode[] }
   | { kind: "strand"; values: AstNode[] }
   | { kind: "array"; values: AstNode[] }
   | { kind: "list"; values: AstNode[] }
-  | { kind: "dfn"; def: AstNode[] }
+  | { kind: "dfn"; def: AstNode }
   | { kind: "dfn arg"; left: boolean }
   | { kind: "namespace access"; left: AstNode; name: string }
   | { kind: "assignment"; left: AstNode };
-
 export class Parser {
   private i = 0;
   private line = 1;
@@ -204,11 +232,13 @@ export class Parser {
       return { kind: "dfn arg", left: tok.kind.startsWith("left") };
     } else if (tok.kind === "identifier") {
       this.i++;
-      return { kind: "reference", name: tok.image };
+      return { kind: "reference", ident: mkIdent(tok) };
     } else if (tok.kind === "scope") {
       this.i++;
       const level = +tok.image.slice(1).replace(glyphs.inf.glyph, "Infinity");
       return { kind: "scope reference", level };
+    } else if (tok.kind === "module name") {
+      return this.moduleAccess();
     } else if (tok.kind === "quad") {
       this.i++;
       return { kind: "quad", name: tok.image.slice(1) };
@@ -234,13 +264,12 @@ export class Parser {
   }
   parenthesized() {
     this.i++;
-    const expr = this.expression();
-    if (!expr) throw this.expected("expression in parentheses", this.tok());
+    const block = this.block(true);
     const tok = this.tok();
     if (tok?.kind !== "close parenthesis")
       throw this.expected("closing parenthesis", tok);
     this.i++;
-    return expr;
+    return block;
   }
   list(): AstNode {
     this.i++;
@@ -284,8 +313,7 @@ export class Parser {
   }
   dfn(): AstNode {
     this.i++;
-    const m = this.block();
-    if (!m) throw this.expected("dfn body", this.tok());
+    const m = this.block(true);
     const tok = this.tok();
     if (tok?.kind !== "close dfn") throw this.expected("close dfn", tok);
     this.i++;
@@ -339,6 +367,27 @@ export class Parser {
     this.i++;
     return { kind: "namespace access", left: p, name: name.image };
   }
+  moduleAccess(): AstNode | void {
+    const name = this.tok()!.image;
+    this.i++;
+    if (this.tok()?.kind !== "module access")
+      return { kind: "module reference", name };
+    const from = [name];
+    while (true) {
+      this.i++;
+      const tk = this.tok();
+      if (tk?.kind === "identifier") break;
+      else if (tk?.kind === "module name") {
+        from.push(tk.image);
+        this.i++;
+      }
+      if (this.tok()?.kind !== "module access")
+        throw new Error("RHS of module access must be an identifier");
+    }
+    const ident = mkIdent(this.tok()!);
+    this.i++;
+    return { kind: "module access", from, ident };
+  }
   assignment(): AstNode | void {
     const l = this.modifierExpression();
     if (!l) return;
@@ -364,28 +413,48 @@ export class Parser {
     const declaredArity = subscripts.indexOf(tok2.image[1]);
     return {
       kind: "binding",
-      name: tok1.image,
+      ident: mkIdent(tok1),
       declaredArity,
       value: this.expression()!,
     };
   }
-  block() {
-    const statements: AstNode[] = [];
+  moduleDeclaration(): AstNode | void {
+    const tok1 = this.tok();
+    if (tok1?.kind !== "module name") return;
+    const tok2 = this.tokens[this.i + 1];
+    if (tok2?.kind !== "module declaration") return;
+    this.i += 2;
+    const tok3 = this.tok();
+    if (tok3?.kind === "string")
+      return { kind: "module import", name: tok1.image, path: tok3.image };
+    if (tok3?.kind !== "open dfn")
+      throw this.expected("string or open brace", tok3);
+    this.i++;
+    const def = this.block(false);
+    const tok4 = this.tok();
+    if (tok4?.kind !== "close dfn") throw this.expected("close brace", tok4);
+    this.i++;
+    return { kind: "module definition", name: tok1.image, def };
+  }
+  block(mustYieldExpression: boolean): Extract<AstNode, { kind: "block" }> {
+    const values: AstNode[] = [];
     while (this.tok()) {
       if (this.tok()?.kind === "newline") {
         this.i++;
         continue;
       }
-      const e = this.binding() ?? this.expression();
+      const e = this.binding() ?? this.moduleDeclaration() ?? this.expression();
       if (!e) break;
-      statements.push(e);
+      values.push(e);
     }
-    return statements;
+    if (mustYieldExpression && values.at(-1)?.kind !== "expression")
+      throw new Error("block must end in expression");
+    return { kind: "block", values };
   }
   program() {
-    const statements = this.block();
+    const statements = this.block(false);
     if (this.tok()) throw this.expected("statement or end of file", this.tok());
-    return statements;
+    return statements.values;
   }
 }
 export type TextOptions = {
@@ -402,12 +471,24 @@ export type ReplContext = {
   drawText: (opts: TextOptions) => Promise<ImageData>;
   readFile: (p: string) => Promise<string>;
 };
-type Module = Record<"bindings" | "variables", Map<string, Val>>;
+type Module = {
+  bindings: Map<string, Val>;
+  variables: Map<string, Val>;
+  modules: Map<string, Module>;
+};
 const modToNS = (m: Module): Val => ({
   kind: "namespace",
-  data: new Map([...m.variables, ...m.bindings]),
+  data: new Map([
+    ...m.variables,
+    ...m.bindings,
+    ...[...m.modules.entries()].map(([n, k]) => [n, modToNS(k)] as const),
+  ]),
 });
-const newScope = (): Module => ({ bindings: new Map(), variables: new Map() });
+const newScope = (): Module => ({
+  bindings: new Map(),
+  variables: new Map(),
+  modules: new Map(),
+});
 export class Visitor {
   global = newScope();
   scopes = [this.global];
@@ -416,6 +497,11 @@ export class Visitor {
   private dfns?: Val[];
   constructor(ctx: Partial<ReplContext>) {
     this.q = quads(ctx as ReplContext);
+  }
+  private getModule(name: string) {
+    for (const { modules } of this.scopes)
+      if (modules.has(name)) return modules.get(name)!;
+    throw new Error(`Module ${name} not found`);
   }
   private exec = F(
     1,
@@ -470,6 +556,10 @@ export class Visitor {
       if (v.kind === "function")
         v.repr = (await display(lft)) + node.glyph + `(${await display(rgt)})`;
       return v;
+    } else if (node.kind === "block") {
+      let e!: Val;
+      for (const s of node.values) e = await execnilad(await this.visit(s));
+      return e;
     } else if (node.kind === "expression") {
       let i = node.values.length;
       const tines: Val[] = [];
@@ -542,35 +632,44 @@ export class Visitor {
       }
       throw new Error("Elements of array literal must have matching shapes");
     } else if (node.kind === "reference") {
-      if (this.thisBinding?.[0] === node.name) {
+      const { ident } = node;
+      if (this.thisBinding?.[0] === ident.name) {
         const [, arity, scope] = this.thisBinding;
         if (arity === -1)
           throw new Error(
-            `Recursive binding ${node.name} must declare its arity`,
+            `Recursive binding ${ident.name} must declare its arity`,
           );
+        this.identArities.set(ident.id, arity);
         return F(arity, (...v) => {
-          const g = scope.bindings.get(node.name) as Fun;
+          const g = scope.bindings.get(ident.name) as Fun;
           return g.data(...v);
         });
       } else {
         const scopes = [...this.scopes];
         for (const scope of scopes)
-          if (scope.bindings.has(node.name))
-            return scope.bindings.get(node.name)!;
+          if (scope.bindings.has(ident.name)) {
+            const b = scope.bindings.get(ident.name)!;
+            this.identArities.set(
+              ident.id,
+              b.kind === "function" ? b.arity : 0,
+            );
+            return scope.bindings.get(ident.name)!;
+          }
         return F(
           0,
           async () => {
             for (const s of scopes)
-              if (s.variables.has(node.name))
-                return s.variables.get(node.name)!;
-            throw new Error(`Unrecognized identifier '${node.name}'`);
+              if (s.variables.has(ident.name))
+                return s.variables.get(ident.name)!;
+            throw new Error(`Unrecognized identifier '${ident.name}'`);
           },
-          node.name,
+          ident.name,
         );
       }
-    } else if (node.kind === "binding") {
-      const { name, declaredArity, value } = node;
-      this.thisBinding = [name, declaredArity, this.scopes[0]];
+    }
+    if (node.kind === "binding") {
+      const { ident, declaredArity, value } = node;
+      this.thisBinding = [ident.name, declaredArity, this.scopes[0]];
       this.scopes.unshift(newScope());
       const v = await execnilad(await this.visit(value));
       this.scopes.shift();
@@ -581,12 +680,35 @@ export class Visitor {
       ) {
         const inferred = v.kind === "function" ? v.arity : 0;
         throw new Error(
-          `in ${name}: arity was declared ${declaredArity} but inferred ${inferred}`,
+          `in ${ident.name}: arity was declared ${declaredArity} but inferred ${inferred}`,
         );
       }
       this.thisBinding = undefined;
-      this.scopes[0].bindings.set(node.name, v);
+      this.scopes[0].bindings.set(ident.name, v);
+      this.identArities.set(ident.id, v.kind === "function" ? v.arity : 0);
       return v;
+    } else if (node.kind === "module definition") {
+      this.scopes.unshift(newScope());
+      const v = await execnilad(await this.visit(node.def));
+      const mod = this.scopes.shift()!;
+      this.scopes[0].modules.set(node.name, mod);
+      return v;
+    } else if (node.kind === "module import") {
+    } else if (node.kind === "module access") {
+      const { ident } = node;
+      let from = this.getModule(node.from[0]);
+      for (let i = 1; i < node.from.length; i++) {
+        if (!from.modules.has(node.from[i]))
+          throw new Error(`submodule ${node.from[i]} not found`);
+        from = from.modules.get(node.from[i])!;
+      }
+      if (!from.bindings.has(ident.name))
+        throw new Error(`binding ${ident.name} not found`);
+      const b = from.bindings.get(ident.name)!;
+      this.identArities.set(ident.id, b.kind === "function" ? b.arity : 0);
+      return b;
+    } else if (node.kind === "module reference") {
+      return modToNS(this.getModule(node.name));
     } else if (node.kind === "assignment") {
       const { left } = node;
       if (left.kind === "namespace access") {
@@ -604,8 +726,8 @@ export class Visitor {
         const sc = this.scopes[0];
         return F(
           1,
-          async (v) => (sc.variables.set(left.name, v), v),
-          left.name + glyphs["::"].glyph,
+          async (v) => (sc.variables.set(left.ident.name, v), v),
+          left.ident.name + glyphs["::"].glyph,
         );
       } else
         throw new Error(
@@ -616,6 +738,7 @@ export class Visitor {
         if (node.kind === "dfn arg") return node.left ? 2 : 1;
         if (
           node.kind === "expression" ||
+          node.kind === "block" ||
           node.kind === "array" ||
           node.kind === "list" ||
           node.kind === "strand"
@@ -628,14 +751,13 @@ export class Visitor {
           return getArity(node.left);
         return 0;
       }
-      const arity = Math.max(...node.def.map(getArity));
+      const arity = getArity(node.def);
       if (arity === 0)
         return F(
           0,
           async () => {
             this.scopes.unshift(newScope());
-            let e!: Val;
-            for (const s of node.def) e = await execnilad(await this.visit(s));
+            const e = await execnilad(await this.visit(node.def));
             this.scopes.shift();
             return e;
           },
@@ -647,8 +769,7 @@ export class Visitor {
           const temp = this.dfns?.slice();
           this.dfns = arity === 1 ? [N(0), v[0]] : v;
           this.scopes.unshift(newScope());
-          let e!: Val;
-          for (const s of node.def) e = await execnilad(await this.visit(s));
+          const e = await execnilad(await this.visit(node.def));
           this.scopes.shift();
           this.dfns = temp;
           return e;
@@ -687,10 +808,11 @@ export class Visitor {
         "Left side of namespace access must be a namespace or a function",
       );
     }
-
     throw new Error(
       "could not handle node — this is an interpreter bug!\n" +
         JSON.stringify(node, null, 2),
     );
   }
+  /** ident.id -> arity */
+  identArities = new Map<number, number>();
 }
