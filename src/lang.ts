@@ -186,7 +186,12 @@ export type AstNode =
 export class Parser {
   private i = 0;
   private line = 1;
-  constructor(private tokens: Token[]) {}
+  private tokens: Token[];
+  constructor(tokens: Token[]) {
+    this.tokens = tokens.filter(
+      (k) => k.kind !== "space" && k.kind !== "comment",
+    );
+  }
   error(msg: string) {
     return new Error(`Parsing error on line ${this.line}: ` + msg);
   }
@@ -425,8 +430,12 @@ export class Parser {
     if (tok2?.kind !== "module declaration") return;
     this.i += 2;
     const tok3 = this.tok();
-    if (tok3?.kind === "string")
-      return { kind: "module import", name: tok1.image, path: tok3.image };
+    if (tok3?.kind === "string") {
+      const path = (0, eval)(
+        tok3.image.replaceAll("\\\n", "").replaceAll("\n", "\\n"),
+      );
+      return { kind: "module import", name: tok1.image, path };
+    }
     if (tok3?.kind !== "open dfn")
       throw this.expected("string or open brace", tok3);
     this.i++;
@@ -457,6 +466,7 @@ export class Parser {
     return statements.values;
   }
 }
+
 export type TextOptions = {
   text: string;
   fontSize: number;
@@ -464,14 +474,14 @@ export type TextOptions = {
   bg?: number[];
   fontFamily?: string;
 };
-export type ReplContext = {
+export type Backend = {
   drawImage: (d: ImageData) => void;
   write: (s: string) => void;
   read: () => Promise<string | null>;
   drawText: (opts: TextOptions) => Promise<ImageData>;
   readFile: (p: string) => Promise<string>;
 };
-type Module = {
+export type Module = {
   bindings: Map<string, Val>;
   variables: Map<string, Val>;
   modules: Map<string, Module>;
@@ -495,8 +505,8 @@ export class Visitor {
   q: ReturnType<typeof quads>;
   private thisBinding?: [string, number, Module];
   private dfns?: Val[];
-  constructor(ctx: Partial<ReplContext>) {
-    this.q = quads(ctx as ReplContext);
+  constructor(private ctx: Partial<Backend>) {
+    this.q = quads(ctx);
   }
   private getModule(name: string) {
     for (const { modules } of this.scopes)
@@ -689,11 +699,20 @@ export class Visitor {
       return v;
     } else if (node.kind === "module definition") {
       this.scopes.unshift(newScope());
-      const v = await execnilad(await this.visit(node.def));
+      await execnilad(await this.visit(node.def));
       const mod = this.scopes.shift()!;
       this.scopes[0].modules.set(node.name, mod);
-      return v;
+      return modToNS(mod);
     } else if (node.kind === "module import") {
+      if (!this.ctx.readFile)
+        throw new Error("cannot read file in this environment");
+      const src = await this.ctx.readFile(node.path);
+      const prs = new Parser(lex(src)).program();
+      const v = new Visitor(this.ctx);
+      for (const s of prs) await execnilad(await v.visit(s));
+      const mod = v.global;
+      this.scopes[0].modules.set(node.name, mod);
+      return modToNS(mod);
     } else if (node.kind === "module access") {
       const { ident } = node;
       let from = this.getModule(node.from[0]);

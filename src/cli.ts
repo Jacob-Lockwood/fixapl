@@ -194,10 +194,12 @@ update:  npm i -g fixapl`);
         } else if (key?.name === "tab") {
           tabEntered = true;
         } else if (key?.name === "backspace") {
+          ins("");
           s = s.slice(0, pos() - 1) + s.slice(pos());
           mov(-1);
         } else if (chunk === "\u0015") {
           // ctrl+backspace; delete before cursor
+          ins("");
           s = s.slice(pos());
           row = col = 0;
         } else if (key?.name === "return") {
