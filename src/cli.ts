@@ -241,10 +241,8 @@ update:  npm i -g fixapl`);
       idents = Object.fromEntries(v.identArities);
       erase(h(f));
       console.log(prompt + highlight(tks));
-      if (x.kind !== "binding" && x.kind !== "module definition") {
-        const out = await pretty(await execnilad(r));
-        console.log(out.join("\n"));
-      }
+      const val = await execnilad(r);
+      if (x.kind === "expression") console.log((await pretty(val)).join("\n"));
     } catch (e) {
       console.error(kleur.red(e instanceof Error ? e.message : e + ""));
     }

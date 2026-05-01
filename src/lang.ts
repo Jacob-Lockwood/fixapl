@@ -499,6 +499,10 @@ const newScope = (): Module => ({
   variables: new Map(),
   modules: new Map(),
 });
+const memo = (fn: () => Promise<Val>) => {
+  let r!: Val;
+  return async () => (r ??= await fn());
+};
 export class Visitor {
   global = newScope();
   scopes = [this.global];
@@ -567,9 +571,14 @@ export class Visitor {
         v.repr = (await display(lft)) + node.glyph + `(${await display(rgt)})`;
       return v;
     } else if (node.kind === "block") {
-      let e!: Val;
-      for (const s of node.values) e = await execnilad(await this.visit(s));
-      return e;
+      const o: Val[] = [];
+      for (const s of node.values) o.push(await this.visit(s));
+      const l = o.at(-1)!;
+      const a = l.kind === "function" ? l.arity : 0;
+      return F(a, async (...v) => {
+        for (const v of o.slice(0, -1)) await execnilad(v);
+        return l.kind === "function" ? l.data(...v) : await execnilad(l);
+      });
     } else if (node.kind === "expression") {
       let i = node.values.length;
       const tines: Val[] = [];
@@ -676,30 +685,30 @@ export class Visitor {
           ident.name,
         );
       }
-    }
-    if (node.kind === "binding") {
+    } else if (node.kind === "binding") {
       const { ident, declaredArity, value } = node;
       this.thisBinding = [ident.name, declaredArity, this.scopes[0]];
       this.scopes.unshift(newScope());
-      const v = await execnilad(await this.visit(value));
+      let v = await this.visit(value);
       this.scopes.shift();
       if (
         (declaredArity > 0 &&
           (v.kind !== "function" || v.arity !== declaredArity)) ||
-        (declaredArity === 0 && v.kind === "function")
+        (declaredArity === 0 && v.kind === "function" && v.arity !== 0)
       ) {
         const inferred = v.kind === "function" ? v.arity : 0;
         throw new Error(
           `in ${ident.name}: arity was declared ${declaredArity} but inferred ${inferred}`,
         );
       }
+      if (v.kind === "function" && v.arity === 0) v.data = memo(v.data);
       this.thisBinding = undefined;
       this.scopes[0].bindings.set(ident.name, v);
       this.identArities.set(ident.id, v.kind === "function" ? v.arity : 0);
       return v;
     } else if (node.kind === "module definition") {
       this.scopes.unshift(newScope());
-      await execnilad(await this.visit(node.def));
+      await this.visit(node.def);
       const mod = this.scopes.shift()!;
       this.scopes[0].modules.set(node.name, mod);
       return modToNS(mod);
@@ -709,10 +718,17 @@ export class Visitor {
       const src = await this.ctx.readFile(node.path);
       const prs = new Parser(lex(src)).program();
       const v = new Visitor(this.ctx);
-      for (const s of prs) await execnilad(await v.visit(s));
+      const o: Val[] = [];
+      for (const s of prs) o.push(await v.visit(s));
       const mod = v.global;
       this.scopes[0].modules.set(node.name, mod);
-      return modToNS(mod);
+      return F(
+        0,
+        memo(async () => {
+          for (const n of o) await execnilad(n);
+          return modToNS(mod);
+        }),
+      );
     } else if (node.kind === "module access") {
       const { ident } = node;
       let from = this.getModule(node.from[0]);
