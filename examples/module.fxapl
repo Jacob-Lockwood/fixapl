@@ -1,0 +1,3 @@
+Sum     ← 0+⊙⫽
+Product ← 1×⊙⫽
+Filter  ← {⍵⊠˜⍺₁¨⍵}
