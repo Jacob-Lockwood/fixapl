@@ -27,12 +27,12 @@ const fmt = (s: string) =>
     .map((x) => x.image)
     .join("")
     .trimEnd();
-const bdg: Record<string, number> = {};
+let idents: Record<number, number> = {};
 const highlight = (tks: Token[]) =>
   tks
-    .map(({ kind, image }) => {
+    .map(({ kind, image, id }) => {
       let style = kleur.white;
-      const ba = kind === "identifier" ? (bdg[image] ?? 0) : 0;
+      const ba = kind === "identifier" ? (idents[id] ?? 0) : 0;
       const qa = kind === "quad" ? (quadsList.get(image.slice(1)) ?? 0) : 0;
       if (kind === "monadic function" || ba === 1 || qa === 1)
         style = kleur.green;
@@ -194,10 +194,12 @@ update:  npm i -g fixapl`);
         } else if (key?.name === "tab") {
           tabEntered = true;
         } else if (key?.name === "backspace") {
+          ins("");
           s = s.slice(0, pos() - 1) + s.slice(pos());
           mov(-1);
         } else if (chunk === "\u0015") {
           // ctrl+backspace; delete before cursor
+          ins("");
           s = s.slice(pos());
           row = col = 0;
         } else if (key?.name === "return") {
@@ -236,14 +238,11 @@ update:  npm i -g fixapl`);
       if (t.length === 0) break evaluate;
       const x = new Parser(t).program()[0];
       const r = await v.visit(x);
-      if (x.kind === "binding")
-        bdg[x.name] = r.kind === "function" ? r.arity : 0;
+      idents = Object.fromEntries(v.identArities);
       erase(h(f));
       console.log(prompt + highlight(tks));
-      if (x.kind !== "binding") {
-        const out = await pretty(await execnilad(r));
-        console.log(out.join("\n"));
-      }
+      const val = await execnilad(r);
+      if (x.kind === "expression") console.log((await pretty(val)).join("\n"));
     } catch (e) {
       console.error(kleur.red(e instanceof Error ? e.message : e + ""));
     }

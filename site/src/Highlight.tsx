@@ -20,11 +20,11 @@ export const special = new Map([
 ]);
 export const Highlight: Component<{
   tokens: readonly Token[];
-  bindings: Record<string, number>;
+  identArities: Record<number, number>;
 }> = (props) => {
   return (
     <For each={props.tokens}>
-      {({ kind, image }) => {
+      {({ kind, image, id }) => {
         switch (kind) {
           case "monadic function":
           case "dyadic function":
@@ -44,8 +44,8 @@ export const Highlight: Component<{
           case "identifier":
             const arity = () =>
               kind === "quad"
-                ? quadsList.get(image.slice(1))!
-                : props.bindings[image];
+                ? quadsList.get(image.slice(1))
+                : props.identArities[id];
             const cl = [
               "text-white",
               glyphColors["monadic function"],
@@ -82,11 +82,14 @@ export const Gly: Component<{ g: Glyph }> = (props) => (
   </span>
 );
 export const Code = (props: {
-  bindings?: Record<string, number>;
+  identArities?: Record<string, number>;
   children: string;
 }) => (
   <code>
-    <Highlight bindings={props.bindings ?? {}} tokens={lex(props.children)} />
+    <Highlight
+      identArities={props.identArities ?? {}}
+      tokens={lex(props.children)}
+    />
   </code>
 );
 export const CodeBlock = (props: Parameters<typeof Code>[0]) => (
