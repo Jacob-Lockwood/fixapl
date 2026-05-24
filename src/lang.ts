@@ -15,6 +15,7 @@ import {
   graphemes,
   nilad,
   Fun,
+  memo,
 } from "./util";
 import { glyphs, PrimitiveKind, prims, subscripts, omega } from "./glyphs";
 import quads from "./quads";
@@ -499,10 +500,6 @@ const newScope = (): Module => ({
   variables: new Map(),
   modules: new Map(),
 });
-const memo = (fn: () => Promise<Val>) => {
-  let r!: Val;
-  return async () => (r ??= await fn());
-};
 export class Visitor {
   global = newScope();
   scopes = [this.global];
@@ -787,26 +784,25 @@ export class Visitor {
         return 0;
       }
       const arity = getArity(node.def);
-      if (arity === 0)
-        return F(
-          0,
-          async () => {
-            this.scopes.unshift(newScope());
-            const e = await execnilad(await this.visit(node.def));
-            this.scopes.shift();
-            return e;
-          },
-          "{nilad}",
-        );
+      this.scopes.unshift(newScope());
+      const temp = this.dfns;
+      this.dfns = [N(0), N(0)];
+      const exec = await this.visit(node.def);
+      this.scopes.shift();
+      this.dfns = temp;
+      if (arity === 0) {
+        const body = memo(() => execnilad(exec));
+        return F(0, body, "{nilad}");
+      }
       return F(
         arity,
         async (...v) => {
-          const temp = this.dfns?.slice();
-          this.dfns = arity === 1 ? [N(0), v[0]] : v;
           this.scopes.unshift(newScope());
+          const temp = this.dfns;
+          this.dfns = arity === 1 ? [N(0), v[0]] : v;
           const e = await execnilad(await this.visit(node.def));
-          this.scopes.shift();
           this.dfns = temp;
+          this.scopes.shift();
           return e;
         },
         `{${arity === 1 ? "monad" : "dyad"}}`,
@@ -815,7 +811,7 @@ export class Visitor {
       if (!this.dfns)
         throw new Error("Cannot reference dfn argument outside dfn");
       const v = node.left ? this.dfns[0] : this.dfns[1];
-      return F(0, async () => v);
+      return v;
     } else if (node.kind === "scope reference") {
       return modToNS(this.scopes[Math.min(node.level, this.scopes.length - 1)]);
     } else if (node.kind === "namespace access") {

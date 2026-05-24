@@ -20,8 +20,8 @@ export default function App() {
     </a>
   );
   const Example: Component<{
-    bindings?: Record<string, number>;
     children: string;
+    bindings?: Record<string, number>;
   }> = (props) => (
     <RunBtn code={dedent(props.children)} class="cursor-pointer">
       <CodeBlock bindings={props.bindings}>{dedent(props.children)}</CodeBlock>
@@ -248,7 +248,7 @@ export default function App() {
                 `}</Example>
               </li>
               <li>
-                <Example bindings={{ Sq: 1, Pl: 1, Gen: 2 }}>{`
+                <Example>{`
                   ⍝ Mandelbrot Set
                   Sq  ← ⊡-/⟜×⍨⊟2××/
                   Pl  ← ⍉⍉ 2×⍪˜⟜(⋅-0.25)⊞⍨ ⍳⊸÷-0.5

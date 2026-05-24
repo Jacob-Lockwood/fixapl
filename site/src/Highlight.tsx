@@ -1,7 +1,8 @@
-import { Component, For } from "solid-js";
-import { lex, Token } from "#fixapl/lang";
+import { Component, createSignal, For, onMount } from "solid-js";
+import { lex, Parser, Token, Visitor } from "#fixapl/lang";
 import { Glyph, glyphs } from "#fixapl/glyphs";
 import { quadsList } from "#fixapl/quads";
+import { F, N } from "#fixapl/util.ts";
 export const glyphColors = {
   "monadic function": "text-lime-400",
   "dyadic function": "text-sky-400",
@@ -20,7 +21,7 @@ export const special = new Map([
 ]);
 export const Highlight: Component<{
   tokens: readonly Token[];
-  identArities: Record<number, number>;
+  identArities: Record<string, number>;
 }> = (props) => {
   return (
     <For each={props.tokens}>
@@ -82,16 +83,30 @@ export const Gly: Component<{ g: Glyph }> = (props) => (
   </span>
 );
 export const Code = (props: {
-  identArities?: Record<string, number>;
+  bindings?: Record<string, number>;
   children: string;
-}) => (
-  <code>
-    <Highlight
-      identArities={props.identArities ?? {}}
-      tokens={lex(props.children)}
-    />
-  </code>
-);
+}) => {
+  const toks = lex(props.children);
+  const [idents, setIdents] = createSignal<Record<string, number>>({});
+  onMount(async () => {
+    try {
+      const p = new Parser(toks).program();
+      const v = new Visitor({});
+      const unreachable = (a: number) => F(a, async () => N(0));
+      for (const [b, a] of Object.entries(props.bindings || {}))
+        v.global.bindings.set(b, unreachable(a));
+      for (const x of p) await v.visit(x);
+      setIdents(Object.fromEntries(v.identArities));
+    } catch (e) {
+      console.log("error in highlighting <Code>:", props.children);
+    }
+  });
+  return (
+    <code>
+      <Highlight identArities={idents()} tokens={toks} />
+    </code>
+  );
+};
 export const CodeBlock = (props: Parameters<typeof Code>[0]) => (
   <pre>
     <Code {...props} />
