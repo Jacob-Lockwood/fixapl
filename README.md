@@ -5,7 +5,7 @@
 <br><br>
 <i>APL reimagined from the ground up with fixed-arity functions</i>
 <br><br>
-<i><a href="https://fixapl.netlify.app">Try FIXAPL online!</a></i>
+<i><a href="http://fixapl.jacoblockwood.net">Try FIXAPL online!</a></i>
 <br><br>
 <i><a href="https://www.youtube.com/live/L7pttMExil4">Featured on the ArrayCast!</a></i>
 </p>
@@ -23,7 +23,7 @@ I created it based on a few observations I made about APL and its family of lang
 
    A similar idea to this has been implemented in the language [Jelly](https://github.com/DennisMitchell/jellylanguage), though FIXAPL takes a pretty different approach.
 
-You can try FIXAPL in an online REPL at https://fixapl.netlify.app. There are a few examples in the [`examples`](./examples) directory. You can install FIXAPL from NPM with `npm install fixapl --global`; run `fixapl --help` to get started.
+You can try FIXAPL in an online REPL at http://fixapl.jacoblockwood.net. There are a few examples in the [`examples`](./examples) directory. You can install FIXAPL from NPM with `npm install fixapl --global`; run `fixapl --help` to get started.
 
 ## Syntax
 
