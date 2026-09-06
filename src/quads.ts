@@ -1,5 +1,5 @@
 import { quad, alpha, omega } from "./glyphs";
-import { ReplContext } from "./lang";
+import { Backend } from "./lang";
 import pretty from "./pretty";
 import {
   A,
@@ -17,12 +17,12 @@ import {
 
 export const quadsList = new Map<string, number>();
 
-const qdefs = new Map<string, (ctx: ReplContext) => Val>();
+const qdefs = new Map<string, (ctx: Partial<Backend>) => Val>();
 const q = (
   name: string,
   arity: number,
   def: (
-    ctx: ReplContext,
+    ctx: Partial<Backend>,
     err: (m: string) => Error,
   ) => (...args: Val[]) => Promise<Val>,
 ) => {
@@ -34,16 +34,24 @@ const q = (
   });
 };
 q("P", 1, (ctx, err) => async (y) => {
+  if (!ctx.write)
+    throw err("writing to the console is not supported in this environment");
   if (!isString(y)) throw err(`${omega} must be a string`);
   const s = y.data.map((x) => String.fromCodePoint(x.data)).join("");
   ctx.write(s + "\n");
   return y;
 });
-q("S", 1, (ctx) => async (y) => {
+q("S", 1, (ctx, err) => async (y) => {
+  if (!ctx.write)
+    throw err("writing to the console is not supported in this environment");
   ctx.write((await pretty(y)).join("\n") + "\n");
   return y;
 });
 q("Prompt", 1, (ctx, err) => async (y) => {
+  if (!ctx.write)
+    throw err("writing to the console is not supported in this environment");
+  if (!ctx.read)
+    throw err("reading from the console is not supported in this environment");
   if (!isString(y)) throw err(`${omega} must be a string`);
   const s = String.fromCodePoint(...y.data.map((x) => x.data));
   ctx.write(s);
@@ -58,6 +66,8 @@ q("Sleep", 1, (_, err) => async (y) => {
   return N((Date.now() - t1) / 1000);
 });
 q("Img", 1, (ctx, err) => async (y) => {
+  if (!ctx.drawImage)
+    throw err("drawing images is not supported in this environment");
   if (y.kind !== "array" || !y.data.every((v) => v.kind === "number"))
     throw err(`${omega} must be an array of numbers`);
   if (y.shape.length < 2 || y.shape.length > 3)
@@ -69,6 +79,8 @@ q("Img", 1, (ctx, err) => async (y) => {
   return A([0], []);
 });
 q("Text", 2, (ctx, err) => async (x, y) => {
+  if (!ctx.drawText)
+    throw err("drawing text is not supported in this environment");
   if (!isString(y)) throw err(`${omega} must be a string`);
   const s = String.fromCodePoint(...y.data.map((v) => v.data));
   let fontSize: number;
@@ -119,6 +131,8 @@ q("Text", 2, (ctx, err) => async (x, y) => {
   );
 });
 q("File", 1, (ctx, err) => async (y) => {
+  if (!ctx.readFile)
+    throw err("reading files is not supported in this environment");
   if (!isString(y)) throw err(`${omega} must be a string`);
   const s = String.fromCodePoint(...y.data.map((v) => v.data));
   try {
@@ -127,5 +141,5 @@ q("File", 1, (ctx, err) => async (y) => {
     throw err(e instanceof Error ? e.message : e + "");
   }
 });
-export default (ctx: ReplContext) =>
+export default (ctx: Partial<Backend>) =>
   new Map([...qdefs.entries()].map(([name, def]) => [name, def(ctx)]));

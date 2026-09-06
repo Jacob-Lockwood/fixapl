@@ -21,6 +21,7 @@ import {
   indices,
   prod,
   nilad,
+  memo,
 } from "./util";
 import { PrimitiveKind } from "./glyphs";
 
@@ -32,7 +33,7 @@ export async function display(val: Val): Promise<string> {
       .replace("Infinity", inf.glyph);
   if (val.kind === "character") {
     const j = JSON.stringify(String.fromCodePoint(val.data));
-    return `'${j.slice(1, -1).replace(/'/g, "\\'")}'`;
+    return `'${j.slice(1, -1).replace(/'/g, "\\'").replace(/\\"/g, '"')}'`;
   }
   if (val.kind === "function") {
     if (val.repr) return val.repr;
@@ -43,8 +44,11 @@ export async function display(val: Val): Promise<string> {
   }
   if (val.kind === "namespace") {
     let s = "{§";
-    for (const [name, v] of val.data)
-      s += ` ${lft.glyph} ${name}↤${await display(v)}`;
+    for (const [name, v] of val.data) {
+      let dv = await display(v);
+      if (v.kind === "function" && v.arity > 0) dv += sb.glyph;
+      s += ` ${lft.glyph} ${name}↤${dv}`;
+    }
     return s + "}";
   }
   if (val.shape.length === 0) {
@@ -931,8 +935,8 @@ export const lft = df("⊣", "left argument", () => async (x) => x);
 export const rgt = df("⊢", "right argument", () => async (_, y) => y);
 export const id = mf("⋅", "identity", () => async (y) => y);
 export const sb = mm("₀", "subject", () => async (X) => {
-  const val = execnilad(X);
-  return F(0, () => val);
+  const b = memo(() => execnilad(X));
+  return F(0, b);
 });
 export const mn = mm("₁", "monad", (err) => async (X) => {
   X = await execnilad(X);
@@ -941,7 +945,7 @@ export const mn = mm("₁", "monad", (err) => async (X) => {
   return X;
 });
 export const dy = mm("₂", "dyad", () => async (X) => {
-  X = await execnilad(X);
+  // X = await execnilad(X);
   if (X.kind !== "function") return F(2, async () => X);
   if (X.arity === 1) return F(2, (_, y) => X.data(y));
   return X;

@@ -66,7 +66,9 @@ export const Repl: Component<{
     "defaultFont",
     "TinyAPL386 Unicode",
   );
-  const [bindings, setBindings] = createSignal<Record<string, number>>({});
+  const [identArities, setIdentArities] = createSignal<Record<number, number>>(
+    {},
+  );
   const [disableEntry, setDisableEntry] = createSignal(false);
   let data: ReplEntry, setData: SetStoreFunction<ReplEntry>;
 
@@ -82,8 +84,8 @@ export const Repl: Component<{
     const [kind, d] = ev.data;
     if (kind === "result") {
       setData("result", (v) => [...v, d]);
-    } else if (kind === "bindings") {
-      setBindings(d);
+    } else if (kind === "identArities") {
+      setIdentArities(d);
     } else if (kind === "error") {
       setData("error", d instanceof Error ? d.message : d + "");
       console.error(d);
@@ -341,7 +343,7 @@ export const Repl: Component<{
                         {result.tokens ? (
                           <Highlight
                             tokens={result.tokens!}
-                            bindings={bindings()}
+                            identArities={identArities()}
                           />
                         ) : (
                           result.source
